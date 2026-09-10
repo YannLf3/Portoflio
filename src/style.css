@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-....: var(--clr-....);
+}
+
+@layer base {
+  :root {
+    /*Token primitives (couleurs de base) */
+    --clr-indigo-600: oklch(51.1% 0.262 276.966);
+
+    /*Token semantic (il dit à quoi li va servir)*/
+    --clr-card-background: var(--clr-indigo-600);
+  }
+}
+
+.bouton--white {
+  --clr-text-btn: var(--clr-indigo-600);
+}
