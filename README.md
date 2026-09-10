@@ -111,7 +111,7 @@ cd nom-du-repo
 Installez les dépendances et lancez le watcher Tailwind :
 ```bash
 npm install
-npm run dev   # ou: npx tailwindcss -i ./src/input.css -o ./public/css/style.css --watch
+npm run dev   # ou: npx tailwindcss -i ./src/input.css -o ./public/css/input.css --watch
 ```
 
 ### 4. Lancer le serveur local
