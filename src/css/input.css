@@ -6,222 +6,270 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* ==========================================================================
-    COULEURS DU THÈME
-    Génère automatiquement les utilitaires Tailwind :
-    - bg-background, bg-background-2, bg-card, bg-accent, bg-accent-soft...
-    - text-foreground, text-muted-foreground, text-accent, text-accent-contrast...
-    - border-border, border-border-strong, border-accent...
-    ========================================================================== */
-  --color-background: var(--background);
-  --color-background-2: var(--background-2);
-  --color-foreground: var(--foreground);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-card: var(--card);
-  --color-border: var(--border);
-  --color-border-strong: var(--border-strong);
+    /* ==========================================================================
+      COULEURS DU THÈME
+      Génère automatiquement les utilitaires Tailwind :
+      - bg-background, bg-background-2, bg-card, bg-accent, bg-accent-soft...
+      - text-foreground, text-muted-foreground, text-accent, text-accent-contrast...
+      - border-border, border-border-strong, border-accent...
+      ========================================================================== */
+    --color-background: var(--background);
+    --color-background-2: var(--background-2);
+    --color-foreground: var(--foreground);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-card: var(--card);
+    --color-border: var(--border);
+    --color-border-strong: var(--border-strong);
 
-  --color-accent: var(--accent);
-  --color-accent-2: var(--accent-2);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-contrast: var(--accent-contrast);
+    --color-accent: var(--accent);
+    --color-accent-2: var(--accent-2);
+    --color-accent-soft: var(--accent-soft);
+    --color-accent-contrast: var(--accent-contrast);
 
-  /* ==========================================================================
-    FAMILLES DE POLICES (FONT FAMILIES)
-    Génère automatiquement les utilitaires Tailwind :
-    - font-display, font-body, font-mono
-    ========================================================================== */
-  --font-display: var(--font-display);
-  --font-body: var(--font-body);
-  --font-mono: var(--font-mono);
+    /* ==========================================================================
+      FAMILLES DE POLICES (FONT FAMILIES)
+      Génère automatiquement les utilitaires Tailwind :
+      - font-display, font-body, font-mono
+      ========================================================================== */
+    --font-display: var(--font-display);
+    --font-body: var(--font-body);
+    --font-mono: var(--font-mono);
 
-  /* ==========================================================================
-    TAILLES DE TEXTE (FONT SIZES)
-    Génère automatiquement les utilitaires Tailwind :
-    - text-2xs, text-xs-plus, text-xs, text-sm, text-base, text-lg...
-    - text-display-md, text-display-lg, text-hero
-    ========================================================================== */
-  --text-2xs: var(--text-2xs);
-  --text-xs-plus: var(--text-xs-plus);
-  --text-xs: var(--text-xs);
-  --text-sm: var(--text-sm);
-  --text-base: var(--text-base);
-  --text-lg: var(--text-lg);
-  --text-xl: var(--text-xl);
-  --text-2xl: var(--text-2xl);
-  --text-3xl: var(--text-3xl);
-  --text-display-md: var(--text-display-md);
-  --text-display-lg: var(--text-display-lg);
-  --text-hero: var(--text-hero);
+    /* ==========================================================================
+      TAILLES DE TEXTE (FONT SIZES)
+      Génère automatiquement les utilitaires Tailwind :
+      - text-2xs, text-xs-plus, text-xs, text-sm, text-base, text-lg...
+      - text-display-md, text-display-lg, text-hero
+      ========================================================================== */
+    --text-2xs: var(--text-2xs);
+    --text-xs-plus: var(--text-xs-plus);
+    --text-xs: var(--text-xs);
+    --text-sm: var(--text-sm);
+    --text-base: var(--text-base);
+    --text-lg: var(--text-lg);
+    --text-xl: var(--text-xl);
+    --text-2xl: var(--text-2xl);
+    --text-3xl: var(--text-3xl);
+    --text-display-md: var(--text-display-md);
+    --text-display-lg: var(--text-display-lg);
+    --text-hero: var(--text-hero);
 
-  /* ==========================================================================
-    GRAISSES DE POLICE (FONT WEIGHTS)
-    Génère automatiquement les utilitaires Tailwind :
-    - font-light, font-normal, font-medium, font-semibold, font-bold
-    ========================================================================== */
-  --font-weight-light: var(--font-weight-light);
-  --font-weight-normal: var(--font-weight-normal);
-  --font-weight-medium: var(--font-weight-medium);
-  --font-weight-semibold: var(--font-weight-semibold);
-  --font-weight-bold: var(--font-weight-bold);
+    /* ==========================================================================
+      GRAISSES DE POLICE (FONT WEIGHTS)
+      Génère automatiquement les utilitaires Tailwind :
+      - font-light, font-normal, font-medium, font-semibold, font-bold
+      ========================================================================== */
+    --font-weight-light: var(--font-weight-light);
+    --font-weight-normal: var(--font-weight-normal);
+    --font-weight-medium: var(--font-weight-medium);
+    --font-weight-semibold: var(--font-weight-semibold);
+    --font-weight-bold: var(--font-weight-bold);
 }
 
 @layer base {
-  :root {
+    :root {
+        /* ==========================================================================
+         TOKENS PRIMITIVES
+         Format OKLCH : Lightness Chroma Hue [ / Alpha ]
+         - L : 0-1 (0 = noir, 1 = blanc)
+         - C : 0-0.4 (0 = achromatique/gris, plus élevé = plus saturé)
+         - H : 0-360 (teinte sur le cercle chromatique en degrés)
+         ========================================================================== */
+
+        /* Palette neutre & fond sombre cinéma (base du portfolio) */
+        --clr-black: oklch(0 0 0);
+        --clr-white: oklch(1 0 0);
+        --clr-dark-ground: oklch(0.15 0.012 265);
+        --clr-dark-surface: oklch(0.19 0.014 265);
+        --clr-dark-card: oklch(0.2 0.014 265);
+        --clr-text-light: oklch(0.96 0.006 90);
+        --clr-text-muted: oklch(0.68 0.01 265);
+        --clr-border-subtle: oklch(1 0 0 / 0.09);
+        --clr-border-strong: oklch(1 0 0 / 0.18);
+
+        /* Palette claire (pour mode light / alternatif) */
+        --clr-light-ground: oklch(0.98 0.005 90);
+        --clr-light-surface: oklch(0.94 0.008 90);
+        --clr-light-card: oklch(1 0 0);
+        --clr-light-text: oklch(0.18 0.02 265);
+        --clr-light-muted: oklch(0.48 0.02 265);
+        --clr-light-border: oklch(0 0 0 / 0.1);
+        --clr-light-border-strong: oklch(0 0 0 / 0.2);
+
+        /* Palette Accents - Mode Dev (Émeraude / Cyan néon) */
+        --clr-dev-accent: oklch(0.86 0.2 162);
+        --clr-dev-accent-2: oklch(0.79 0.14 205);
+        --clr-dev-accent-soft: oklch(0.86 0.2 162 / 0.13);
+        --clr-dev-contrast: oklch(0.15 0.02 265);
+
+        /* Palette Accents - Mode Photo (Ambre chaleureux / Terre cuite) */
+        --clr-photo-accent: oklch(0.82 0.14 62);
+        --clr-photo-accent-2: oklch(0.72 0.11 35);
+        --clr-photo-accent-soft: oklch(0.82 0.14 62 / 0.14);
+        --clr-photo-contrast: oklch(0.16 0.02 60);
+        --clr-photo-ground: oklch(0.16 0.013 55);
+        --clr-photo-surface: oklch(0.21 0.016 50);
+
+        /* ==========================================================================
+         TOKENS SÉMANTIQUES (Thème actif par défaut : Sombre / Dev)
+         ========================================================================== */
+        --background: var(--clr-dark-ground);
+        --background-2: var(--clr-dark-surface);
+        --foreground: var(--clr-text-light);
+        --muted-foreground: var(--clr-text-muted);
+        --card: var(--clr-dark-card);
+        --border: var(--clr-border-subtle);
+        --border-strong: var(--clr-border-strong);
+
+        /* Accents par défaut */
+        --accent: var(--clr-dev-accent);
+        --accent-2: var(--clr-dev-accent-2);
+        --accent-soft: var(--clr-dev-accent-soft);
+        --accent-contrast: var(--clr-dev-contrast);
+
+        /* ==========================================================================
+         TOKENS TYPOGRAPHIE - FAMILLES DE POLICES
+         ========================================================================== */
+        --font-display: 'Fraunces', Georgia, serif;
+        --font-body: 'Inter', system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+        /* ==========================================================================
+         TOKENS TYPOGRAPHIE - TAILLES DE POLICE
+         ========================================================================== */
+        --text-2xs: 0.625rem;
+        /* 10px - micro-tags, badges, labels techniques */
+        --text-xs-plus: 0.6875rem;
+        /* 11px - sous-labels, boutons compacts */
+        --text-xs: 0.75rem;
+        /* 12px - tags uppercase mono, navigation */
+        --text-sm: 0.875rem;
+        /* 14px - champs de formulaire, textes secondaires */
+        --text-base: 1rem;
+        /* 16px - texte courant de lecture */
+        --text-lg: 1.125rem;
+        /* 18px - chapô, textes d'accroche */
+        --text-xl: 1.25rem;
+        /* 20px - titres d'items, cartes */
+        --text-2xl: 1.5rem;
+        /* 24px - sous-titres de section */
+        --text-3xl: 1.875rem;
+        /* 30px - titres secondaires */
+        --text-display-md: clamp(2rem, 4.5vw, 3.4rem);
+        /* Titres h2 fluides adaptatifs */
+        --text-display-lg: clamp(2.4rem, 7vw, 5.5rem);
+        /* Titres d'appel majeurs fluides */
+        --text-hero: clamp(3rem, 10vw, 8.5rem);
+        /* Titre hero h1 grand format fluide */
+
+        /* ==========================================================================
+         TOKENS TYPOGRAPHIE - GRAISSES DE POLICE
+         ========================================================================== */
+        --font-weight-light: 300;
+        --font-weight-normal: 400;
+        --font-weight-medium: 500;
+        --font-weight-semibold: 600;
+        --font-weight-bold: 700;
+    }
+
     /* ==========================================================================
-     TOKENS PRIMITIVES
-     Format OKLCH : Lightness Chroma Hue [ / Alpha ]
-     - L : 0-1 (0 = noir, 1 = blanc)
-     - C : 0-0.4 (0 = achromatique/gris, plus élevé = plus saturé)
-     - H : 0-360 (teinte sur le cercle chromatique en degrés)
-     ========================================================================== */
-
-    /* Palette neutre & fond sombre cinéma (base du portfolio) */
-    --clr-black: oklch(0 0 0);
-    --clr-white: oklch(1 0 0);
-    --clr-dark-ground: oklch(0.15 0.012 265);
-    --clr-dark-surface: oklch(0.19 0.014 265);
-    --clr-dark-card: oklch(0.2 0.014 265);
-    --clr-text-light: oklch(0.96 0.006 90);
-    --clr-text-muted: oklch(0.68 0.01 265);
-    --clr-border-subtle: oklch(1 0 0 / 0.09);
-    --clr-border-strong: oklch(1 0 0 / 0.18);
-
-    /* Palette claire (pour mode light / alternatif) */
-    --clr-light-ground: oklch(0.98 0.005 90);
-    --clr-light-surface: oklch(0.94 0.008 90);
-    --clr-light-card: oklch(1 0 0);
-    --clr-light-text: oklch(0.18 0.02 265);
-    --clr-light-muted: oklch(0.48 0.02 265);
-    --clr-light-border: oklch(0 0 0 / 0.1);
-    --clr-light-border-strong: oklch(0 0 0 / 0.2);
-
-    /* Palette Accents - Mode Dev (Émeraude / Cyan néon) */
-    --clr-dev-accent: oklch(0.86 0.2 162);
-    --clr-dev-accent-2: oklch(0.79 0.14 205);
-    --clr-dev-accent-soft: oklch(0.86 0.2 162 / 0.13);
-    --clr-dev-contrast: oklch(0.15 0.02 265);
-
-    /* Palette Accents - Mode Photo (Ambre chaleureux / Terre cuite) */
-    --clr-photo-accent: oklch(0.82 0.14 62);
-    --clr-photo-accent-2: oklch(0.72 0.11 35);
-    --clr-photo-accent-soft: oklch(0.82 0.14 62 / 0.14);
-    --clr-photo-contrast: oklch(0.16 0.02 60);
-    --clr-photo-ground: oklch(0.16 0.013 55);
-    --clr-photo-surface: oklch(0.21 0.016 50);
+      DÉCLINAISON THÈME SOMBRE (.dark)
+      ========================================================================== */
+    .dark {
+        --background: var(--clr-dark-ground);
+        --background-2: var(--clr-dark-surface);
+        --foreground: var(--clr-text-light);
+        --muted-foreground: var(--clr-text-muted);
+        --card: var(--clr-dark-card);
+        --border: var(--clr-border-subtle);
+        --border-strong: var(--clr-border-strong);
+    }
 
     /* ==========================================================================
-     TOKENS SÉMANTIQUES (Thème actif par défaut : Sombre / Dev)
-     ========================================================================== */
-    --background: var(--clr-dark-ground);
-    --background-2: var(--clr-dark-surface);
-    --foreground: var(--clr-text-light);
-    --muted-foreground: var(--clr-text-muted);
-    --card: var(--clr-dark-card);
-    --border: var(--clr-border-subtle);
-    --border-strong: var(--clr-border-strong);
-
-    /* Accents par défaut */
-    --accent: var(--clr-dev-accent);
-    --accent-2: var(--clr-dev-accent-2);
-    --accent-soft: var(--clr-dev-accent-soft);
-    --accent-contrast: var(--clr-dev-contrast);
+      DÉCLINAISON THÈME CLAIR (.light)
+      ========================================================================== */
+    .light {
+        --background: var(--clr-light-ground);
+        --background-2: var(--clr-light-surface);
+        --foreground: var(--clr-light-text);
+        --muted-foreground: var(--clr-light-muted);
+        --card: var(--clr-light-card);
+        --border: var(--clr-light-border);
+        --border-strong: var(--clr-light-border-strong);
+        --accent-contrast: var(--clr-white);
+    }
 
     /* ==========================================================================
-     TOKENS TYPOGRAPHIE - FAMILLES DE POLICES
-     ========================================================================== */
-    --font-display: 'Fraunces', Georgia, serif;
-    --font-body: 'Inter', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      VARIANTE MODE DEV ([data-mode="dev"])
+      ========================================================================== */
+    /*document.documentElement.dataset.mode = 'photo'; // Met à jour l'attribut automatiquement
+  */
+    [data-mode='dev'] {
+        --accent: var(--clr-dev-accent);
+        --accent-2: var(--clr-dev-accent-2);
+        --accent-soft: var(--clr-dev-accent-soft);
+        --accent-contrast: var(--clr-dev-contrast);
+        --background: var(--clr-dark-ground);
+        --background-2: var(--clr-dark-surface);
+    }
+
 
     /* ==========================================================================
-     TOKENS TYPOGRAPHIE - TAILLES DE POLICE
-     ========================================================================== */
-    --text-2xs: 0.625rem;
-    /* 10px - micro-tags, badges, labels techniques */
-    --text-xs-plus: 0.6875rem;
-    /* 11px - sous-labels, boutons compacts */
-    --text-xs: 0.75rem;
-    /* 12px - tags uppercase mono, navigation */
-    --text-sm: 0.875rem;
-    /* 14px - champs de formulaire, textes secondaires */
-    --text-base: 1rem;
-    /* 16px - texte courant de lecture */
-    --text-lg: 1.125rem;
-    /* 18px - chapô, textes d'accroche */
-    --text-xl: 1.25rem;
-    /* 20px - titres d'items, cartes */
-    --text-2xl: 1.5rem;
-    /* 24px - sous-titres de section */
-    --text-3xl: 1.875rem;
-    /* 30px - titres secondaires */
-    --text-display-md: clamp(2rem, 4.5vw, 3.4rem);
-    /* Titres h2 fluides adaptatifs */
-    --text-display-lg: clamp(2.4rem, 7vw, 5.5rem);
-    /* Titres d'appel majeurs fluides */
-    --text-hero: clamp(3rem, 10vw, 8.5rem);
-    /* Titre hero h1 grand format fluide */
+      VARIANTE MODE PHOTO ([data-mode="photo"])
+      ========================================================================== */
+    [data-mode='photo'] {
+        --accent: var(--clr-photo-accent);
+        --accent-2: var(--clr-photo-accent-2);
+        --accent-soft: var(--clr-photo-accent-soft);
+        --accent-contrast: var(--clr-photo-contrast);
+        --background: var(--clr-photo-ground);
+        --background-2: var(--clr-photo-surface);
+    }
 
-    /* ==========================================================================
-     TOKENS TYPOGRAPHIE - GRAISSES DE POLICE
-     ========================================================================== */
-    --font-weight-light: 300;
-    --font-weight-normal: 400;
-    --font-weight-medium: 500;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
-  }
 
-  /* ==========================================================================
-    DÉCLINAISON THÈME SOMBRE (.dark)
-    ========================================================================== */
-  .dark {
-    --background: var(--clr-dark-ground);
-    --background-2: var(--clr-dark-surface);
-    --foreground: var(--clr-text-light);
-    --muted-foreground: var(--clr-text-muted);
-    --card: var(--clr-dark-card);
-    --border: var(--clr-border-subtle);
-    --border-strong: var(--clr-border-strong);
-  }
+}
 
-  /* ==========================================================================
-    DÉCLINAISON THÈME CLAIR (.light)
-    ========================================================================== */
-  .light {
-    --background: var(--clr-light-ground);
-    --background-2: var(--clr-light-surface);
-    --foreground: var(--clr-light-text);
-    --muted-foreground: var(--clr-light-muted);
-    --card: var(--clr-light-card);
-    --border: var(--clr-light-border);
-    --border-strong: var(--clr-light-border-strong);
-    --accent-contrast: var(--clr-white);
-  }
+/* ===========================================================================
+   THEME TRANSITION
+   ========================================================================== */
+#theme-transition-overlay {
+    clip-path: circle(0% at calc(100% - 120px) 35px);
+    background-color: var(--accent);
+    opacity: 0;
+    /* On applique la transition sur le cercle ET sur l'opacité */
+    transition: clip-path 0.7s ease-in-out, opacity 0.4s ease-in-out;
+}
 
-  /* ==========================================================================
-    VARIANTE MODE DEV ([data-mode="dev"])
-    ========================================================================== */
-  /*document.documentElement.dataset.mode = 'photo'; // Met à jour l'attribut automatiquement
-*/
-  [data-mode='dev'] {
-    --accent: var(--clr-dev-accent);
-    --accent-2: var(--clr-dev-accent-2);
-    --accent-soft: var(--clr-dev-accent-soft);
-    --accent-contrast: var(--clr-dev-contrast);
-    --background: var(--clr-dark-ground);
-    --background-2: var(--clr-dark-surface);
-  }
+#theme-transition-overlay.active {
+    opacity: 1;
+    clip-path: circle(150% at calc(100% - 120px) 35px);
+}
 
-  /* ==========================================================================
-    VARIANTE MODE PHOTO ([data-mode="photo"])
-    ========================================================================== */
-  [data-mode='photo'] {
-    --accent: var(--clr-photo-accent);
-    --accent-2: var(--clr-photo-accent-2);
-    --accent-soft: var(--clr-photo-accent-soft);
-    --accent-contrast: var(--clr-photo-contrast);
-    --background: var(--clr-photo-ground);
-    --background-2: var(--clr-photo-surface);
-  }
+.bg-grid-pattern {
+    background-image: /* Un dégradé radial subtil (lueur centrale en haut) */ radial-gradient(circle at 50% 15%, rgba(0, 255, 128, 0.08) 0%, transparent 60%),
+        /* Lignes verticales de la grille */ linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        /* Lignes horizontales de la grille */ linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+
+    /* Taille de la grille (48px par 48px) */
+    background-size: 100% 100%, 48px 48px, 48px 48px;
+}
+
+/* Par défaut ou en mode dev : on affiche dev, on cache photo */
+html:not([data-mode="photo"]) .mode-photo-content,
+[data-mode="dev"] .mode-photo-content {
+    display: none;
+}
+
+html:not([data-mode="photo"]) .mode-dev-content,
+[data-mode="dev"] .mode-dev-content {
+    display: inline;
+}
+
+/* En mode photo explicite */
+[data-mode="photo"] .mode-dev-content {
+    display: none;
+}
+
+[data-mode="photo"] .mode-photo-content {
+    display: inline;
 }

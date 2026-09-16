@@ -1,29 +1,40 @@
-<main class="max-w-6xl mx-auto px-4 py-16">
-    <!-- Hero Section avec Tailwind -->
-    <section class="text-center py-12">
-        <h1 class="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-4">
-            Développeur Web Full-Stack & Designer
+<?php require_once __DIR__ . '/../layouts/header.php'; ?>
+
+    <section class="mt-16 flex flex-col items-start gap-8 max-w-2xl">
+
+        <!-- 1. Badge de disponibilité (Stage) -->
+        <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-border-strong bg-background-card/50 backdrop-blur-md text-xs tracking-wider text-muted-foreground uppercase">
+            <!-- Petit point lumineux (prend la couleur de l'accent grâce à bg-accent) -->
+            <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+            <span>Disponible pour un stage · 8-12 semaines</span>
+        </div>
+
+        <!-- 2. Titre principal (Yann Le Flohic) -->
+        <h1 class="text-5xl sm:text-6xl font-normal tracking-tight flex flex-col leading-none">
+            <span class="text-foreground">Yann</span>
+            <!-- Le nom de famille passe en italique et adopte la couleur d'accent -->
+            <span class="italic font-light text-accent mt-2">Le Flohic</span>
         </h1>
-        <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-8">
-            Bienvenue sur mon portfolio. Découvre mes projets récents et mes réalisations.
+
+        <!-- 3. Description adaptative selon le mode -->
+        <p class="text-muted-foreground text-base sm:text-lg leading-relaxed font-sans">
+            <!-- Version Dev (affichée par défaut ou gérée en PHP/CSS) -->
+            <span id="dev-intro" class="mode-dev-content">
+            Développeur web full-stack — je conçois et code des interfaces sur-mesure, du front au back, jusqu'à l'hébergement.
+        </span>
+            <!-- Version Photo -->
+            <span id="photo-intro" class="mode-photo-content">
+            Photographe — je capture la lumière, la matière et l'instant, entre portraits, rue et paysages cinématographiques.
+        </span>
         </p>
-        <a href="#projects" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition">
-            Voir mes travaux
-        </a>
+
+        <!-- 4. Informations de localisation / Études -->
+        <div class="flex items-center gap-4 text-xs tracking-widest text-muted-foreground uppercase pt-2">
+            <span>Châteauroux — FR</span>
+            <span class="w-8 h-px bg-border-strong"></span>
+            <span>2° Année MMI</span>
+        </div>
+
     </section>
 
-    <!-- Exemples d'assets dynamiques/statiques -->
-    <section id="projects" class="py-12">
-        <h2 class="text-2xl font-bold mb-6 text-indigo-400">Projets récents</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-lg">
-                <!-- Les images doivent pointer vers /assets/... -->
-                <img src="/assets/images/project-placeholder.jpg" alt="Aperçu projet" class="w-full h-48 object-cover" />
-                <div class="p-5">
-                    <h3 class="text-xl font-bold text-white mb-2">Nom du projet</h3>
-                    <p class="text-slate-400 text-sm mb-4">Description courte du projet réalisé en PHP MVC et Tailwind.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-</main>
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>
