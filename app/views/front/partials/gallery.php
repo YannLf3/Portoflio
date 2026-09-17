@@ -14,7 +14,7 @@
         <!-- Description adaptative selon le mode -->
         <p class="text-xs sm:text-sm text-muted-foreground max-w-xs leading-relaxed">
             <span class="mode-dev-content">Bascule en mode Photographe pour révéler la sélection.</span>
-            <span class="mode-photo-content">Une sélection de photographies — portraits, scènes de rue et paysages.</span>
+            <span class="mode-photo-content">Une sélection de photographies — portraits et paysages.</span>
         </p>
     </div>
 
@@ -23,7 +23,7 @@
 
         <!-- Photo 1 : Verticale (Grand Portrait) -->
         <div class="group relative overflow-hidden rounded-2xl bg-background-card aspect-3/4 lg:row-span-2">
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80"
+            <img src="/assets/images/gallery/gallery-4.webp"
                  alt="Portrait lumière naturelle"
                  class="h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105 grayscale [html[data-mode='photo']_&]:grayscale-0"
                  loading="lazy">
@@ -38,56 +38,56 @@
 
         <!-- Photo 2 : Horizontale (Paysage) -->
         <div class="group relative overflow-hidden rounded-2xl bg-background-card aspect-16/10">
-            <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"
-                 alt="Paysage heure dorée"
+            <img src="/assets/images/gallery/gallery-1.webp"
+                 alt="Paysage Marmottes"
                  class="h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105 grayscale [html[data-mode='photo']_&]:grayscale-0"
                  loading="lazy">
 
             <div class="absolute inset-0 bg-linear-to-t from-background/90 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end p-6">
                 <span class="text-[11px] font-mono tracking-widest uppercase text-white/90">
-                    PAYSAGE · HEURE DORÉE
+                    PAYSAGE · MARMOTTES
                 </span>
             </div>
         </div>
 
         <!-- Photo 3 : Carrée (Scène de rue) -->
         <div class="group relative overflow-hidden rounded-2xl bg-background-card aspect-square">
-            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80"
-                 alt="Portrait de nuit"
+            <img src="/assets/images/gallery/gallery-2.webp"
+                 alt="Montagne, dans les dolomites"
                  class="h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105 grayscale [html[data-mode='photo']_&]:grayscale-0"
                  loading="lazy">
 
             <div class="absolute inset-0 bg-linear-to-t from-background/90 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end p-6">
                 <span class="text-[11px] font-mono tracking-widest uppercase text-white/90">
-                    RUE · NUIT
+                    PAYSAGE · MONTAGNE
                 </span>
             </div>
         </div>
 
         <!-- Photo 4 : Carrée (Candid) -->
         <div class="group relative overflow-hidden rounded-2xl bg-background-card aspect-square">
-            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80"
+            <img src="/assets/images/gallery/gallery-5.webp"
                  alt="Expression portrait"
                  class="h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105 grayscale [html[data-mode='photo']_&]:grayscale-0"
                  loading="lazy">
 
             <div class="absolute inset-0 bg-linear-to-t from-background/90 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end p-6">
                 <span class="text-[11px] font-mono tracking-widest uppercase text-white/90">
-                    PORTRAIT · STUDIO
+                    PORTRAIT · LUMIÈRE D'AUTONME
                 </span>
             </div>
         </div>
 
         <!-- Photo 5 : Horizontale / Close-up -->
         <div class="group relative overflow-hidden rounded-2xl bg-background-card aspect-16/10">
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80"
-                 alt="Portrait masculin cinématique"
+            <img src="/assets/images/gallery/gallery-3.webp"
+                 alt="Montagne, dans les dolomites"
                  class="h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105 grayscale [html[data-mode='photo']_&]:grayscale-0"
                  loading="lazy">
 
             <div class="absolute inset-0 bg-linear-to-t from-background/90 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end p-6">
                 <span class="text-[11px] font-mono tracking-widest uppercase text-white/90">
-                    CINÉMATIQUE · OMBRE & LUMIÈRE
+                    PAYSAGE · MONTAGNE
                 </span>
             </div>
         </div>
