@@ -7,7 +7,7 @@
     <!-- Lien vers le fichier CSS compilé par Tailwind -->
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="font-mono bg-background-2 mx-10">
+<body class="font-mono bg-background-2 mx-4 sm:mx-6 lg:mx-10">
 
 <!-- Calque de fond : Grille & Dégradé radial -->
 <div class="fixed inset-0 pointer-events-none z-0 bg-grid-pattern opacity-60"></div>
@@ -44,4 +44,3 @@
 
     <script src="/js/theme-toggle.js"></script>
 </header>
-

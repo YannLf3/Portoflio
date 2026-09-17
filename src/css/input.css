@@ -273,3 +273,45 @@ html:not([data-mode="photo"]) .mode-dev-content,
 [data-mode="photo"] .mode-photo-content {
     display: inline;
 }
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0%);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee 25s linear infinite;
+}
+
+/* Pause au survol du curseur pour le confort utilisateur */
+.animate-marquee:hover {
+    animation-play-state: paused;
+}
+
+.bg-linear-to-r {
+    background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.bg-linear-to-l {
+    background-image: linear-gradient(to left, var(--tw-gradient-stops));
+}
+
+.section-divider {
+    position: relative;
+}
+
+.section-divider::before {
+    content: '';
+    position: absolute;
+    top: -2rem;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-accent) 0%, rgba(0, 0, 0, 0) 100%);
+}

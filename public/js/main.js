@@ -1,1 +1,0 @@
-console.log("Portfolio prêt et scripts chargés.");

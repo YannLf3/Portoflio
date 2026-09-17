@@ -29,6 +29,10 @@ switch ($url) {
         (new AuthController())->logout();
         break;
 
+    case '/mentions-legales':
+        (new HomeController())->legal();
+        break;
+
     // Espace Back-Office (Protections appliquées dans AdminController)
     case '/admin':
         (new AdminController())->index();
