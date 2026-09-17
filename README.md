@@ -142,7 +142,7 @@ Rendez-vous ensuite sur `http://localhost:8000`.
 - **Rôle :** Développeur Web Full-stack & Photographe
 - **Formation :** BUT MMI (Métiers du Multimédia et de l'Internet) — Parcours Web & Dispositifs interactifs (IUT du Limousin)
 - **LinkedIn :** [linkedin.com/in/yann-le-flohic](https://fr.linkedin.com/in/yannlf3)
-- **Site Web :** Hébergé sur Hostinger
+- **Site Web :** yannleflohic.fr
 
 ---
 
