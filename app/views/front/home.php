@@ -23,11 +23,21 @@
             <p class="text-muted-foreground text-base sm:text-lg leading-relaxed font-sans">
                 <!-- Version Dev (affichée par défaut ou gérée en PHP/CSS) -->
                 <span id="dev-intro" class="mode-dev-content">
-            Développeur web full-stack — je conçois et code des interfaces sur-mesure, du front au back, jusqu'à l'hébergement.
+             Bienvenue sur mon site web portoflio, en tant que freelance & étudiant développeur web full-stack, je conçois et code des interfaces sur-mesure, du front au back, jusqu'à l'hébergement.
+                    <br>
+                    Je suis passionné par la création de sites web et applications web, et j'aime partager mes connaissances et mes projets avec les autres.
+                    <br>
+                    Vous avez un projet en tête ? <a href="#contact"
+                                                     class="text-accent">Contactez-moi !</a>
         </span>
                 <!-- Version Photo -->
                 <span id="photo-intro" class="mode-photo-content">
             Photographe — je capture la lumière, la matière et l'instant, entre portraits, rue et paysages cinématographiques.
+                    <br>
+                    Je suis aussi passionné par la photographie et j'aime partager mes connaissances sur ce sujet.
+                    <br>
+                    Vous avez un projet en tête ? <a href="#contact"
+                                                     class="text-accent">Contactez-moi !</a>
         </span>
             </p>
 

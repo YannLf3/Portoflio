@@ -315,3 +315,53 @@ html:not([data-mode="photo"]) .mode-dev-content,
     height: 2px;
     background: linear-gradient(90deg, var(--color-accent) 0%, rgba(0, 0, 0, 0) 100%);
 }
+
+/* Cache le curseur natif uniquement sur ordinateur */
+@media (min-width: 768px) {
+    body {
+        cursor: none;
+    }
+
+    a, button, [role="button"] {
+        cursor: none;
+    }
+}
+
+/* Gestion du basculement du curseur selon data-mode */
+html:not([data-mode="photo"]) .mode-photo-cursor {
+    display: none;
+}
+
+html[data-mode="photo"] .mode-dev-cursor {
+    display: none;
+}
+
+/* Effet d'agrandissement / réaction au survol des éléments cliquables */
+body.cursor-hover #custom-cursor .mode-photo-cursor {
+    transform: scale(1.4);
+    border-color: #f59e0b;
+    transition: transform 0.2s ease;
+}
+
+body.cursor-hover #custom-cursor .mode-dev-cursor {
+    transform: scale(1.3);
+    transition: transform 0.2s ease;
+}
+
+/* Animation de clignotement de fin de ligne de commande */
+#terminal-logs > div:last-child::after {
+    content: '▋';
+    display: inline-block;
+    margin-left: 4px;
+    color: #10b981;
+    animation: blink 0.8s infinite;
+}
+
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}

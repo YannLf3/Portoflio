@@ -8,6 +8,31 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="font-mono bg-background-2 mx-4 sm:mx-6 lg:mx-10">
+<!-- Loader Terminal -->
+<div id="app-loader"
+     class="fixed inset-0 z-100 bg-zinc-950 flex flex-col justify-between p-6 font-mono text-xs md:text-sm text-zinc-400 select-none transition-transform duration-700 ease-in-out">
+
+    <!-- En-tête type fenêtre macOS -->
+    <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+        </div>
+        <span class="text-zinc-500 text-[11px]">yann@portfolio:~ (zsh)</span>
+    </div>
+
+    <!-- Conteneur des lignes de logs -->
+    <div class="my-auto max-w-xl mx-auto w-full space-y-2" id="terminal-logs">
+        <!-- Les lignes vont s'injecter ici via JS -->
+    </div>
+
+    <!-- Pied de loader / Progression -->
+    <div class="flex items-center justify-between border-t border-zinc-800 pt-4 text-zinc-500 text-[11px]">
+        <span>SYSTEM_STATUS: OK</span>
+        <span id="loader-progress">0%</span>
+    </div>
+</div>
 
 <!-- Calque de fond : Grille & Dégradé radial -->
 <div class="fixed inset-0 pointer-events-none z-0 bg-grid-pattern opacity-60"></div>

@@ -23,15 +23,15 @@
 
         <!-- Photo 1 : Verticale (Grand Portrait) -->
         <div class="group relative overflow-hidden rounded-2xl bg-background-card aspect-3/4 lg:row-span-2">
-            <img src="/assets/images/gallery/gallery-4.webp"
-                 alt="Portrait lumière naturelle"
+            <img src="/assets/images/gallery/gallery-6.webp"
+                 alt="Fleurs du jardin roses"
                  class="h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105 grayscale [html[data-mode='photo']_&]:grayscale-0"
                  loading="lazy">
 
             <!-- Overlay dégradé + Texte d'infos au survol -->
             <div class="absolute inset-0 bg-linear-to-t from-background/90 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end p-6">
                 <span class="text-[11px] font-mono tracking-widest uppercase text-white/90">
-                    PORTRAIT · LUMIÈRE NATURELLE
+                    FLEURS ROSES · LUMIÈRE NATURELLE
                 </span>
             </div>
         </div>

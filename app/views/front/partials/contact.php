@@ -1,4 +1,4 @@
-<section class="section-divider mt-24 w-full flex flex-col gap-12">
+<section id="contact" class="section-divider mt-24 w-full flex flex-col gap-12">
 
     <!-- En-tête de section -->
     <div class="flex flex-col items-start gap-4">
@@ -72,12 +72,12 @@
                 </div>
             </a>
 
-            <!-- Site -->
-            <a href="https://yannleflohic.fr" target="_blank" rel="noopener noreferrer"
+            <!-- Malt -->
+            <a href="https://www.malt.fr/profile/yannleflohic1" target="_blank" rel="noopener noreferrer"
                class="group flex items-center justify-between py-5 transition-colors">
-                <span class="text-xs font-mono tracking-widest text-muted-foreground uppercase">SITE</span>
+                <span class="text-xs font-mono tracking-widest text-muted-foreground uppercase">Malt</span>
                 <div class="flex items-center gap-2">
-                    <span class="text-sm sm:text-base font-sans text-foreground group-hover:text-accent transition-colors">yannleflohic.fr</span>
+                    <span class="text-sm sm:text-base font-sans text-foreground group-hover:text-accent transition-colors">Mon lien Malt</span>
                     <svg class="w-4 h-4 text-muted-foreground transition-transform duration-300 group-hover:-rotate-45 group-hover:text-accent"
                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
