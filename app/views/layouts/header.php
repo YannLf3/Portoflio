@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" class="scroll-smooth">
+<html lang="fr" data-mode="dev" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,16 +8,19 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="font-mono bg-background-2 mx-4 sm:mx-6 lg:mx-10">
-<!-- Loader Terminal -->
+
+<!-- Loader Terminal (Opaque & Sécurisé Safari/WebKit) -->
+<!-- Loader Terminal (Plein écran absolu) -->
 <div id="app-loader"
-     class="fixed inset-0 z-100 bg-zinc-950 flex flex-col justify-between p-6 font-mono text-xs md:text-sm text-zinc-400 select-none transition-transform duration-700 ease-in-out">
+     style="background-color: #09090b; z-index: 999999; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh;"
+     class="flex flex-col justify-between p-6 font-mono text-xs md:text-sm text-zinc-400 select-none transition-all duration-700 ease-in-out">
 
     <!-- En-tête type fenêtre macOS -->
     <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
         <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
-            <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
-            <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
         </div>
         <span class="text-zinc-500 text-[11px]">yann@portfolio:~ (zsh)</span>
     </div>
@@ -43,13 +46,11 @@
 <!-- Début de la barre de navigation -->
 <header class="sticky top-0 flex flex-row justify-between z-50">
 
-
     <!-- 1. Le Logo -->
     <a class="mt-2" href="/">
         <span class="text-muted-foreground">YannLf3</span>
         <span class="text-muted-foreground"><span class="text-accent">.</span>dev</span>
     </a>
-
 
     <!-- 2. Les actions (Changement de thème & Bouton d'appel à l'action) -->
     <!-- Bouton pour basculer entre le mode Dev et Photo -->
@@ -57,7 +58,7 @@
          id="theme-toggle"
          aria-label="Changer de thème">
         <button id="toggle-dev"
-                class="uppercase text-accent-contrast rounded-full p-2 bg-accent cursor-pointer transition-all duration-300 ease-in-out hover:scale-105 transform active:scale-95 ">
+                class="uppercase text-accent-contrast rounded-full p-2 bg-accent cursor-pointer transition-all duration-300 ease-in-out hover:scale-105 transform active:scale-95">
             Développeur
         </button>
 
