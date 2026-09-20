@@ -1,4 +1,4 @@
-<section class="mt-24 w-full flex flex-col gap-12">
+<section id="skills" class="mt-24 w-full flex flex-col gap-12">
 
     <!-- En-tête de section -->
     <div class="flex flex-col items-start gap-2">

@@ -16,6 +16,14 @@ switch ($url) {
         (new HomeController())->index();
         break;
 
+    case '/mentions-legales':
+        (new HomeController())->legal();
+        break;
+
+    case '/lab':
+        (new HomeController())->lab();
+        break;
+
     // Authentification Admin
     case '/login':
         if ($method === 'POST') {
@@ -27,10 +35,6 @@ switch ($url) {
 
     case '/logout':
         (new AuthController())->logout();
-        break;
-
-    case '/mentions-legales':
-        (new HomeController())->legal();
         break;
 
     // Espace Back-Office (Protections appliquées dans AdminController)

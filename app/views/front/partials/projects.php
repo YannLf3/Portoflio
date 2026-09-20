@@ -1,4 +1,4 @@
-<section class="mt-24 flex flex-col gap-12 w-full">
+<section id="projects" class="mt-24 flex flex-col gap-12 w-full">
 
     <!-- En-tête et Filtres -->
     <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8">

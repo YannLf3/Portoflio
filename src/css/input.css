@@ -202,8 +202,6 @@
     /* ==========================================================================
       VARIANTE MODE DEV ([data-mode="dev"])
       ========================================================================== */
-    /*document.documentElement.dataset.mode = 'photo'; // Met à jour l'attribut automatiquement
-  */
     [data-mode='dev'] {
         --accent: var(--clr-dev-accent);
         --accent-2: var(--clr-dev-accent-2);
@@ -212,7 +210,6 @@
         --background: var(--clr-dark-ground);
         --background-2: var(--clr-dark-surface);
     }
-
 
     /* ==========================================================================
       VARIANTE MODE PHOTO ([data-mode="photo"])
@@ -225,8 +222,6 @@
         --background: var(--clr-photo-ground);
         --background-2: var(--clr-photo-surface);
     }
-
-
 }
 
 /* ===========================================================================
@@ -236,7 +231,6 @@
     clip-path: circle(0% at calc(100% - 120px) 35px);
     background-color: var(--accent);
     opacity: 0;
-    /* On applique la transition sur le cercle ET sur l'opacité */
     transition: clip-path 0.7s ease-in-out, opacity 0.4s ease-in-out;
 }
 
@@ -246,11 +240,9 @@
 }
 
 .bg-grid-pattern {
-    background-image: /* Un dégradé radial subtil (lueur centrale en haut) */ radial-gradient(circle at 50% 15%, rgba(0, 255, 128, 0.08) 0%, transparent 60%),
-        /* Lignes verticales de la grille */ linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        /* Lignes horizontales de la grille */ linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-
-    /* Taille de la grille (48px par 48px) */
+    background-image: radial-gradient(circle at 50% 15%, rgba(0, 255, 128, 0.08) 0%, transparent 60%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 100% 100%, 48px 48px, 48px 48px;
 }
 
@@ -289,7 +281,6 @@ html:not([data-mode="photo"]) .mode-dev-content,
     animation: marquee 25s linear infinite;
 }
 
-/* Pause au survol du curseur pour le confort utilisateur */
 .animate-marquee:hover {
     animation-play-state: paused;
 }
@@ -316,36 +307,58 @@ html:not([data-mode="photo"]) .mode-dev-content,
     background: linear-gradient(90deg, var(--color-accent) 0%, rgba(0, 0, 0, 0) 100%);
 }
 
-/* Cache le curseur natif uniquement sur ordinateur */
+/* ===========================================================================
+   GESTION DU CURSEUR SUR MESURE & REPASSAGE EN POINTEUR NATIF AU SURVOL
+   ========================================================================== */
 @media (min-width: 768px) {
-    body {
+    /* Le curseur natif est masqué sur le body actif */
+    body.custom-cursor-active {
         cursor: none;
     }
 
-    a, button, [role="button"] {
-        cursor: none;
+    /* Réaffiche le curseur pointeur standard au survol des liens/boutons de la page */
+    body.cursor-hover,
+    body.cursor-hover a,
+    body.cursor-hover button,
+    body.cursor-hover [role="button"],
+    body.cursor-hover input {
+        cursor: pointer !important;
+    }
+
+    /* FORÇAGE POINTEUR DANS LES MODALES : réaffiche la flèche/curseur natif partout */
+    #code-modal,
+    #article-modal,
+    #code-modal *,
+    #article-modal * {
+        cursor: auto !important;
+    }
+
+    /* Boutons et éléments cliquables au sein des modales */
+    #code-modal button,
+    #code-modal a,
+    #article-modal button,
+    #article-modal a,
+    .code-tab {
+        cursor: pointer !important;
+    }
+
+    /* Masque le composant custom cursor au survol des éléments cliquables ou dans les modales */
+    body.cursor-hover #custom-cursor,
+    #code-modal:not(.hidden) ~ #custom-cursor,
+    #article-modal:not(.hidden) ~ #custom-cursor {
+        opacity: 0 !important;
+        visibility: hidden;
+        transition: opacity 0.15s ease, visibility 0.15s ease;
     }
 }
 
-/* Gestion du basculement du curseur selon data-mode */
+/* Bascule visuelle du curseur custom selon data-mode */
 html:not([data-mode="photo"]) .mode-photo-cursor {
     display: none;
 }
 
 html[data-mode="photo"] .mode-dev-cursor {
     display: none;
-}
-
-/* Effet d'agrandissement / réaction au survol des éléments cliquables */
-body.cursor-hover #custom-cursor .mode-photo-cursor {
-    transform: scale(1.4);
-    border-color: #f59e0b;
-    transition: transform 0.2s ease;
-}
-
-body.cursor-hover #custom-cursor .mode-dev-cursor {
-    transform: scale(1.3);
-    transition: transform 0.2s ease;
 }
 
 /* Animation de clignotement de fin de ligne de commande */

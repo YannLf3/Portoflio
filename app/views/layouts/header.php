@@ -43,18 +43,49 @@
 <div id="theme-transition-overlay"
      class="fixed inset-0 pointer-events-none z-20 transition-all duration-700 ease-in-out opacity-0"></div>
 
-<!-- Début de la barre de navigation -->
-<header class="sticky top-0 flex flex-row justify-between z-50">
+<!-- Début de la barre de navigation sticky -->
+<header class="sticky top-0 flex flex-row justify-between items-center z-50 bg-background-2/80 backdrop-blur-md border-b border-border py-3 transition-colors duration-300">
 
     <!-- 1. Le Logo -->
-    <a class="mt-2" href="/">
+    <a href="/" class="flex items-center gap-1 font-mono text-sm hover:opacity-80 transition-opacity">
         <span class="text-muted-foreground">YannLf3</span>
-        <span class="text-muted-foreground"><span class="text-accent">.</span>dev</span>
+        <span class="text-muted-foreground"><span
+                    class="text-accent [html[data-mode='photo']_&]:text-amber-400">.</span>dev</span>
     </a>
 
-    <!-- 2. Les actions (Changement de thème & Bouton d'appel à l'action) -->
-    <!-- Bouton pour basculer entre le mode Dev et Photo -->
-    <div class="border border-border-strong backdrop-blur-md rounded-full flex flex-row p-1 mt-4 text-xs"
+    <!-- 2. Navigation vers les sections de la page (Barre centrale) -->
+    <nav class="hidden md:flex items-center gap-1 border border-border-strong bg-background-card/40 backdrop-blur-md rounded-full px-4 py-1.5 text-xs font-mono"
+         aria-label="Navigation principale">
+        <a href="/#about"
+           class="px-3 py-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
+            01. Parcours
+        </a>
+        <a href="/#skills"
+           class="px-3 py-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
+            02. Compétences
+        </a>
+        <a href="/#projects"
+           class="px-3 py-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
+            03. Projets
+        </a>
+        <a href="/#contact"
+           class="px-3 py-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
+            04. Contact
+        </a>
+
+        <!-- Séparateur discret -->
+        <span class="w-px h-3 bg-border-strong mx-1"></span>
+
+        <!-- Lien vers la page Lab -->
+        <a href="/lab"
+           class="flex items-center gap-1.5 px-3 py-1 rounded-full text-accent [html[data-mode='photo']_&]:text-amber-400 hover:bg-background-card/60 transition-all">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [html[data-mode='photo']_&]:bg-amber-400"></span>
+            <span>Lab</span>
+        </a>
+    </nav>
+
+    <!-- 3. Actions : Bascule de thème Dev / Photo -->
+    <div class="border border-border-strong backdrop-blur-md rounded-full flex flex-row p-1 text-xs"
          id="theme-toggle"
          aria-label="Changer de thème">
         <button id="toggle-dev"

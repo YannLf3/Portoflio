@@ -21,4 +21,12 @@ class HomeController
     {
         require_once __DIR__ . '/../views/front/legal.php';
     }
+
+    // app/controllers/HomeController.php
+
+    public function lab(): void
+    {
+        $title = "Lab & Experiments | Yann Le Flohic";
+        require_once __DIR__ . '/../views/front/lab.php';
+    }
 }

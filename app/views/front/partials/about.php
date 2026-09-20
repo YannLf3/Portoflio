@@ -1,4 +1,4 @@
-<section class="mt-24 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+<section id="about" class="mt-24 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
 
     <!-- Colonne Gauche : Titre et Description -->
     <div class="flex flex-col items-start gap-6 lg:sticky lg:top-24">
