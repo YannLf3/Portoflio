@@ -1,10 +1,12 @@
 <?php
-define('DB_HOST', 'localhost');
+// Alignement strict avec ton service 'db' dans docker-compose.yml
+define('DB_HOST', 'db');
 define('DB_NAME', 'portfolio_db');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'root');
 
-function getPDOConnection() {
+function getPDOConnection()
+{
     static $pdo = null;
     if ($pdo === null) {
         try {

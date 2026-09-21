@@ -12,7 +12,7 @@
                 <a href="/mentions-legales" class="hover:text-foreground transition-colors duration-200">
                     Mentions Légales
                 </a>
-                <a href="/admin/login" class="hover:text-accent transition-colors duration-200">
+                <a href="/login" class="hover:text-accent transition-colors duration-200">
                     ADMIN
                 </a>
             </div>

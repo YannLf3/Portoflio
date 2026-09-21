@@ -1,32 +1,30 @@
 <?php
-require_once __DIR__ . '/../models/Project.php';
+require_once __DIR__ . '/../models/settings.php';
 
 class HomeController
 {
+
     public function index(): void
     {
-        // Optionnel : Récupérer des données de la BDD
-        // $projects = Project::getAll();
+        // 1. Récupérer tout le contenu enregistré en BDD
+        $content = Setting::getAll();
 
-        // Titre de la page
-        $title = "Yann | Développeur Web & Créatif";
+        // 2. Transmettre les données à la vue
+        $title = "Yann Le Flohic | Développeur Web & Créatif";
 
-        // Charger les vues (layouts + page)
-        require_once __DIR__ . '/../views/layouts/header.php';
         require_once __DIR__ . '/../views/front/home.php';
-        require_once __DIR__ . '/../views/layouts/footer.php';
+    }
+
+    public function lab(): void
+    {
+        $content = Setting::getAll();
+        $title = "Lab & Veille — Yann Le Flohic";
+        require_once __DIR__ . '/../views/front/lab.php';
     }
 
     public function legal(): void
     {
+        $title = "Mentions Légales";
         require_once __DIR__ . '/../views/front/legal.php';
-    }
-
-    // app/controllers/HomeController.php
-
-    public function lab(): void
-    {
-        $title = "Lab & Experiments | Yann Le Flohic";
-        require_once __DIR__ . '/../views/front/lab.php';
     }
 }

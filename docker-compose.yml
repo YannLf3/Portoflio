@@ -1,7 +1,17 @@
 version: '3.8'
 
 services:
-  # Service Base de données MySQL
+  web:
+    build: .
+    container_name: portfolio_app
+    restart: always
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+
   db:
     image: mysql:8.0
     container_name: portfolio_mysql
@@ -12,21 +22,21 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      # Exécute automatiquement schema.sql au tout premier démarrage
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-      # Persistance des données (pour ne pas perdre tes données quand tu coupes Docker)
       - db_data:/var/lib/mysql
 
-  # Interface graphique Web pour la BDD (Optionnel mais très pratique)
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: portfolio_phpmyadmin
+    platform: linux/amd64
     restart: always
     ports:
       - "8080:80"
     environment:
       PMA_HOST: db
       MYSQL_ROOT_PASSWORD: root
+      PMA_ABSOLUTE_URI: http://localhost:8080/
+      PMA_ARBITRARY: 1
 
 volumes:
   db_data:

@@ -42,6 +42,17 @@ switch ($url) {
         (new AdminController())->index();
         break;
 
+    // Route de sauvegarde du formulaire
+    case '/admin/save':
+        if ($method === 'POST') {
+            (new AdminController())->save();
+        } else {
+            // Si on tente d'accéder à l'URL sans valider le formulaire, on redirige vers le dashboard
+            header('Location: /admin');
+            exit;
+        }
+        break;
+
     default:
         http_response_code(404);
         echo "404 - Page non trouvée";
