@@ -3,7 +3,6 @@ require_once __DIR__ . '/../models/User.php';
 
 class AuthController
 {
-
     // Affiche le formulaire de login
     public function showLogin()
     {
@@ -15,17 +14,18 @@ class AuthController
     }
 
     // Traite la soumission du formulaire
-    public function login()
+    public function login(): void
     {
         $email = trim($_POST['email'] ?? '');
         $password = trim($_POST['password'] ?? '');
 
         $user = User::findByEmail($email);
+        $dbPassword = is_array($user) ? $user['password'] : ($user->password ?? null);
 
-        if ($user && password_verify($password, $user['password'])) {
+        if ($user && $dbPassword && password_verify($password, $dbPassword)) {
             $_SESSION['admin_logged_in'] = true;
-            $_SESSION['admin_id'] = $user['id'];
-            $_SESSION['admin_email'] = $user['email'];
+            $_SESSION['admin_id'] = is_array($user) ? $user['id'] : $user->id;
+            $_SESSION['admin_email'] = is_array($user) ? $user['email'] : $user->email;
 
             header('Location: /admin');
             exit;

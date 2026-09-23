@@ -28,24 +28,31 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <?php
-                $snippetsList = $content['snippets'] ?? [
-                        [
-                                'title' => 'Glow Effect & Dynamic Border',
-                                'category' => 'CSS Modern',
-                                'badge' => 'Tested on Chrome / Safari',
-                                'html' => '<button class="glow-button">Survole-moi !</button>',
-                                'css' => ".glow-button {\n  background: #18181b;\n  border: 1px solid transparent;\n}",
-                                'js' => "// Pas de JavaScript requis"
-                        ],
-                        [
-                                'title' => 'Mini Canvas Particle System',
-                                'category' => 'JS Native',
-                                'badge' => 'Performance 60 FPS',
-                                'html' => '<canvas id="particle-canvas" width="400" height="160"></canvas>',
-                                'css' => "canvas { width: 100%; height: 100%; background: #09090b; }",
-                                'js' => "const canvas = document.getElementById('particle-canvas');\nconst ctx = canvas.getContext('2d');\nfunction animate() {\n  ctx.clearRect(0, 0, canvas.width, canvas.height);\n  requestAnimationFrame(animate);\n}\nanimate();"
-                        ]
-                ];
+                // Décodage et conversion sécurisée de $snippets
+                $snippetsList = $snippets ?? $content['snippets'] ?? [];
+                if (is_string($snippetsList)) {
+                    $snippetsList = json_decode($snippetsList, true) ?? [];
+                }
+                if (!is_array($snippetsList) || empty($snippetsList)) {
+                    $snippetsList = [
+                            [
+                                    'title' => 'Glow Effect & Dynamic Border',
+                                    'category' => 'CSS Modern',
+                                    'badge' => 'Tested on Chrome / Safari',
+                                    'html' => '<button class="glow-button">Survole-moi !</button>',
+                                    'css' => ".glow-button {\n  background: #18181b;\n  border: 1px solid transparent;\n}",
+                                    'js' => "// Pas de JavaScript requis"
+                            ],
+                            [
+                                    'title' => 'Mini Canvas Particle System',
+                                    'category' => 'JS Native',
+                                    'badge' => 'Performance 60 FPS',
+                                    'html' => '<canvas id="particle-canvas" width="400" height="160"></canvas>',
+                                    'css' => "canvas { width: 100%; height: 100%; background: #09090b; }",
+                                    'js' => "const canvas = document.getElementById('particle-canvas');\nconst ctx = canvas.getContext('2d');\nfunction animate() {\n  ctx.clearRect(0, 0, canvas.width, canvas.height);\n  requestAnimationFrame(animate);\n}\nanimate();"
+                            ]
+                    ];
+                }
 
                 if (!empty($snippetsList)):
                     foreach ($snippetsList as $snip):
@@ -97,23 +104,30 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <?php
-                $articlesList = $content['articles'] ?? [
-                        [
-                                'title' => "Passer d'Illustrator à Affinity V3 : Mon retour d'expérience en vectoriel",
-                                'meta' => 'AFFINITY DESIGNER — 12 SEP 2026',
-                                'content' => "Après plusieurs mois d'utilisation intensive d'Affinity Designer V3 dans mes projets web et UI/UX, le passage depuis la suite Adobe Creative Cloud s'est fait sans friction majeure.\n\n### Les points forts :\n- **Paiement unique** : Fin de l'abonnement mensuel Adobe.\n- **Performance** : Temps de chargement instantané sur macOS Apple Silicon.\n- **Export SVG propre** : Les fichiers générés sont légers et directement exploitables en HTML/CSS.\n\nEn résumé, pour le design d'icônes, de maquettes web et d'illustrations vectorielles, Affinity constitue une alternative d'une grande fluidité."
-                        ],
-                        [
-                                'title' => 'Mon Setup macOS pour coder en PHP MVC sans Docker lourd',
-                                'meta' => 'MACOS / DEV — 02 SEP 2026',
-                                'content' => "Pour maintenir une excellente autonomie sur mon MacBook et éviter le surplus de mémoire consommé par Docker sur des projets légers, j'utilise un environnement serveur natif.\n\n### La Stack de développement :\n1. **Homebrew** pour l'installation de PHP 8.3 et MySQL.\n2. **Apache / Nginx** configuré localement avec des hôtes virtuels.\n3. **PhpStorm & VS Code** avec liaisons Git automatisées.\n4. **Raycast** pour lancer mes scripts et requêtes de base de données en un raccourci clavier."
-                        ],
-                        [
-                                'title' => 'Étalonnage vidéo sur écran Apple Silicon : Retours sur DaVinci Resolve',
-                                'meta' => 'HARDWARE — 28 AOU 2026',
-                                'content' => "Travailler l'étalonnage de vidéos automobiles ou de montages réseaux sur DaVinci Resolve demande une grande rigueur sur la chaîne de couleur.\n\n### Le piège du Gamma QuickTime sous macOS :\nLes écrans Apple utilisent l'espace Display P3 avec un profil de restitution spécifique. Lors de l'exportation :\n- Configurer la Timeline sur **Rec.709-DB** ou **Rec.709 A**.\n- Activer la gestion des profils de couleur d'affichage macOS dans les préférences DaVinci Resolve.\n\nCela évite l'effet d'image délavée lors de la relecture sur Safari ou sur smartphone."
-                        ]
-                ];
+                // Décodage et conversion sécurisée de $articles
+                $articlesList = $articles ?? $content['articles'] ?? [];
+                if (is_string($articlesList)) {
+                    $articlesList = json_decode($articlesList, true) ?? [];
+                }
+                if (!is_array($articlesList) || empty($articlesList)) {
+                    $articlesList = [
+                            [
+                                    'title' => "Passer d'Illustrator à Affinity V3 : Mon retour d'expérience en vectoriel",
+                                    'meta' => 'AFFINITY DESIGNER — 12 SEP 2026',
+                                    'content' => "Après plusieurs mois d'utilisation intensive d'Affinity Designer V3 dans mes projets web et UI/UX, le passage depuis la suite Adobe Creative Cloud s'est fait sans friction majeure.\n\n### Les points forts :\n- **Paiement unique** : Fin de l'abonnement mensuel Adobe.\n- **Performance** : Temps de chargement instantané sur macOS Apple Silicon.\n- **Export SVG propre** : Les fichiers générés sont légers et directement exploitables en HTML/CSS.\n\nEn résumé, pour le design d'icônes, de maquettes web et d'illustrations vectorielles, Affinity constitue une alternative d'une grande fluidité."
+                            ],
+                            [
+                                    'title' => 'Mon Setup macOS pour coder en PHP MVC sans Docker lourd',
+                                    'meta' => 'MACOS / DEV — 02 SEP 2026',
+                                    'content' => "Pour maintenir une excellente autonomie sur mon MacBook et éviter le surplus de mémoire consommé par Docker sur des projets légers, j'utilise un environnement serveur natif.\n\n### La Stack de développement :\n1. **Homebrew** pour l'installation de PHP 8.3 et MySQL.\n2. **Apache / Nginx** configuré localement avec des hôtes virtuels.\n3. **PhpStorm & VS Code** avec liaisons Git automatisées.\n4. **Raycast** pour lancer mes scripts et requêtes de base de données en un raccourci clavier."
+                            ],
+                            [
+                                    'title' => 'Étalonnage vidéo sur écran Apple Silicon : Retours sur DaVinci Resolve',
+                                    'meta' => 'HARDWARE — 28 AOU 2026',
+                                    'content' => "Travailler l'étalonnage de vidéos automobiles ou de montages réseaux sur DaVinci Resolve demande une grande rigueur sur la chaîne de couleur.\n\n### Le piège du Gamma QuickTime sous macOS :\nLes écrans Apple utilisent l'espace Display P3 avec un profil de restitution spécifique. Lors de l'exportation :\n- Configurer la Timeline sur **Rec.709-DB** ou **Rec.709 A**.\n- Activer la gestion des profils de couleur d'affichage macOS dans les préférences DaVinci Resolve.\n\nCela évite l'effet d'image délavée lors de la relecture sur Safari ou sur smartphone."
+                            ]
+                    ];
+                }
 
                 if (!empty($articlesList)):
                     foreach ($articlesList as $art):

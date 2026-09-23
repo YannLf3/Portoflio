@@ -75,7 +75,7 @@
 
 <!-- FORMULAIRE GLOBAL -->
 <main class="flex-grow p-4 sm:p-6 max-w-5xl mx-auto w-full">
-    <form id="admin-form" action="/admin/save" method="POST" class="flex flex-col gap-12">
+    <form id="admin-form" action="/admin/save" method="POST" enctype="multipart/form-data" class="flex flex-col gap-12">
 
         <!-- ========================================== -->
         <!-- 1. ONGLET : DISPONIBILITÉ & HERO           -->
@@ -102,10 +102,15 @@
                     </div>
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Avatar /
-                            Image Memoji (URL)</label>
-                        <input type="text" name="hero_avatar"
-                               value="<?= htmlspecialchars($content['hero_avatar'] ?? '/assets/images/memoji.png') ?>"
-                               class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                            Image Memoji (URL ou Upload)</label>
+                        <div class="flex flex-col gap-3">
+                            <input type="text" name="hero_avatar"
+                                   value="<?= htmlspecialchars($content['hero_avatar'] ?? '') ?>"
+                                   placeholder="URL de l'image..."
+                                   class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                            <input type="file" name="hero_avatar_file" accept="image/*"
+                                   class="w-full text-xs text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer">
+                        </div>
                     </div>
                 </div>
 
@@ -164,10 +169,16 @@
                 <!-- Liste des étapes -->
                 <div id="parcours-container" class="flex flex-col gap-6">
                     <?php
-                    $parcoursList = $parcours ?? [
-                            ['period' => '2025 — Actuel', 'type' => 'Formation', 'title' => 'BUT Métiers du Multimédia et de l\'Internet (MMI)', 'detail' => 'Parcours Web et dispositifs interactifs · IUT du Limousin, Limoges'],
-                            ['period' => '2025 — Actuel', 'type' => 'Expérience', 'title' => 'Freelance développeur Full-stack', 'detail' => 'Développement web sur-mesure, gestion de projets clients et intégration UI/UX.']
-                    ];
+                    $parcoursList = $parcours ?? [];
+                    if (is_string($parcoursList)) {
+                        $parcoursList = json_decode($parcoursList, true) ?? [];
+                    }
+                    if (!is_array($parcoursList) || empty($parcoursList)) {
+                        $parcoursList = [
+                                ['period' => '2025 — Actuel', 'type' => 'Formation', 'title' => 'BUT Métiers du Multimédia et de l\'Internet (MMI)', 'detail' => 'Parcours Web et dispositifs interactifs · IUT du Limousin, Limoges'],
+                                ['period' => '2025 — Actuel', 'type' => 'Expérience', 'title' => 'Freelance développeur Full-stack', 'detail' => 'Développement web sur-mesure, gestion de projets clients et intégration UI/UX.']
+                        ];
+                    }
                     foreach ($parcoursList as $idx => $item):
                         ?>
                         <div class="parcours-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col gap-4 relative">
@@ -182,28 +193,28 @@
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Période</label>
                                     <input type="text" name="parcours[<?= $idx ?>][period]"
-                                           value="<?= htmlspecialchars($item['period']) ?>"
+                                           value="<?= htmlspecialchars($item['period'] ?? '') ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Type (Formation
                                         / Expérience)</label>
                                     <input type="text" name="parcours[<?= $idx ?>][type]"
-                                           value="<?= htmlspecialchars($item['type']) ?>"
+                                           value="<?= htmlspecialchars($item['type'] ?? '') ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                             </div>
                             <div>
                                 <label class="text-[10px] font-mono text-muted-foreground uppercase">Titre</label>
                                 <input type="text" name="parcours[<?= $idx ?>][title]"
-                                       value="<?= htmlspecialchars($item['title']) ?>"
+                                       value="<?= htmlspecialchars($item['title'] ?? '') ?>"
                                        class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                             </div>
                             <div>
                                 <label class="text-[10px] font-mono text-muted-foreground uppercase">Détail /
                                     Établissement</label>
                                 <textarea name="parcours[<?= $idx ?>][detail]" rows="2"
-                                          class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent resize-y"><?= htmlspecialchars($item['detail']) ?></textarea>
+                                          class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent resize-y"><?= htmlspecialchars($item['detail'] ?? '') ?></textarea>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -248,10 +259,16 @@
 
                 <div id="langues-container" class="flex flex-col gap-4">
                     <?php
-                    $languesList = $langues ?? [
-                            ['name' => 'Français', 'level' => 'Natif', 'percent' => 100],
-                            ['name' => 'Espagnol', 'level' => 'B2+ / C1', 'percent' => 82]
-                    ];
+                    $languesList = $langues ?? [];
+                    if (is_string($languesList)) {
+                        $languesList = json_decode($languesList, true) ?? [];
+                    }
+                    if (!is_array($languesList) || empty($languesList)) {
+                        $languesList = [
+                                ['name' => 'Français', 'level' => 'Natif', 'percent' => 100],
+                                ['name' => 'Espagnol', 'level' => 'B2+ / C1', 'percent' => 82]
+                        ];
+                    }
                     foreach ($languesList as $idx => $lang):
                         ?>
                         <div class="langue-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -259,20 +276,20 @@
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Langue</label>
                                     <input type="text" name="langues[<?= $idx ?>][name]"
-                                           value="<?= htmlspecialchars($lang['name']) ?>"
+                                           value="<?= htmlspecialchars($lang['name'] ?? '') ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Niveau</label>
                                     <input type="text" name="langues[<?= $idx ?>][level]"
-                                           value="<?= htmlspecialchars($lang['level']) ?>"
+                                           value="<?= htmlspecialchars($lang['level'] ?? '') ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Maîtrise
                                         (%)</label>
                                     <input type="number" name="langues[<?= $idx ?>][percent]"
-                                           value="<?= htmlspecialchars($lang['percent']) ?>" min="0" max="100"
+                                           value="<?= htmlspecialchars($lang['percent'] ?? 80) ?>" min="0" max="100"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                             </div>
@@ -304,20 +321,26 @@
                     principaux</label>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <input type="text" name="project_cat_1"
-                           value="<?= htmlspecialchars($content['project_cat_1'] ?? 'Web') ?>"
+                           value="<?= htmlspecialchars($content['project_cat_1'] ?? 'Scolaires') ?>"
                            class="bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none">
                     <input type="text" name="project_cat_2"
-                           value="<?= htmlspecialchars($content['project_cat_2'] ?? 'Logiciel') ?>"
+                           value="<?= htmlspecialchars($content['project_cat_2'] ?? 'Personnels') ?>"
                            class="bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none">
                     <input type="text" name="project_cat_3"
-                           value="<?= htmlspecialchars($content['project_cat_3'] ?? 'Design') ?>"
+                           value="<?= htmlspecialchars($content['project_cat_3'] ?? 'Professionnels') ?>"
                            class="bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none">
                 </div>
             </div>
 
             <div id="projects-container" class="flex flex-col gap-8">
-                <?php if (!empty($projects)): ?>
-                    <?php foreach ($projects as $index => $project): ?>
+                <?php
+                $projectsList = $projects ?? [];
+                if (is_string($projectsList)) {
+                    $projectsList = json_decode($projectsList, true) ?? [];
+                }
+                if (is_array($projectsList) && !empty($projectsList)):
+                    foreach ($projectsList as $index => $project):
+                        ?>
                         <div class="project-item border border-border-strong bg-background-2/20 p-6 rounded-xl flex flex-col gap-6 relative">
                             <input type="hidden" name="projects[<?= $index ?>][id]" value="<?= $project['id'] ?? '' ?>">
 
@@ -355,11 +378,16 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div class="flex flex-col gap-2">
-                                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Image
-                                        (URL)</label>
-                                    <input type="text" name="projects[<?= $index ?>][image]"
-                                           value="<?= htmlspecialchars($project['image'] ?? '') ?>"
-                                           class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Image (URL ou
+                                        Upload)</label>
+                                    <div class="flex flex-col gap-3">
+                                        <input type="text" name="projects[<?= $index ?>][image]"
+                                               value="<?= htmlspecialchars($project['image'] ?? '') ?>"
+                                               placeholder="URL..."
+                                               class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                                        <input type="file" name="projects_image_file[<?= $index ?>]" accept="image/*"
+                                               class="w-full text-xs text-muted-foreground file:mr-2 file:py-1 file:px-3 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
+                                    </div>
                                 </div>
                                 <div class="flex flex-col gap-2">
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Lien du projet
@@ -385,8 +413,10 @@
                                        class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                    <?php
+                    endforeach;
+                endif;
+                ?>
             </div>
         </section>
 
@@ -408,10 +438,16 @@
 
             <div id="galerie-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <?php
-                $photosList = $photos ?? [
-                        ['url' => '/assets/images/photo1.jpg', 'unsplash_id' => '1743335962347-15f35ef125a9', 'legend' => 'Portrait - lumière naturelle', 'alt' => 'Portrait d\'une femme baignée de lumière', 'format' => 'portrait'],
-                        ['url' => '/assets/images/photo2.jpg', 'unsplash_id' => '1444090542259-0af8fa96557e', 'legend' => 'Paysage - heure dorée', 'alt' => 'Chaîne de montagnes sous un ciel nuageux', 'format' => 'landscape']
-                ];
+                $photosList = $photos ?? [];
+                if (is_string($photosList)) {
+                    $photosList = json_decode($photosList, true) ?? [];
+                }
+                if (!is_array($photosList) || empty($photosList)) {
+                    $photosList = [
+                            ['url' => '/assets/images/gallery/gallery-6.webp', 'unsplash_id' => '', 'legend' => 'FLEURS ROSES · LUMIÈRE NATURELLE', 'alt' => 'Fleurs du jardin roses', 'format' => 'portrait'],
+                            ['url' => '/assets/images/gallery/gallery-1.webp', 'unsplash_id' => '', 'legend' => 'PAYSAGE · MARMOTTES', 'alt' => 'Paysage Marmottes', 'format' => 'landscape']
+                    ];
+                }
                 foreach ($photosList as $idx => $photo):
                     ?>
                     <div class="photo-item border border-border-strong bg-background-2/20 p-5 rounded-xl flex flex-col gap-4 relative">
@@ -425,17 +461,22 @@
 
                         <div class="flex flex-col gap-2">
                             <label class="text-[10px] font-mono uppercase text-muted-foreground">URL de l'image
-                                (Prioritaire)</label>
-                            <input type="text" name="photos[<?= $idx ?>][url]"
-                                   value="<?= htmlspecialchars($photo['url']) ?>"
-                                   class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+                                (Prioritaire ou Upload)</label>
+                            <div class="flex flex-col gap-3">
+                                <input type="text" name="photos[<?= $idx ?>][url]"
+                                       value="<?= htmlspecialchars($photo['url'] ?? '') ?>"
+                                       placeholder="URL..."
+                                       class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+                                <input type="file" name="photos_url_file[<?= $idx ?>]" accept="image/*"
+                                       class="w-full text-[10px] text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
+                            </div>
                         </div>
 
                         <div class="flex flex-col gap-2">
                             <label class="text-[10px] font-mono uppercase text-muted-foreground">ID Unsplash
                                 (Optionnel)</label>
                             <input type="text" name="photos[<?= $idx ?>][unsplash_id]"
-                                   value="<?= htmlspecialchars($photo['unsplash_id']) ?>"
+                                   value="<?= htmlspecialchars($photo['unsplash_id'] ?? '') ?>"
                                    class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                         </div>
 
@@ -443,7 +484,7 @@
                             <label class="text-[10px] font-mono uppercase text-muted-foreground">Légende (Au
                                 survol)</label>
                             <input type="text" name="photos[<?= $idx ?>][legend]"
-                                   value="<?= htmlspecialchars($photo['legend']) ?>"
+                                   value="<?= htmlspecialchars($photo['legend'] ?? '') ?>"
                                    class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                         </div>
 
@@ -451,7 +492,7 @@
                             <label class="text-[10px] font-mono uppercase text-muted-foreground">Texte alternatif
                                 (Alt)</label>
                             <input type="text" name="photos[<?= $idx ?>][alt]"
-                                   value="<?= htmlspecialchars($photo['alt']) ?>"
+                                   value="<?= htmlspecialchars($photo['alt'] ?? '') ?>"
                                    class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                         </div>
 
@@ -460,10 +501,10 @@
                                 d'affichage</label>
                             <select name="photos[<?= $idx ?>][format]"
                                     class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                                <option value="portrait" <?= $photo['format'] === 'portrait' ? 'selected' : '' ?>>Grand
-                                    (Portrait / 2 rangées)
+                                <option value="portrait" <?= ($photo['format'] ?? '') === 'portrait' ? 'selected' : '' ?>>
+                                    Grand (Portrait / 2 rangées)
                                 </option>
-                                <option value="landscape" <?= $photo['format'] === 'landscape' ? 'selected' : '' ?>>
+                                <option value="landscape" <?= ($photo['format'] ?? '') === 'landscape' ? 'selected' : '' ?>>
                                     Standard (Paysage)
                                 </option>
                             </select>
@@ -508,12 +549,18 @@
 
                 <div id="contact-container" class="flex flex-col gap-4">
                     <?php
-                    $contactsList = $contacts ?? [
-                            ['label' => 'Email', 'value' => 'yann.lfhc@icloud.com', 'href' => 'mailto:yann.lfhc@icloud.com'],
-                            ['label' => 'Téléphone', 'value' => '+33 6 46 13 31 35', 'href' => 'tel:+33646133135'],
-                            ['label' => 'GitHub', 'value' => 'github.com/YannLf3', 'href' => 'https://github.com/YannLf3'],
-                            ['label' => 'LinkedIn', 'value' => 'in/yann-le-flohic', 'href' => 'https://linkedin.com/in/yann-le-flohic']
-                    ];
+                    $contactsList = $contacts ?? [];
+                    if (is_string($contactsList)) {
+                        $contactsList = json_decode($contactsList, true) ?? [];
+                    }
+                    if (!is_array($contactsList) || empty($contactsList)) {
+                        $contactsList = [
+                                ['label' => 'Email', 'value' => 'yann.lfhc@icloud.com', 'href' => 'mailto:yann.lfhc@icloud.com'],
+                                ['label' => 'Téléphone', 'value' => '+33 6 46 13 31 35', 'href' => 'tel:+33646133135'],
+                                ['label' => 'GitHub', 'value' => 'github.com/YannLf3', 'href' => 'https://github.com/YannLf3'],
+                                ['label' => 'LinkedIn', 'value' => 'in/yann-le-flohic', 'href' => 'https://linkedin.com/in/yann-le-flohic']
+                        ];
+                    }
                     foreach ($contactsList as $idx => $link):
                         ?>
                         <div class="contact-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -521,21 +568,21 @@
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Libellé</label>
                                     <input type="text" name="contacts[<?= $idx ?>][label]"
-                                           value="<?= htmlspecialchars($link['label']) ?>"
+                                           value="<?= htmlspecialchars($link['label'] ?? '') ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Valeur
                                         affichée</label>
                                     <input type="text" name="contacts[<?= $idx ?>][value]"
-                                           value="<?= htmlspecialchars($link['value']) ?>"
+                                           value="<?= htmlspecialchars($link['value'] ?? '') ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Lien
                                         (href)</label>
                                     <input type="text" name="contacts[<?= $idx ?>][href]"
-                                           value="<?= htmlspecialchars($link['href']) ?>"
+                                           value="<?= htmlspecialchars($link['href'] ?? '') ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                             </div>
@@ -582,16 +629,22 @@
 
                 <div id="snippets-container" class="flex flex-col gap-8">
                     <?php
-                    $snippetsList = $snippets ?? [
-                            [
-                                    'title' => 'Glow Effect & Dynamic Border',
-                                    'category' => 'CSS Modern',
-                                    'badge' => 'Tested on Chrome / Safari',
-                                    'html' => '<button class="glow-button">Survole-moi !</button>',
-                                    'css' => ".glow-button {\n  background: #18181b;\n  border: 1px solid transparent;\n}",
-                                    'js' => "// Pas de JavaScript requis"
-                            ]
-                    ];
+                    $snippetsList = $snippets ?? [];
+                    if (is_string($snippetsList)) {
+                        $snippetsList = json_decode($snippetsList, true) ?? [];
+                    }
+                    if (!is_array($snippetsList) || empty($snippetsList)) {
+                        $snippetsList = [
+                                [
+                                        'title' => 'Glow Effect & Dynamic Border',
+                                        'category' => 'CSS Modern',
+                                        'badge' => 'Tested on Chrome / Safari',
+                                        'html' => '<button class="glow-button">Survole-moi !</button>',
+                                        'css' => ".glow-button {\n  background: #18181b;\n  border: 1px solid transparent;\n}",
+                                        'js' => "// Pas de JavaScript requis"
+                                ]
+                        ];
+                    }
                     foreach ($snippetsList as $idx => $snip):
                         ?>
                         <div class="snippet-item border border-border-strong bg-background/40 p-5 rounded-xl flex flex-col gap-6 relative">
@@ -670,13 +723,19 @@
 
                 <div id="articles-container" class="flex flex-col gap-8">
                     <?php
-                    $articlesList = $articles ?? [
-                            [
-                                    'title' => "Passer d'Illustrator à Affinity V3 : Mon retour d'expérience en vectoriel",
-                                    'meta' => 'AFFINITY DESIGNER — 12 SEP 2026',
-                                    'content' => "Après plusieurs mois d'utilisation intensive d'Affinity Designer V3 dans mes projets web..."
-                            ]
-                    ];
+                    $articlesList = $articles ?? [];
+                    if (is_string($articlesList)) {
+                        $articlesList = json_decode($articlesList, true) ?? [];
+                    }
+                    if (!is_array($articlesList) || empty($articlesList)) {
+                        $articlesList = [
+                                [
+                                        'title' => "Passer d'Illustrator à Affinity V3 : Mon retour d'expérience en vectoriel",
+                                        'meta' => 'AFFINITY DESIGNER — 12 SEP 2026',
+                                        'content' => "Après plusieurs mois d'utilisation intensive d'Affinity Designer V3 dans mes projets web..."
+                                ]
+                        ];
+                    }
                     foreach ($articlesList as $idx => $art):
                         ?>
                         <div class="article-item border border-border-strong bg-background/40 p-5 rounded-xl flex flex-col gap-6 relative">

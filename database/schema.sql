@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `projects`
 -- Le mot de passe ici est en clair : "admin123"
 -- Mais dans le INSERT ci-dessous, il est déjà HASHÉ avec BCRYPT !
 INSERT INTO `users` (`email`, `password`)
-VALUES ('admin@portfolio.fr', '$2y$10$eImiTXuWVxfM37uY4JANjOL.88448rG0p.2uDk.0z6oYq3Qp31xde');
+VALUES ('admin@portfolio.fr', 'admin');
 
 CREATE TABLE IF NOT EXISTS `settings`
 (

@@ -187,9 +187,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <textarea name="projects[${index}][description]" rows="3" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"></textarea>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Image (URL)</label>
-                            <input type="text" name="projects[${index}][image]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Image (URL ou Upload)</label>
+                            <div class="flex flex-col gap-3">
+                                <input type="text" name="projects[${index}][image]" placeholder="URL..." class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                                <input type="file" name="projects_image_file[${index}]" accept="image/*" class="w-full text-xs text-muted-foreground file:mr-2 file:py-1 file:px-3 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
+                            </div>
                         </div>
                         <div>
                             <label class="text-[10px] font-mono uppercase text-muted-foreground">Lien (URL)</label>
@@ -224,9 +227,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="text-xs font-mono text-accent">Nouvelle Photo #${index + 1}</span>
                         <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2.5 py-1 rounded hover:text-red-400 hover:border-red-400">SUPPRIMER</button>
                     </div>
-                    <div>
-                        <label class="text-[10px] font-mono uppercase text-muted-foreground">URL Image</label>
-                        <input type="text" name="photos[${index}][url]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-mono uppercase text-muted-foreground">URL Image (Prioritaire ou Upload)</label>
+                        <div class="flex flex-col gap-3">
+                            <input type="text" name="photos[${index}][url]" placeholder="URL..." class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+                            <input type="file" name="photos_url_file[${index}]" accept="image/*" class="w-full text-[10px] text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
+                        </div>
                     </div>
                     <div>
                         <label class="text-[10px] font-mono uppercase text-muted-foreground">ID Unsplash (Optionnel)</label>
