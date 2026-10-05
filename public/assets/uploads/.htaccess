@@ -1,0 +1,23 @@
+# ---------------------------------------------------------------------------
+# Dossier des images envoyées via le back-office : AUCUN script ne doit s'y exécuter.
+# (Seconde barrière : ImageUploader.php n'accepte déjà que des images JPEG/PNG/WebP/GIF
+# renommées aléatoirement.)
+# ---------------------------------------------------------------------------
+
+# 1. Refuse l'accès à tout fichier exécutable (PHP sous toutes ses extensions, CGI, scripts…)
+<FilesMatch "\.(php\d?|phar|pht|phtml|pl|py|jsp|asp|aspx|htm|html|shtml|sh|cgi)$">
+    Require all denied
+</FilesMatch>
+
+# 2. Pas d'exécution CGI ni de listing du dossier
+Options -ExecCGI -Indexes
+
+# 3. Moteur PHP désactivé — UNIQUEMENT si PHP tourne en module Apache.
+#    Sans ces <IfModule>, « php_flag » provoque une erreur 500 sur tout le dossier
+#    (donc sur toutes les images) quand PHP tourne en FPM / CGI.
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>

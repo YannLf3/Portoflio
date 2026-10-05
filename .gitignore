@@ -22,3 +22,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets (identifiants BDD locaux / Hostinger)
+.env
+# Gabarit versionné : SEUL le modèle sans valeurs réelles est commité
+!.env.example
+
+# Réglages locaux de l'assistant IA (permissions propres à cette machine)
+.claude/settings.local.json
+
+# Images envoyées via le back-office : données de production, pas du code.
+# Le .htaccess anti-exécution du dossier, lui, DOIT rester versionné.
+public/assets/uploads/*
+!public/assets/uploads/.htaccess
+
+# Fichiers système
+Thumbs.db

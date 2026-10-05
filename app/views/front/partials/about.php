@@ -8,9 +8,13 @@
         </span>
 
         <!-- Titre principal adaptatif selon le mode -->
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal tracking-tight text-foreground leading-tight">
-            <span class="[html[data-mode='photo']_&]:hidden">Entre code et image, j'essaye de toujours faire les choses avec rigueur.</span>
-            <span class="hidden [html[data-mode='photo']_&]:inline italic text-amber-200">Capturer l'instant, travailler la lumière et composer des images percutantes.</span>
+        <h2 class="reveal-title text-3xl sm:text-4xl lg:text-5xl font-display font-normal tracking-tight text-foreground leading-tight">
+            <span class="reveal-title__mask">
+                <span class="reveal-title__inner">
+                    <span class="[html[data-mode='photo']_&]:hidden">Entre code et image, j'essaye de toujours faire les choses avec rigueur.</span>
+                    <span class="hidden [html[data-mode='photo']_&]:inline italic text-amber-200">Capturer l'instant, travailler la lumière et composer des images percutantes.</span>
+                </span>
+            </span>
         </h2>
 
         <!-- Description dynamique depuis le Back-Office -->
@@ -78,7 +82,7 @@
 
                     <!-- Titre & Détails : Version PHOTO -->
                     <div class="hidden [html[data-mode='photo']_&]:block">
-                        <h3 class="text-base sm:text-lg font-medium text-amber-200 font-serif italic">
+                        <h3 class="text-base sm:text-lg font-medium text-amber-200 font-display italic">
                             <?= htmlspecialchars($item['title'] ?? '') ?>
                         </h3>
                         <p class="text-xs sm:text-sm text-muted-foreground">

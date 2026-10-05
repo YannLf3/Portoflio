@@ -249,8 +249,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <label class="text-[10px] font-mono uppercase text-muted-foreground">Format</label>
                         <select name="photos[${index}][format]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                            <option value="portrait">Grand (Portrait)</option>
-                            <option value="landscape" selected>Standard (Paysage)</option>
+                            <option value="portrait">Portrait (3:4 Dev · 4:5 Photo)</option>
+                            <option value="landscape" selected>Paysage (16:10 Dev · 16:9 Photo)</option>
+                            <option value="panorama">Panorama cinéma (21:9 Photo, pleine largeur)</option>
                         </select>
                     </div>
                 </div>`;

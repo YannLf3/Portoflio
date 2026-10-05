@@ -7,8 +7,10 @@
             <span class="text-xs font-mono tracking-widest text-accent uppercase [html[data-mode='photo']_&]:text-amber-400">
                 04 — Laboratoire &amp; Veille
             </span>
-            <h1 class="text-3xl sm:text-5xl font-serif font-normal tracking-tight text-foreground">
-                Le Bac à Sable.
+            <h1 class="reveal-title reveal-title--short text-3xl sm:text-5xl font-display font-normal tracking-tight text-foreground">
+                <span class="reveal-title__mask">
+                    <span class="reveal-title__inner">Le Bac à Sable.</span>
+                </span>
             </h1>
             <p class="text-muted-foreground text-sm sm:text-base max-w-2xl leading-relaxed">
                 Espace d'expérimentation pour tester en direct des propriétés CSS modernes, des scripts JS, ainsi que
@@ -19,9 +21,13 @@
         <!-- SECTION 1 : EXPERIMENTATIONS CSS & JS (DYNAMIQUE BDD) -->
         <section class="flex flex-col gap-8">
             <div class="flex items-center justify-between">
-                <h2 class="text-xl sm:text-2xl font-serif text-foreground flex items-center gap-3">
-                    <span class="font-mono text-xs text-accent [html[data-mode='photo']_&]:text-amber-400">&lt;/&gt;</span>
-                    <span>Snippets &amp; UI Experiments</span>
+                <h2 class="reveal-title reveal-title--short text-xl sm:text-2xl font-display text-foreground">
+                    <span class="reveal-title__mask">
+                        <span class="reveal-title__inner flex items-center gap-3">
+                            <span class="font-mono text-xs text-accent [html[data-mode='photo']_&]:text-amber-400">&lt;/&gt;</span>
+                            <span>Snippets &amp; UI Experiments</span>
+                        </span>
+                    </span>
                 </h2>
                 <span class="text-xs font-mono text-muted-foreground">CSS / JS / Console</span>
             </div>
@@ -40,22 +46,14 @@
                                     'category' => 'CSS Modern',
                                     'badge' => 'Tested on Chrome / Safari',
                                     'html' => '<button class="glow-button">Survole-moi !</button>',
-                                    'css' => ".glow-button {\n  background: #18181b;\n  border: 1px solid transparent;\n}",
+                                    'css' => ".glow-button {\n  background: #18181b;\n  border: 1px solid #27272a;\n  color: #fff;\n  padding: 12px 24px;\n  border-radius: 8px;\n  cursor: pointer;\n  transition: all 0.3s;\n}\n.glow-button:hover {\n  border-color: #22c55e;\n  box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);\n}",
                                     'js' => "// Pas de JavaScript requis"
-                            ],
-                            [
-                                    'title' => 'Mini Canvas Particle System',
-                                    'category' => 'JS Native',
-                                    'badge' => 'Performance 60 FPS',
-                                    'html' => '<canvas id="particle-canvas" width="400" height="160"></canvas>',
-                                    'css' => "canvas { width: 100%; height: 100%; background: #09090b; }",
-                                    'js' => "const canvas = document.getElementById('particle-canvas');\nconst ctx = canvas.getContext('2d');\nfunction animate() {\n  ctx.clearRect(0, 0, canvas.width, canvas.height);\n  requestAnimationFrame(animate);\n}\nanimate();"
                             ]
                     ];
                 }
 
                 if (!empty($snippetsList)):
-                    foreach ($snippetsList as $snip):
+                    foreach ($snippetsList as $idx => $snip):
                         ?>
                         <div class="border border-border-strong rounded-xl bg-background-card/30 p-6 flex flex-col justify-between gap-6 relative overflow-hidden group">
                             <div class="flex justify-between items-start">
@@ -64,18 +62,38 @@
                                     <p class="text-xs text-muted-foreground mt-1">Snippet interactif</p>
                                 </div>
                                 <span class="text-[10px] font-mono px-2 py-0.5 rounded border border-accent/30 text-accent [html[data-mode='photo']_&]:border-amber-400/30 [html[data-mode='photo']_&]:text-amber-400">
-                                <?= htmlspecialchars($snip['category'] ?? 'Lab') ?>
-                            </span>
+                                    <?= htmlspecialchars($snip['category'] ?? $snip['tag'] ?? 'Lab') ?>
+                                </span>
                             </div>
 
-                            <div class="h-40 rounded-lg bg-zinc-950/80 border border-zinc-800 flex items-center justify-center relative overflow-hidden p-4">
-                                <button class="relative px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs font-mono text-zinc-200 transition-all duration-300 hover:scale-105 hover:border-accent hover:shadow-[0_0_20px_rgba(34,197,94,0.3)]">
-                                    Survole-moi !
-                                </button>
+                            <!-- PREVIEW ET INJECTION CSS / HTML DYNAMIQUE -->
+                            <div class="h-48 rounded-lg bg-zinc-950/80 border border-zinc-800 flex items-center justify-center relative overflow-hidden p-4" id="snippet-container-<?= $idx ?>">
+                                <!-- Injection du CSS spécifique -->
+                                <?php if (!empty($snip['css'])): ?>
+                                    <style>
+                                        <?= $snip['css'] ?>
+                                    </style>
+                                <?php endif; ?>
+
+                                <!-- Rendu du HTML -->
+                                <?= $snip['html'] ?? '' ?>
+
+                                <!-- Exécution du JS si présent -->
+                                <?php if (!empty($snip['js']) && strpos($snip['js'], '// Pas de') === false): ?>
+                                    <script>
+                                        (function() {
+                                            try {
+                                                <?= $snip['js'] ?>
+                                            } catch(e) {
+                                                console.error('Erreur JS Snippet:', e);
+                                            }
+                                        })();
+                                    </script>
+                                <?php endif; ?>
                             </div>
 
                             <div class="flex justify-between items-center text-xs font-mono text-muted-foreground pt-2 border-t border-zinc-800/60">
-                                <span><?= htmlspecialchars($snip['badge'] ?? 'Tested on Chrome / Safari') ?></span>
+                                <span><?= htmlspecialchars($snip['badge'] ?? $snip['note'] ?? 'Tested on Modern Browsers') ?></span>
                                 <button class="text-accent hover:underline [html[data-mode='photo']_&]:text-amber-400 open-code-modal"
                                         data-title="<?= htmlspecialchars($snip['title'] ?? 'Console', ENT_QUOTES) ?>"
                                         data-html="<?= htmlspecialchars($snip['html'] ?? '', ENT_QUOTES) ?>"
@@ -95,9 +113,13 @@
         <!-- SECTION 2 : ARTICLES DE BLOG (DYNAMIQUE BDD) -->
         <section class="flex flex-col gap-8 pb-20">
             <div class="flex items-center justify-between border-t border-border-strong pt-12">
-                <h2 class="text-xl sm:text-2xl font-serif text-foreground flex items-center gap-3">
-                    <span class="font-mono text-accent [html[data-mode='photo']_&]:text-amber-400"></span>
-                    <span>Workflows, Mac &amp; Design Notes</span>
+                <h2 class="reveal-title reveal-title--short text-xl sm:text-2xl font-display text-foreground">
+                    <span class="reveal-title__mask">
+                        <span class="reveal-title__inner flex items-center gap-3">
+                            <span class="font-mono text-accent [html[data-mode='photo']_&]:text-amber-400"></span>
+                            <span>Workflows, Mac &amp; Design Notes</span>
+                        </span>
+                    </span>
                 </h2>
                 <span class="text-xs font-mono text-muted-foreground">Affinity / macOS / Tech</span>
             </div>
@@ -148,7 +170,7 @@
                                 <?= htmlspecialchars(strip_tags($art['content'] ?? '')) ?>
                             </p>
                             <div class="pt-2 mt-auto">
-                                <button class="text-xs font-mono text-accent [html[data-mode='photo']_&]:text-amber-400 open-article-modal"
+                                <button class="text-xs font-mono text-accent hover:underline [html[data-mode='photo']_&]:text-amber-400 open-article-modal"
                                         data-title="<?= htmlspecialchars($art['title'] ?? '', ENT_QUOTES) ?>"
                                         data-category="<?= htmlspecialchars($art['meta'] ?? '', ENT_QUOTES) ?>"
                                         data-content="<?= htmlspecialchars($art['content'] ?? '', ENT_QUOTES) ?>">
@@ -215,9 +237,9 @@
             </div>
 
             <div class="p-6 md:p-8 overflow-y-auto space-y-4">
-                <h2 id="article-modal-title" class="text-xl md:text-2xl font-serif text-foreground">Titre</h2>
+                <h2 id="article-modal-title" class="text-xl md:text-2xl font-display text-foreground">Titre</h2>
                 <div id="article-modal-body"
-                     class="text-sm text-zinc-300 leading-relaxed space-y-3 font-sans whitespace-pre-line">
+                     class="text-sm text-zinc-300 leading-relaxed space-y-3 font-body whitespace-pre-line">
                     Contenu de l'article...
                 </div>
             </div>

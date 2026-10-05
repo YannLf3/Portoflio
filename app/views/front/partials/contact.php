@@ -5,9 +5,13 @@
         <span class="text-xs font-mono tracking-widest text-accent uppercase">
             05 — Travaillons ensemble
         </span>
-        <h2 class="text-4xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-tight flex flex-col">
-            <span><?= htmlspecialchars($content['contact_title'] ?? 'Un projet web ou photo ?') ?></span>
-            <span class="italic font-light text-accent mt-1"><?= htmlspecialchars($content['contact_subtitle'] ?? 'Parlons-en.') ?></span>
+        <h2 class="reveal-title text-4xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-tight">
+            <span class="reveal-title__mask">
+                <span class="reveal-title__inner flex flex-col">
+                    <span><?= htmlspecialchars($content['contact_title'] ?? 'Un projet web ou photo ?') ?></span>
+                    <span class="italic font-light text-accent mt-1"><?= htmlspecialchars($content['contact_subtitle'] ?? 'Parlons-en.') ?></span>
+                </span>
+            </span>
         </h2>
     </div>
 
@@ -38,7 +42,7 @@
                         <?= htmlspecialchars($link['label'] ?? 'CONTACT') ?>
                     </span>
                         <div class="flex items-center gap-2">
-                        <span class="text-sm sm:text-base font-sans text-foreground group-hover:text-accent transition-colors">
+                        <span class="text-sm sm:text-base font-body text-foreground group-hover:text-accent transition-colors">
                             <?= htmlspecialchars($link['value'] ?? '') ?>
                         </span>
                             <svg class="w-4 h-4 text-muted-foreground transition-transform duration-300 group-hover:-rotate-45 group-hover:text-accent"

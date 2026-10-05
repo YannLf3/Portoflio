@@ -6,7 +6,7 @@
     <title>Connexion | Espace Admin</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="font-mono bg-background flex items-center justify-center min-h-screen p-4">
+<body class="font-body bg-background flex items-center justify-center min-h-screen p-4">
 
 <!-- Calque de fond discret -->
 <div class="fixed inset-0 pointer-events-none z-0 bg-grid-pattern opacity-40"></div>
@@ -18,7 +18,7 @@
             <span class="text-xs font-mono tracking-widest text-accent uppercase">
                 Espace Admin
             </span>
-        <h1 class="text-3xl font-serif font-normal text-foreground">
+        <h1 class="text-3xl font-display font-normal text-foreground">
             Connexion
         </h1>
     </div>
@@ -31,6 +31,8 @@
     <?php endif; ?>
 
     <form action="/login" method="POST" class="flex flex-col gap-6">
+        <!-- Jeton anti-CSRF (vérifié par AuthController::login) -->
+        <?= Csrf::field() ?>
 
         <!-- Email / Identifiant -->
         <div class="flex flex-col gap-2">

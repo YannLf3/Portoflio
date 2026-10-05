@@ -18,13 +18,18 @@
             $firstName = $nameParts[0] ?? 'Yann';
             $lastName = $nameParts[1] ?? 'Le Flohic';
             ?>
-            <h1 class="text-5xl sm:text-6xl font-normal tracking-tight flex flex-col leading-none">
-                <span class="text-foreground"><?= htmlspecialchars($firstName) ?></span>
-                <span class="italic font-light text-accent mt-2"><?= htmlspecialchars($lastName) ?></span>
+            <!-- .reveal-title : masque (overflow) + glissement vers le haut + trait Lime (animations.js) -->
+            <h1 class="reveal-title reveal-title--short text-5xl sm:text-6xl font-normal tracking-tight leading-none">
+                <span class="reveal-title__mask">
+                    <span class="reveal-title__inner flex flex-col">
+                        <span class="text-foreground"><?= htmlspecialchars($firstName) ?></span>
+                        <span class="italic font-light text-accent mt-2"><?= htmlspecialchars($lastName) ?></span>
+                    </span>
+                </span>
             </h1>
 
             <!-- 3. Description adaptative selon le mode -->
-            <div class="text-muted-foreground text-base sm:text-lg leading-relaxed font-sans">
+            <div class="text-muted-foreground text-base sm:text-lg leading-relaxed font-body">
                 <!-- Version Dev -->
                 <div id="dev-intro" class="mode-dev-content flex flex-col gap-3">
                     <p><?= nl2br(htmlspecialchars($content['hero_dev'] ?? "Développeur web full-stack — je conçois et code des interfaces sur-mesure, du front au back, jusqu'à l'hébergement.")) ?></p>
@@ -39,7 +44,20 @@
                 </div>
             </div>
 
-            <!-- 4. Localisation & Études -->
+            <!-- 4. Appels à l'action : boutons Glow (bordure au repos, halo Lime au survol) + effet magnétique -->
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="#projects" class="btn-glow" data-magnetic>
+                    <span>Voir mes projets</span>
+                    <svg class="btn-glow__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+                <a href="#contact" class="btn-glow" data-magnetic>
+                    <span>Me contacter</span>
+                </a>
+            </div>
+
+            <!-- 5. Localisation & Études -->
             <div class="flex items-center gap-4 text-xs tracking-widest text-muted-foreground uppercase pt-2">
                 <span><?= htmlspecialchars($content['location'] ?? 'Châteauroux — FR') ?></span>
                 <span class="w-8 h-px bg-border-strong"></span>
@@ -58,7 +76,7 @@
                 <img src="<?= htmlspecialchars($avatar) ?>" alt="Avatar Yann Le Flohic"
                      class="w-full h-full object-contain pointer-events-none select-none">
             <?php else: ?>
-                <video autoplay loop muted playsinline
+                <video autoplay loop muted playsinline poster="/assets/before-video.webp" width="1280" height="720"
                        class="w-full h-full object-contain pointer-events-none select-none">
                     <source src="/assets/videos/animoji.mov" type="video/quicktime; codecs=hvc1">
                     <source src="/assets/videos/animoji.webm" type="video/webm">
@@ -76,6 +94,8 @@
 <?php require_once __DIR__ . '/partials/projects.php'; ?>
 
 <?php require_once __DIR__ . '/partials/gallery.php'; ?>
+
+<?php require_once __DIR__ . '/partials/compare.php'; ?>
 
 <?php require_once __DIR__ . '/partials/contact.php'; ?>
 

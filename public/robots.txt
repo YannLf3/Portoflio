@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /assets/uploads/
+
+Sitemap: https://yannleflohic.fr/sitemap.xml

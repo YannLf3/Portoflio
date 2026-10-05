@@ -7,8 +7,10 @@
             <span class="text-xs font-mono tracking-widest text-accent uppercase">
                 03 — Projets sélectionnés
             </span>
-            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal tracking-tight text-foreground leading-tight">
-                Mes projets
+            <h2 class="reveal-title text-3xl sm:text-4xl lg:text-5xl font-display font-normal tracking-tight text-foreground leading-tight">
+                <span class="reveal-title__mask">
+                    <span class="reveal-title__inner">Mes projets</span>
+                </span>
             </h2>
         </div>
 
@@ -20,17 +22,22 @@
 
         $categoriesFilter = array_filter([$cat1, $cat2, $cat3]);
         ?>
+        <!-- Filtres : boutons Glow compacts ; l'état actif est porté par aria-pressed (stylé en CSS) -->
         <div class="flex flex-wrap gap-2 sm:gap-3" id="project-filters">
             <button type="button"
                     data-filter="all"
-                    class="filter-btn active px-4 py-1.5 rounded-full bg-accent text-background text-xs font-mono font-medium tracking-wider uppercase transition-all duration-300">
+                    data-magnetic
+                    aria-pressed="true"
+                    class="filter-btn btn-glow btn-glow--sm">
                 Tous
             </button>
 
             <?php foreach ($categoriesFilter as $catName): ?>
                 <button type="button"
                         data-filter="<?= htmlspecialchars(mb_strtolower(trim($catName))) ?>"
-                        class="filter-btn px-4 py-1.5 rounded-full border border-border-strong text-muted-foreground text-xs font-mono tracking-wider uppercase hover:border-accent hover:text-foreground transition-all duration-300">
+                        data-magnetic
+                        aria-pressed="false"
+                        class="filter-btn btn-glow btn-glow--sm">
                     <?= htmlspecialchars(trim($catName)) ?>
                 </button>
             <?php endforeach; ?>
@@ -109,10 +116,13 @@
                 // Normalisation de la catégorie pour le filtrage JS
                 $projectCat = mb_strtolower(trim($project['category'] ?? ''));
                 ?>
+                <!-- .tilt-card + data-tilt : apparition en cascade au scroll et inclinaison 3D (animations.js).
+                     Transform/transition gérés par le composant CSS : pas d'utilitaire transition-* / translate-* ici. -->
                 <a href="<?= htmlspecialchars($linkUrl) ?>"
                         <?= $isExternal ? 'target="_blank" rel="noopener noreferrer"' : '' ?>
                    data-category="<?= htmlspecialchars($projectCat) ?>"
-                   class="project-card group relative flex flex-col rounded-2xl border border-border-strong bg-background-card overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:border-accent/30 z-10 lg:max-w-130">
+                   data-tilt
+                   class="project-card tilt-card group relative flex flex-col rounded-2xl border border-border-strong bg-background-card overflow-hidden hover:shadow-2xl hover:border-accent/30 z-10 lg:max-w-130">
 
                     <!-- Haut : Image & Badges -->
                     <div class="relative h-56 sm:h-64 w-full bg-border-strong/20">
@@ -125,7 +135,7 @@
                         <div class="absolute inset-0 bg-gradient-to-b from-background/80 via-transparent to-transparent"></div>
 
                         <!-- Numéro dynamique -->
-                        <span class="absolute top-5 left-6 text-4xl font-serif italic text-white font-light"><?= $num ?></span>
+                        <span class="absolute top-5 left-6 text-4xl font-display italic text-white font-light"><?= $num ?></span>
 
                         <!-- Badge Meta Haut Droite -->
                         <?php if (!empty($project['meta'])): ?>
@@ -204,14 +214,9 @@
             btn.addEventListener('click', () => {
                 const filterValue = btn.getAttribute('data-filter');
 
-                // Mise à jour de l'état visuel des boutons
-                filterBtns.forEach(b => {
-                    b.classList.remove('bg-accent', 'text-background', 'font-medium');
-                    b.classList.add('border', 'border-border-strong', 'text-muted-foreground');
-                });
-
-                btn.classList.remove('border', 'border-border-strong', 'text-muted-foreground');
-                btn.classList.add('bg-accent', 'text-background', 'font-medium');
+                // Mise à jour de l'état des boutons : aria-pressed pilote le style (.btn-glow[aria-pressed='true'])
+                // et informe les lecteurs d'écran du filtre actif
+                filterBtns.forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
 
                 // Filtrage des cartes
                 projectCards.forEach(card => {

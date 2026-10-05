@@ -43,20 +43,57 @@
     </div>
 </footer>
 
-<!-- Curseur personnalisé (masqué sur mobile via hidden md:block) -->
-<div id="custom-cursor"
-     class="pointer-events-none fixed top-0 left-0 z-50 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300 opacity-0 hidden md:block">
+<!-- =====================================================================
+     TERMINAL CLI (Easter Egg) — public/js/terminal.js
+     Ouverture : bouton flottant ou raccourci ⌘K / Ctrl+K. Données : GET /api/terminal.
+     ===================================================================== -->
+<button type="button" id="cli-launcher" class="cli-launcher" data-magnetic
+        aria-haspopup="dialog" aria-controls="cli" aria-expanded="false" aria-label="Ouvrir le terminal interactif">
+    <span class="cli-launcher__prompt" aria-hidden="true">&gt;_</span>
+    <span>terminal</span>
+    <kbd class="cli-launcher__kbd" data-cli-shortcut>Ctrl K</kbd>
+</button>
 
-    <!-- Design Mode DEV : Curseurs Terminal (|) -->
-    <div class="mode-dev-cursor flex items-center gap-1 font-mono text-accent text-xs font-bold tracking-widest select-none">
-        <span>&lt;</span><span class="w-1 h-1 bg-accent rounded-full"></span><span>&gt;</span>
+<!-- closedby="any" : fermeture par Échap, geste retour mobile ET clic hors de la fenêtre (repli JS pour Safari) -->
+<dialog id="cli" class="cli" closedby="any" aria-labelledby="cli-title">
+    <div class="cli__bar">
+        <div class="flex items-center gap-2" aria-hidden="true">
+            <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+        </div>
+        <h2 id="cli-title" class="cli__title">visiteur@yannleflohic.fr: ~ (zsh)</h2>
+        <button type="button" class="cli__close" data-cli-action="close" aria-label="Fermer le terminal">✕</button>
     </div>
 
-    <!-- Design Mode PHOTO : Collimateur d'autofocus -->
-    <div class="mode-photo-cursor relative w-7 h-5 border border-amber-400/70 flex items-center justify-center select-none">
-        <div class="w-1 h-1 bg-amber-400 rounded-full"></div>
-    </div>
+    <!-- role="log" : les nouvelles lignes sont annoncées par les lecteurs d'écran -->
+    <div id="cli-output" class="cli__output" role="log" aria-live="polite"></div>
 
+    <form id="cli-form" class="cli__prompt" autocomplete="off">
+        <label for="cli-input" class="cli__ps1">visiteur<span class="cli__ps1-host">@yannleflohic.fr</span>:~$</label>
+        <input id="cli-input" class="cli__input" type="text" name="command"
+               autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send"
+               aria-describedby="cli-title" placeholder="help">
+    </form>
+</dialog>
+
+<!-- Gabarits du terminal : remplis par remplacement de chaînes ({{…}}) dans terminal.js -->
+<template id="tpl-cli-line"><p class="cli__line cli__line--{{type}}">{{content}}</p></template>
+<template id="tpl-cli-link"><a class="cli__link" href="{{href}}"{{target}}>{{label}}</a></template>
+<template id="tpl-cli-chip"><button type="button" class="cli__chip" data-cli-run="{{command}}">{{label}}</button></template>
+
+<!-- Curseur magnétique (bloc BEM .cursor, positionné par public/js/animations.js).
+     Affiché uniquement avec une souris/trackpad : la classe .has-custom-cursor est posée par le JS. -->
+<div id="custom-cursor" class="cursor" aria-hidden="true">
+    <span class="cursor__dot"></span>
+    <!-- Libellé du grand cercle en mode Photo (« Voir », « Glisser »), rempli par animations.js -->
+    <span class="cursor__label"></span>
 </div>
 
-<script src="/js/main.js"></script>
+<script src="/js/main.js?v=20261005"></script>
+<!-- Animations & micro-interactions (WebGL, curseur, révélations, tilt) -->
+<script src="/js/animations.js?v=20261005" defer></script>
+<!-- Terminal CLI interactif (Easter Egg) -->
+<script src="/js/terminal.js?v=20261005" defer></script>
+<!-- Mode Photo : visionneuse de la galerie + comparateur avant / après -->
+<script src="/js/photo-mode.js?v=20261005" defer></script>

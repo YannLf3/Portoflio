@@ -1,5 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    /**
+     * Signale que l'interface est visible (loader terminé ou ignoré).
+     * Le drapeau data-app-ready couvre le cas où animations.js s'initialise après l'événement ;
+     * l'événement app:ready couvre le cas inverse. animations.js lance alors les révélations au scroll.
+     * @returns {void}
+     */
+    const markAppReady = () => {
+        document.documentElement.dataset.appReady = 'true';
+        document.dispatchEvent(new CustomEvent('app:ready'));
+    };
+
     // ----------------------------------------------------
     // 1. GESTION DU LOADER (Compatible Safari & WebKit)
     // ----------------------------------------------------
@@ -10,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loader && logsContainer) {
         if (sessionStorage.getItem('portfolio_loaded')) {
             loader.style.display = 'none';
+            markAppReady();
         } else {
             const logs = [
                 {text: '> INITIALIZING PORTFOLIO_CORE v2.0...', delay: 200},
@@ -22,7 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
             logs.forEach((item, index) => {
                 setTimeout(() => {
                     const line = document.createElement('div');
-                    line.className = 'flex items-center gap-2 text-emerald-400';
+                    // text-accent : Lime Spark du design system (le loader s'affiche toujours en mode dev)
+                    line.className = 'flex items-center gap-2 text-accent';
                     line.innerHTML = `<span class="text-zinc-600">$</span> <span>${item.text}</span>`;
                     logsContainer.appendChild(line);
 
@@ -35,6 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         setTimeout(() => {
                             loader.style.transform = 'translateY(-100%)';
                             loader.style.opacity = '0';
+                            // Les titres se révèlent pendant que le loader remonte
+                            markAppReady();
 
                             setTimeout(() => {
                                 loader.style.display = 'none';
@@ -45,42 +60,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, item.delay);
             });
         }
+    } else {
+        markAppReady();
     }
 
     // ----------------------------------------------------
-    // 2. GESTION DU CURSEUR PERSONNALISÉ
+    // 2. CURSEUR PERSONNALISÉ
     // ----------------------------------------------------
-    const cursor = document.getElementById('custom-cursor');
-
-    if (cursor) {
-        // Active le masquage du curseur natif uniquement sur ordinateur (pas de tactile)
-        const isDesktop = window.innerWidth >= 768 && !('ontouchstart' in window);
-        if (isDesktop) {
-            document.body.classList.add('custom-cursor-active');
-        }
-
-        // Suivi de la souris
-        window.addEventListener('mousemove', (e) => {
-            cursor.style.left = `${e.clientX}px`;
-            cursor.style.top = `${e.clientY}px`;
-            cursor.style.opacity = '1';
-        });
-
-        // Masquer si la souris quitte la fenêtre
-        document.addEventListener('mouseleave', () => {
-            cursor.style.opacity = '0';
-        });
-
-        // Effet de zoom au survol des éléments cliquables
-        const interactiveElements = document.querySelectorAll('a, button, input, [role="button"]');
-        interactiveElements.forEach((el) => {
-            el.addEventListener('mouseenter', () => {
-                cursor.classList.add('scale-125');
-            });
-            el.addEventListener('mouseleave', () => {
-                cursor.classList.remove('scale-125');
-            });
-        });
-    }
+    // Déplacé dans public/js/animations.js (curseur magnétique M/V/C, boucle rAF partagée
+    // avec le fond WebGL). Ne pas réintroduire d'écouteur mousemove ici : double suivi.
 
 });

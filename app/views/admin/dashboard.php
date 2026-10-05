@@ -7,13 +7,13 @@
     <link rel="stylesheet" href="/css/style.css">
     <script src="/js/admin.js" defer></script>
 </head>
-<body class="font-sans bg-background text-foreground min-h-screen flex flex-col">
+<body class="font-body bg-background text-foreground min-h-screen flex flex-col">
 
 <!-- HEADER ADMIN -->
 <header class="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border-strong px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div class="flex flex-col">
         <span class="text-xs font-mono tracking-widest text-accent uppercase">YLF.36 — Admin</span>
-        <h1 class="text-2xl sm:text-3xl font-serif mt-0.5">Contenu du site</h1>
+        <h1 class="text-2xl sm:text-3xl font-display mt-0.5">Contenu du site</h1>
     </div>
 
     <div class="flex items-center gap-2 sm:gap-3 text-xs font-mono">
@@ -75,14 +75,40 @@
 
 <!-- FORMULAIRE GLOBAL -->
 <main class="flex-grow p-4 sm:p-6 max-w-5xl mx-auto w-full">
+
+    <?php if (!empty($flash) && is_array($flash)):
+        // Couleur du bandeau selon la nature du message (succès / avertissement / erreur)
+        $flashStyles = [
+                'success' => 'border-accent/40 bg-accent/10 text-accent',
+                'warning' => 'border-amber-400/40 bg-amber-400/10 text-amber-300',
+                'error' => 'border-red-500/40 bg-red-500/10 text-red-300',
+        ];
+        $flashClass = $flashStyles[$flash['type'] ?? 'error'] ?? $flashStyles['error'];
+        ?>
+        <!-- Message flash (Post/Redirect/Get) : affiché une seule fois après un enregistrement -->
+        <div role="<?= ($flash['type'] ?? '') === 'error' ? 'alert' : 'status' ?>"
+             class="mb-8 rounded-lg border px-4 py-3 text-sm <?= $flashClass ?>">
+            <p><?= htmlspecialchars($flash['message'] ?? '') ?></p>
+            <?php if (!empty($flash['details']) && is_array($flash['details'])): ?>
+                <ul class="mt-2 list-disc pl-5 text-xs opacity-90">
+                    <?php foreach ($flash['details'] as $detail): ?>
+                        <li><?= htmlspecialchars((string)$detail) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
     <form id="admin-form" action="/admin/save" method="POST" enctype="multipart/form-data" class="flex flex-col gap-12">
+        <!-- Jeton anti-CSRF (vérifié par AdminController::save) -->
+        <?= Csrf::field() ?>
 
         <!-- ========================================== -->
         <!-- 1. ONGLET : DISPONIBILITÉ & HERO           -->
         <!-- ========================================== -->
         <section id="dispo" class="tab-content flex flex-col gap-8">
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
-                <h2 class="font-mono text-sm text-accent">En-tête &amp; Textes d'accroche</h2>
+                <h2 class="font-display text-sm text-accent">En-tête &amp; Textes d'accroche</h2>
 
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Badge de
@@ -152,7 +178,7 @@
         <section id="parcours" class="tab-content hidden flex-col gap-8">
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
                 <div class="flex justify-between items-center border-b border-border-strong pb-4">
-                    <h2 class="font-mono text-sm text-accent">Section Parcours &amp; Expériences</h2>
+                    <h2 class="font-display text-sm text-accent">Section Parcours &amp; Expériences</h2>
                     <button type="button" id="add-parcours-btn"
                             class="px-3 py-1 font-mono text-xs border border-border-strong rounded-lg hover:border-accent transition-colors">
                         + Ajouter une étape
@@ -228,7 +254,7 @@
         <section id="skills" class="tab-content hidden flex-col gap-8">
             <!-- Badges Tech -->
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
-                <h2 class="font-mono text-sm text-accent">Compétences Techniques &amp; Outils</h2>
+                <h2 class="font-display text-sm text-accent">Compétences Techniques &amp; Outils</h2>
 
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Stack Technique
@@ -250,7 +276,7 @@
             <!-- Langues -->
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
                 <div class="flex justify-between items-center border-b border-border-strong pb-4">
-                    <h2 class="font-mono text-sm text-accent">Langues parlées</h2>
+                    <h2 class="font-display text-sm text-accent">Langues parlées</h2>
                     <button type="button" id="add-langue-btn"
                             class="px-3 py-1 font-mono text-xs border border-border-strong rounded-lg hover:border-accent transition-colors">
                         + Ajouter une langue
@@ -308,7 +334,7 @@
         <!-- ========================================== -->
         <section id="projects" class="tab-content hidden flex-col gap-8">
             <div class="flex justify-between items-center border-b border-border-strong pb-4">
-                <h2 class="font-mono text-sm text-accent">Gestion des Projets du Portfolio</h2>
+                <h2 class="font-display text-sm text-accent">Gestion des Projets du Portfolio</h2>
                 <button type="button" id="add-project-btn"
                         class="px-4 py-2 font-mono text-xs border border-border-strong rounded-lg hover:border-accent transition-colors">
                     + Ajouter un projet
@@ -345,7 +371,7 @@
                             <input type="hidden" name="projects[<?= $index ?>][id]" value="<?= $project['id'] ?? '' ?>">
 
                             <div class="flex justify-between items-center border-b border-border-strong pb-4">
-                                <h3 class="font-serif text-xl text-accent italic">Projet
+                                <h3 class="font-display text-xl text-accent italic">Projet
                                     #<?= sprintf('%02d', $index + 1) ?></h3>
                                 <button type="button"
                                         class="remove-item-btn text-[10px] font-mono border border-border-strong px-3 py-1 rounded hover:text-red-400 hover:border-red-400 transition-colors">
@@ -426,7 +452,7 @@
         <section id="galerie" class="tab-content hidden flex-col gap-8">
             <div class="flex justify-between items-center border-b border-border-strong pb-4">
                 <div>
-                    <h2 class="font-mono text-sm text-accent">Galerie "Regarder Autrement"</h2>
+                    <h2 class="font-display text-sm text-accent">Galerie "Regarder Autrement"</h2>
                     <p class="text-xs text-muted-foreground mt-1">Gérez les photos, leurs légendes et leur format de
                         grille.</p>
                 </div>
@@ -502,15 +528,69 @@
                             <select name="photos[<?= $idx ?>][format]"
                                     class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 <option value="portrait" <?= ($photo['format'] ?? '') === 'portrait' ? 'selected' : '' ?>>
-                                    Grand (Portrait / 2 rangées)
+                                    Portrait (3:4 Dev · 4:5 Photo)
                                 </option>
                                 <option value="landscape" <?= ($photo['format'] ?? '') === 'landscape' ? 'selected' : '' ?>>
-                                    Standard (Paysage)
+                                    Paysage (16:10 Dev · 16:9 Photo)
+                                </option>
+                                <option value="panorama" <?= ($photo['format'] ?? '') === 'panorama' ? 'selected' : '' ?>>
+                                    Panorama cinéma (21:9 Photo, pleine largeur)
                                 </option>
                             </select>
                         </div>
                     </div>
                 <?php endforeach; ?>
+            </div>
+
+            <!-- Comparateur Avant / Après (section « Post-traitement », visible en Mode Photo) -->
+            <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
+                <div>
+                    <h2 class="font-display text-sm text-accent">Comparateur Avant / Après (Mode Photo)</h2>
+                    <p class="text-xs text-muted-foreground mt-1">
+                        Photo brute (RAW exporté en JPEG / WebP) et rendu final étalonné, de même cadrage.
+                        Sans image brute, un aperçu brut est simulé (et signalé comme tel) à partir de l'image finale.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-mono uppercase text-muted-foreground">Image AVANT (brute) : URL ou upload</label>
+                        <input type="text" name="compare_before"
+                               value="<?= htmlspecialchars($content['compare_before'] ?? '') ?>"
+                               placeholder="Vide = brut simulé"
+                               class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+                        <input type="file" name="compare_before_file" accept="image/jpeg,image/png,image/webp"
+                               class="w-full text-[10px] text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-mono uppercase text-muted-foreground">Image APRÈS (étalonnée) : URL ou upload</label>
+                        <input type="text" name="compare_after"
+                               value="<?= htmlspecialchars($content['compare_after'] ?? '') ?>"
+                               placeholder="/assets/images/gallery/gallery-2.webp"
+                               class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+                        <input type="file" name="compare_after_file" accept="image/jpeg,image/png,image/webp"
+                               class="w-full text-[10px] text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre de la section</label>
+                    <input type="text" name="compare_title"
+                           value="<?= htmlspecialchars($content['compare_title'] ?? '') ?>"
+                           placeholder="Du RAW à l'image finale."
+                           class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Texte d'accompagnement</label>
+                    <textarea name="compare_caption" rows="2"
+                              class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent resize-y"><?= htmlspecialchars($content['compare_caption'] ?? '') ?></textarea>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Outils (séparés par des virgules)</label>
+                    <input type="text" name="compare_tools"
+                           value="<?= htmlspecialchars($content['compare_tools'] ?? 'Lightroom Classic, DaVinci Resolve') ?>"
+                           class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+                </div>
             </div>
         </section>
 
@@ -519,7 +599,7 @@
         <!-- ========================================== -->
         <section id="contact" class="tab-content hidden flex-col gap-8">
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
-                <h2 class="font-mono text-sm text-accent">Titres &amp; Textes de Contact</h2>
+                <h2 class="font-display text-sm text-accent">Titres &amp; Textes de Contact</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre de section</label>
@@ -540,7 +620,7 @@
             <!-- Liens de contact -->
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
                 <div class="flex justify-between items-center border-b border-border-strong pb-4">
-                    <h2 class="font-mono text-sm text-accent">Coordonnées &amp; Liens Réseaux</h2>
+                    <h2 class="font-display text-sm text-accent">Coordonnées &amp; Liens Réseaux</h2>
                     <button type="button" id="add-contact-btn"
                             class="px-3 py-1 font-mono text-xs border border-border-strong rounded-lg hover:border-accent transition-colors">
                         + Ajouter un lien
@@ -597,7 +677,7 @@
 
             <!-- Centres d'intérêt -->
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-4">
-                <h2 class="font-mono text-sm text-accent">Centres d'intérêt (Footer)</h2>
+                <h2 class="font-display text-sm text-accent">Centres d'intérêt (Footer)</h2>
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Tags séparés par des
                         virgules</label>
@@ -617,7 +697,7 @@
             <div class="flex flex-col gap-6 border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl">
                 <div class="flex justify-between items-center border-b border-border-strong pb-4">
                     <div>
-                        <h3 class="font-mono text-sm text-accent">Expérimentations &amp; Snippets Console</h3>
+                        <h3 class="font-display text-sm text-accent">Expérimentations &amp; Snippets Console</h3>
                         <p class="text-xs text-muted-foreground mt-1">Ajoutez ou modifiez vos snippets de code
                             interactifs.</p>
                     </div>
@@ -712,7 +792,7 @@
             <div class="flex flex-col gap-6 border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl">
                 <div class="flex justify-between items-center border-b border-border-strong pb-4">
                     <div>
-                        <h3 class="font-mono text-sm text-amber-400">Articles de Blog &amp; Notes d'expérience</h3>
+                        <h3 class="font-display text-sm text-amber-400">Articles de Blog &amp; Notes d'expérience</h3>
                         <p class="text-xs text-muted-foreground mt-1">Rédigez et organisez vos publications.</p>
                     </div>
                     <button type="button" id="add-article-btn"

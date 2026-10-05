@@ -12,6 +12,7 @@ $languesList = $content['langues'] ?? [
         ['name' => 'Espagnol', 'level' => 'B2+ / C1', 'percent' => 85],
         ['name' => 'Anglais', 'level' => 'B1', 'percent' => 60]
 ];
+
 ?>
 
 <section id="skills" class="mt-24 w-full flex flex-col gap-12">
@@ -29,7 +30,7 @@ $languesList = $content['langues'] ?? [
         <div class="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none"></div>
         <div class="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"></div>
 
-        <div class="flex whitespace-nowrap animate-marquee gap-8 items-center text-xl sm:text-2xl font-serif italic">
+        <div class="flex whitespace-nowrap animate-marquee gap-8 items-center text-xl sm:text-2xl font-display italic">
 
             <!-- CONTENU MODE DEV (Généré dynamiquement) -->
             <div class="contents [html[data-mode='photo']_&]:hidden text-foreground/80">
@@ -81,7 +82,7 @@ $languesList = $content['langues'] ?? [
             <!-- MODE DEV : Langages & Frameworks (Dynamique BDD) -->
             <div class="[html[data-mode='photo']_&]:hidden flex flex-wrap gap-2.5">
                 <?php foreach ($skillsTechList as $tech): ?>
-                    <span class="px-3.5 py-1.5 rounded-full border border-border-strong bg-background-card/40 text-xs font-sans text-foreground">
+                    <span class="px-3.5 py-1.5 rounded-full border border-border-strong bg-background-card/40 text-xs font-body text-foreground">
                         <?= htmlspecialchars($tech) ?>
                     </span>
                 <?php endforeach; ?>
@@ -99,11 +100,11 @@ $languesList = $content['langues'] ?? [
             <!-- MODE PHOTO : Matériel & Prestations Visuelles -->
             <div class="hidden [html[data-mode='photo']_&]:flex flex-col gap-6">
                 <div class="flex flex-wrap gap-2.5">
-                    <span class="px-3.5 py-1.5 rounded-full border border-amber-400/30 bg-amber-950/20 text-xs font-sans text-amber-200">Portrait &amp; Street Photography</span>
-                    <span class="px-3.5 py-1.5 rounded-full border border-amber-400/30 bg-amber-950/20 text-xs font-sans text-amber-200">Color Grading</span>
-                    <span class="px-3.5 py-1.5 rounded-full border border-amber-400/30 bg-amber-950/20 text-xs font-sans text-amber-200">Montage vidéo dynamique</span>
-                    <span class="px-3.5 py-1.5 rounded-full border border-amber-400/30 bg-amber-950/20 text-xs font-sans text-amber-200">Retouche photo avancée</span>
-                    <span class="px-3.5 py-1.5 rounded-full border border-amber-400/30 bg-amber-950/20 text-xs font-sans text-amber-200">Création de contenu réseaux</span>
+                    <span class="px-3.5 py-1.5 rounded-full border border-amber-400/30 bg-amber-950/20 text-xs font-body text-amber-200">Portrait &amp; Street Photography</span>
+                    <span class="px-3.5 py-1.5 rounded-full border border-amber-400/30 bg-amber-950/20 text-xs font-body text-amber-200">Color Grading</span>
+                    <span class="px-3.5 py-1.5 rounded-full border border-amber-400/30 bg-amber-950/20 text-xs font-body text-amber-200">Montage vidéo dynamique</span>
+                    <span class="px-3.5 py-1.5 rounded-full border border-amber-400/30 bg-amber-950/20 text-xs font-body text-amber-200">Retouche photo avancée</span>
+                    <span class="px-3.5 py-1.5 rounded-full border border-amber-400/30 bg-amber-950/20 text-xs font-body text-amber-200">Création de contenu réseaux</span>
                 </div>
 
                 <div class="flex flex-wrap gap-2 pt-2">
@@ -132,7 +133,7 @@ $languesList = $content['langues'] ?? [
                         $percent = intval($lang['percent'] ?? 100);
                         ?>
                         <div class="flex flex-col gap-2">
-                            <div class="flex justify-between items-center text-sm font-sans">
+                            <div class="flex justify-between items-center text-sm font-body">
                                 <span class="text-foreground"><?= htmlspecialchars($lang['name'] ?? 'Langue') ?></span>
                                 <span class="text-xs font-mono text-muted-foreground"><?= htmlspecialchars($lang['level'] ?? '') ?></span>
                             </div>
