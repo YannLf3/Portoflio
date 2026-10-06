@@ -291,6 +291,8 @@ Les quatre familles sont chargées par **une seule requête** Google Fonts (`@im
 
 ### 7.1 Vue d'ensemble
 
+Toute la partie animation concernant les 'points' en en background et les traits sous les titres qui apparaissent au scroll on été créés par moi assisté par Claude Opus 5.5 concernant les fonctions créés car je voulais absolument avoir ces animations mais ne sachant pas comment les créer sans utiliser de librairies tierces ou de librairies Three.js ou GSAP. J'ai donc demandé a Claude de m'expliquer le focntionnement et d'en coder ensuite les principales fonctions en respectant mon architecture MVC déjà en place.
+
 | Fonctionnalité | Logique JS | Style (`input.css`) | Vues |
 | --- | --- | --- | --- |
 | Particules WebGL | `animations.js` → `M.particles`, `V.particles` | `.fx-particles` | `layouts/header.php` |
