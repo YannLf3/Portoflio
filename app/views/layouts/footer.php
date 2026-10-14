@@ -80,6 +80,7 @@
 </div>
 
 <script src="/js/main.js?v=20261014"></script>
+<script src="/js/nav-menu.js?v=20261014" defer></script>
 <script src="/js/animations.js?v=20261014" defer></script>
 <script src="/js/terminal.js?v=20261014" defer></script>
 <script src="/js/photo-mode.js?v=20261014" defer></script>

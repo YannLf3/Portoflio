@@ -1310,6 +1310,13 @@ html:has(#lightbox[open]) {
         --_color: var(--_fg-active);
     }
 
+    /* Très petits écrans (< 360px) : options resserrées pour laisser la place au bouton burger */
+    @media (width < 22.5rem) {
+        .mode-switch__option {
+            padding-inline: 0.45rem;
+        }
+    }
+
     /* -----------------------------------------------------------------------
        9. GRAIN ARGENTIQUE — surimpression de bruit SVG (feTurbulence), animée
        par sauts (steps) comme un film qui défile. Actif en mode Photo uniquement.
@@ -1779,6 +1786,97 @@ html:has(#lightbox[open]) {
         scale: 1.1;
         background-color: oklch(0 0 0 / 0.65);
     }
+
+    /* -----------------------------------------------------------------------
+       13. MENU BURGER (mobile < md) — bouton ☰ → ✕ + panneau déroulant
+       Piloté par public/js/nav-menu.js. L'état est porté par aria-expanded
+       (bouton) et data-open (panneau #main-nav). En desktop, la <nav> reste
+       la pilule habituelle et le bouton est masqué (md:hidden).
+       ----------------------------------------------------------------------- */
+    .nav-burger {
+        --_bar: var(--foreground);
+        --_gap: 5px;
+
+        position: relative;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        background-color: color-mix(in oklab, var(--background-2) 70%, transparent);
+        backdrop-filter: blur(12px);
+        transition: border-color 0.4s ease;
+    }
+
+    .nav-burger:hover,
+    .nav-burger[aria-expanded='true'] {
+        --_bar: var(--accent);
+
+        border-color: color-mix(in oklab, var(--accent) 45%, var(--border-strong));
+    }
+
+    /* Très petits écrans (< 360px) : bouton réduit pour tenir à côté du logo et de l'interrupteur */
+    @media (width < 22.5rem) {
+        .nav-burger {
+            width: 2.25rem;
+            height: 2.25rem;
+        }
+    }
+
+    .nav-burger:focus-visible {
+        outline: 2px solid var(--accent-2);
+        outline-offset: 3px;
+    }
+
+    /* Les trois barres sont superposées au centre puis décalées verticalement (--_y) */
+    .nav-burger__bar {
+        --_y: 0px;
+
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 1rem;
+        height: 1.5px;
+        border-radius: 999px;
+        background-color: var(--_bar);
+        transform: translate(-50%, calc(-50% + var(--_y)));
+        transition: transform 0.45s var(--ease-out-expo), opacity 0.25s ease, background-color 0.4s ease;
+    }
+
+    .nav-burger__bar:nth-child(1) {
+        --_y: calc(var(--_gap) * -1);
+    }
+
+    .nav-burger__bar:nth-child(3) {
+        --_y: var(--_gap);
+    }
+
+    /* Ouvert : barres extrêmes recentrées et croisées en ✕, barre centrale effacée */
+    .nav-burger[aria-expanded='true'] .nav-burger__bar:nth-child(1) {
+        transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .nav-burger[aria-expanded='true'] .nav-burger__bar:nth-child(2) {
+        opacity: 0;
+    }
+
+    .nav-burger[aria-expanded='true'] .nav-burger__bar:nth-child(3) {
+        transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    /* Panneau mobile : apparition par fondu + légère descente (display: none → flex) */
+    @media (width < 48rem) {
+        .nav-menu[data-open='true'] {
+            transition: opacity 0.3s ease, translate 0.4s var(--ease-out-expo);
+
+            @starting-style {
+                opacity: 0;
+                translate: 0 -8px;
+            }
+        }
+    }
 }
 
 /* Glitch — canal A (accent) : tranches horizontales qui sautent, décalage vers la gauche */
@@ -1935,7 +2033,9 @@ html:has(#lightbox[open]) {
     .tilt-card,
     .cursor__dot,
     .btn-glow,
-    .cli-launcher {
+    .cli-launcher,
+    .nav-burger__bar,
+    .nav-menu[data-open='true'] {
         transition-duration: 0.01ms !important;
         transition-delay: 0s !important;
     }

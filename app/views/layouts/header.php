@@ -116,36 +116,44 @@
 <div id="theme-transition-overlay"
      class="fixed inset-0 pointer-events-none z-20 transition-all duration-700 ease-in-out opacity-0"></div>
 
-<header class="sticky top-0 flex flex-row justify-between items-center z-50 bg-background-2/80 backdrop-blur-md border-b border-border py-3 transition-colors duration-300">
+<header class="sticky top-0 flex flex-row justify-between items-center gap-1.5 z-50 bg-background-2/80 backdrop-blur-md border-b border-border py-3 transition-colors duration-300">
 
     <a href="/" data-magnetic data-glitch="Yann Le Flohic" aria-label="Yann Le Flohic — retour à l'accueil"
        class="glitch font-display font-semibold uppercase text-xs sm:text-sm tracking-[0.14em] sm:tracking-[0.2em] text-foreground whitespace-nowrap">
         <span class="glitch__text">Yann Le Flohic</span>
     </a>
 
-    <nav class="hidden md:flex items-center gap-1 border border-border-strong bg-background-card/40 backdrop-blur-md rounded-full px-4 py-1.5 text-xs font-mono"
+    <button type="button" id="nav-toggle" class="nav-burger ml-auto sm:mr-1.5 md:hidden"
+            aria-controls="main-nav" aria-expanded="false" aria-label="Ouvrir le menu">
+        <span class="nav-burger__bar" aria-hidden="true"></span>
+        <span class="nav-burger__bar" aria-hidden="true"></span>
+        <span class="nav-burger__bar" aria-hidden="true"></span>
+    </button>
+
+    <nav id="main-nav" data-open="false"
+         class="nav-menu absolute top-full inset-x-0 mt-2 hidden data-[open=true]:flex flex-col gap-1 p-2 rounded-2xl border border-border-strong bg-background-2 shadow-lg text-sm font-mono md:static md:mt-0 md:flex md:flex-row md:items-center md:gap-1 md:px-4 md:py-1.5 md:rounded-full md:bg-background-card/40 md:backdrop-blur-md md:shadow-none md:text-xs"
          aria-label="Navigation principale">
         <a href="/#about" data-magnetic
-           class="px-3 py-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
+           class="px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
             01. Parcours
         </a>
         <a href="/#skills" data-magnetic
-           class="px-3 py-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
+           class="px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
             02. Compétences
         </a>
         <a href="/#projects" data-magnetic
-           class="px-3 py-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
+           class="px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
             03. Projets
         </a>
         <a href="/#contact" data-magnetic
-           class="px-3 py-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
+           class="px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
             04. Contact
         </a>
 
-        <span class="w-px h-3 bg-border-strong mx-1"></span>
+        <span class="h-px mx-2 my-1 bg-border-strong md:w-px md:h-3 md:mx-1 md:my-0" aria-hidden="true"></span>
 
         <a href="/lab" data-magnetic
-           class="flex items-center gap-1.5 px-3 py-1 rounded-full text-accent [html[data-mode='photo']_&]:text-amber-400 hover:bg-background-card/60 transition-all">
+           class="flex items-center gap-1.5 px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-accent [html[data-mode='photo']_&]:text-amber-400 hover:bg-background-card/60 transition-all">
             <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [html[data-mode='photo']_&]:bg-amber-400"></span>
             <span>Lab</span>
         </a>
