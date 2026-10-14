@@ -2,7 +2,6 @@
 
     <main class="mt-12 w-full flex flex-col gap-20">
 
-        <!-- En-tête de la page -->
         <section class="flex flex-col items-start gap-4 border-b border-border-strong pb-12">
             <span class="text-xs font-mono tracking-widest text-accent uppercase [html[data-mode='photo']_&]:text-amber-400">
                 04 — Laboratoire &amp; Veille
@@ -18,7 +17,6 @@
             </p>
         </section>
 
-        <!-- SECTION 1 : EXPERIMENTATIONS CSS & JS (DYNAMIQUE BDD) -->
         <section class="flex flex-col gap-8">
             <div class="flex items-center justify-between">
                 <h2 class="reveal-title reveal-title--short text-xl sm:text-2xl font-display text-foreground">
@@ -33,84 +31,55 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <?php
-                // Décodage et conversion sécurisée de $snippets
-                $snippetsList = $snippets ?? $content['snippets'] ?? [];
-                if (is_string($snippetsList)) {
-                    $snippetsList = json_decode($snippetsList, true) ?? [];
-                }
-                if (!is_array($snippetsList) || empty($snippetsList)) {
-                    $snippetsList = [
-                            [
-                                    'title' => 'Glow Effect & Dynamic Border',
-                                    'category' => 'CSS Modern',
-                                    'badge' => 'Tested on Chrome / Safari',
-                                    'html' => '<button class="glow-button">Survole-moi !</button>',
-                                    'css' => ".glow-button {\n  background: #18181b;\n  border: 1px solid #27272a;\n  color: #fff;\n  padding: 12px 24px;\n  border-radius: 8px;\n  cursor: pointer;\n  transition: all 0.3s;\n}\n.glow-button:hover {\n  border-color: #22c55e;\n  box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);\n}",
-                                    'js' => "// Pas de JavaScript requis"
-                            ]
-                    ];
-                }
-
-                if (!empty($snippetsList)):
-                    foreach ($snippetsList as $idx => $snip):
-                        ?>
-                        <div class="border border-border-strong rounded-xl bg-background-card/30 p-6 flex flex-col justify-between gap-6 relative overflow-hidden group">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-bold text-foreground text-base"><?= htmlspecialchars($snip['title'] ?? 'Expérimentation') ?></h3>
-                                    <p class="text-xs text-muted-foreground mt-1">Snippet interactif</p>
-                                </div>
-                                <span class="text-[10px] font-mono px-2 py-0.5 rounded border border-accent/30 text-accent [html[data-mode='photo']_&]:border-amber-400/30 [html[data-mode='photo']_&]:text-amber-400">
-                                    <?= htmlspecialchars($snip['category'] ?? $snip['tag'] ?? 'Lab') ?>
-                                </span>
+                <?php array_walk($snippets, static function (array $snippet, int|string $index): void { ?>
+                    <div class="border border-border-strong rounded-xl bg-background-card/30 p-6 flex flex-col justify-between gap-6 relative overflow-hidden group">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-foreground text-base"><?= htmlspecialchars($snippet['title']) ?></h3>
+                                <p class="text-xs text-muted-foreground mt-1">Snippet interactif</p>
                             </div>
-
-                            <!-- PREVIEW ET INJECTION CSS / HTML DYNAMIQUE -->
-                            <div class="h-48 rounded-lg bg-zinc-950/80 border border-zinc-800 flex items-center justify-center relative overflow-hidden p-4" id="snippet-container-<?= $idx ?>">
-                                <!-- Injection du CSS spécifique -->
-                                <?php if (!empty($snip['css'])): ?>
-                                    <style>
-                                        <?= $snip['css'] ?>
-                                    </style>
-                                <?php endif; ?>
-
-                                <!-- Rendu du HTML -->
-                                <?= $snip['html'] ?? '' ?>
-
-                                <!-- Exécution du JS si présent -->
-                                <?php if (!empty($snip['js']) && strpos($snip['js'], '// Pas de') === false): ?>
-                                    <script>
-                                        (function() {
-                                            try {
-                                                <?= $snip['js'] ?>
-                                            } catch(e) {
-                                                console.error('Erreur JS Snippet:', e);
-                                            }
-                                        })();
-                                    </script>
-                                <?php endif; ?>
-                            </div>
-
-                            <div class="flex justify-between items-center text-xs font-mono text-muted-foreground pt-2 border-t border-zinc-800/60">
-                                <span><?= htmlspecialchars($snip['badge'] ?? $snip['note'] ?? 'Tested on Modern Browsers') ?></span>
-                                <button class="text-accent hover:underline [html[data-mode='photo']_&]:text-amber-400 open-code-modal"
-                                        data-title="<?= htmlspecialchars($snip['title'] ?? 'Console', ENT_QUOTES) ?>"
-                                        data-html="<?= htmlspecialchars($snip['html'] ?? '', ENT_QUOTES) ?>"
-                                        data-css="<?= htmlspecialchars($snip['css'] ?? '', ENT_QUOTES) ?>"
-                                        data-js="<?= htmlspecialchars($snip['js'] ?? '', ENT_QUOTES) ?>">
-                                    Voir le code →
-                                </button>
-                            </div>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded border border-accent/30 text-accent [html[data-mode='photo']_&]:border-amber-400/30 [html[data-mode='photo']_&]:text-amber-400">
+                                <?= htmlspecialchars($snippet['category']) ?>
+                            </span>
                         </div>
-                    <?php
-                    endforeach;
-                endif;
-                ?>
+
+                        <div class="h-48 rounded-lg bg-zinc-950/80 border border-zinc-800 flex items-center justify-center relative overflow-hidden p-4" id="snippet-container-<?= $index ?>">
+                            <?php if ($snippet['hasCss']): ?>
+                                <style>
+                                    <?= $snippet['css'] ?>
+                                </style>
+                            <?php endif; ?>
+
+                            <?= $snippet['html'] ?>
+
+                            <?php if ($snippet['runJs']): ?>
+                                <script>
+                                    (function() {
+                                        try {
+                                            <?= $snippet['js'] ?>
+                                        } catch(e) {
+                                            console.error('Erreur JS Snippet:', e);
+                                        }
+                                    })();
+                                </script>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="flex justify-between items-center text-xs font-mono text-muted-foreground pt-2 border-t border-zinc-800/60">
+                            <span><?= htmlspecialchars($snippet['badge']) ?></span>
+                            <button type="button" class="text-accent hover:underline [html[data-mode='photo']_&]:text-amber-400 open-code-modal"
+                                    data-title="<?= htmlspecialchars($snippet['modalTitle'], ENT_QUOTES) ?>"
+                                    data-html="<?= htmlspecialchars($snippet['html'], ENT_QUOTES) ?>"
+                                    data-css="<?= htmlspecialchars($snippet['css'], ENT_QUOTES) ?>"
+                                    data-js="<?= htmlspecialchars($snippet['js'], ENT_QUOTES) ?>">
+                                Voir le code →
+                            </button>
+                        </div>
+                    </div>
+                <?php }); ?>
             </div>
         </section>
 
-        <!-- SECTION 2 : ARTICLES DE BLOG (DYNAMIQUE BDD) -->
         <section class="flex flex-col gap-8 pb-20">
             <div class="flex items-center justify-between border-t border-border-strong pt-12">
                 <h2 class="reveal-title reveal-title--short text-xl sm:text-2xl font-display text-foreground">
@@ -125,89 +94,52 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <?php
-                // Décodage et conversion sécurisée de $articles
-                $articlesList = $articles ?? $content['articles'] ?? [];
-                if (is_string($articlesList)) {
-                    $articlesList = json_decode($articlesList, true) ?? [];
-                }
-                if (!is_array($articlesList) || empty($articlesList)) {
-                    $articlesList = [
-                            [
-                                    'title' => "Passer d'Illustrator à Affinity V3 : Mon retour d'expérience en vectoriel",
-                                    'meta' => 'AFFINITY DESIGNER — 12 SEP 2026',
-                                    'content' => "Après plusieurs mois d'utilisation intensive d'Affinity Designer V3 dans mes projets web et UI/UX, le passage depuis la suite Adobe Creative Cloud s'est fait sans friction majeure.\n\n### Les points forts :\n- **Paiement unique** : Fin de l'abonnement mensuel Adobe.\n- **Performance** : Temps de chargement instantané sur macOS Apple Silicon.\n- **Export SVG propre** : Les fichiers générés sont légers et directement exploitables en HTML/CSS.\n\nEn résumé, pour le design d'icônes, de maquettes web et d'illustrations vectorielles, Affinity constitue une alternative d'une grande fluidité."
-                            ],
-                            [
-                                    'title' => 'Mon Setup macOS pour coder en PHP MVC sans Docker lourd',
-                                    'meta' => 'MACOS / DEV — 02 SEP 2026',
-                                    'content' => "Pour maintenir une excellente autonomie sur mon MacBook et éviter le surplus de mémoire consommé par Docker sur des projets légers, j'utilise un environnement serveur natif.\n\n### La Stack de développement :\n1. **Homebrew** pour l'installation de PHP 8.3 et MySQL.\n2. **Apache / Nginx** configuré localement avec des hôtes virtuels.\n3. **PhpStorm & VS Code** avec liaisons Git automatisées.\n4. **Raycast** pour lancer mes scripts et requêtes de base de données en un raccourci clavier."
-                            ],
-                            [
-                                    'title' => 'Étalonnage vidéo sur écran Apple Silicon : Retours sur DaVinci Resolve',
-                                    'meta' => 'HARDWARE — 28 AOU 2026',
-                                    'content' => "Travailler l'étalonnage de vidéos automobiles ou de montages réseaux sur DaVinci Resolve demande une grande rigueur sur la chaîne de couleur.\n\n### Le piège du Gamma QuickTime sous macOS :\nLes écrans Apple utilisent l'espace Display P3 avec un profil de restitution spécifique. Lors de l'exportation :\n- Configurer la Timeline sur **Rec.709-DB** ou **Rec.709 A**.\n- Activer la gestion des profils de couleur d'affichage macOS dans les préférences DaVinci Resolve.\n\nCela évite l'effet d'image délavée lors de la relecture sur Safari ou sur smartphone."
-                            ]
-                    ];
-                }
-
-                if (!empty($articlesList)):
-                    foreach ($articlesList as $art):
-                        $metaParts = explode('—', $art['meta'] ?? '', 2);
-                        $artCat = trim($metaParts[0] ?? 'BLOG');
-                        $artDate = trim($metaParts[1] ?? '2026');
-                        ?>
-                        <article
-                                class="border border-border-strong rounded-xl bg-background-card/20 p-5 flex flex-col gap-4 hover:border-zinc-700 transition-all duration-300">
-                            <div class="flex items-center justify-between text-xs font-mono text-muted-foreground">
-                                <span class="text-accent [html[data-mode='photo']_&]:text-amber-400"><?= htmlspecialchars($artCat) ?></span>
-                                <span><?= htmlspecialchars($artDate) ?></span>
-                            </div>
-                            <h3 class="font-bold text-foreground text-base leading-snug">
-                                <?= htmlspecialchars($art['title'] ?? '') ?>
-                            </h3>
-                            <p class="text-xs text-muted-foreground leading-relaxed line-clamp-3">
-                                <?= htmlspecialchars(strip_tags($art['content'] ?? '')) ?>
-                            </p>
-                            <div class="pt-2 mt-auto">
-                                <button class="text-xs font-mono text-accent hover:underline [html[data-mode='photo']_&]:text-amber-400 open-article-modal"
-                                        data-title="<?= htmlspecialchars($art['title'] ?? '', ENT_QUOTES) ?>"
-                                        data-category="<?= htmlspecialchars($art['meta'] ?? '', ENT_QUOTES) ?>"
-                                        data-content="<?= htmlspecialchars($art['content'] ?? '', ENT_QUOTES) ?>">
-                                    Lire l'article →
-                                </button>
-                            </div>
-                        </article>
-                    <?php
-                    endforeach;
-                endif;
-                ?>
+                <?php array_walk($articles, static function (array $article): void { ?>
+                    <article
+                            class="border border-border-strong rounded-xl bg-background-card/20 p-5 flex flex-col gap-4 hover:border-zinc-700 transition-all duration-300">
+                        <div class="flex items-center justify-between text-xs font-mono text-muted-foreground">
+                            <span class="text-accent [html[data-mode='photo']_&]:text-amber-400"><?= htmlspecialchars($article['category']) ?></span>
+                            <span><?= htmlspecialchars($article['date']) ?></span>
+                        </div>
+                        <h3 class="font-bold text-foreground text-base leading-snug">
+                            <?= htmlspecialchars($article['title']) ?>
+                        </h3>
+                        <p class="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                            <?= htmlspecialchars($article['excerpt']) ?>
+                        </p>
+                        <div class="pt-2 mt-auto">
+                            <button type="button" class="text-xs font-mono text-accent hover:underline [html[data-mode='photo']_&]:text-amber-400 open-article-modal"
+                                    data-title="<?= htmlspecialchars($article['title'], ENT_QUOTES) ?>"
+                                    data-category="<?= htmlspecialchars($article['meta'], ENT_QUOTES) ?>"
+                                    data-content="<?= htmlspecialchars($article['content'], ENT_QUOTES) ?>">
+                                Lire l'article →
+                            </button>
+                        </div>
+                    </article>
+                <?php }); ?>
             </div>
         </section>
 
     </main>
 
-    <!-- ========================================== -->
-    <!-- MODALE CONSOLE / CODE                      -->
-    <!-- ========================================== -->
     <div id="code-modal"
          class="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
         <div class="bg-zinc-950 border border-zinc-800 rounded-xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
 
             <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50">
                 <div class="flex items-center gap-2">
-                    <button class="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-500 close-modal"></button>
+                    <button type="button" class="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-500 close-modal" aria-label="Fermer la console"></button>
                     <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
                     <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
                     <span id="code-modal-title" class="text-xs font-mono text-zinc-400 ml-2">Console</span>
                 </div>
 
                 <div class="flex gap-1 font-mono text-xs">
-                    <button class="code-tab px-3 py-1 rounded bg-zinc-800 text-accent active" data-lang="html">HTML
+                    <button type="button" class="code-tab px-3 py-1 rounded bg-zinc-800 text-accent active" data-lang="html">HTML
                     </button>
-                    <button class="code-tab px-3 py-1 rounded text-zinc-400 hover:text-zinc-200" data-lang="css">CSS
+                    <button type="button" class="code-tab px-3 py-1 rounded text-zinc-400 hover:text-zinc-200" data-lang="css">CSS
                     </button>
-                    <button class="code-tab px-3 py-1 rounded text-zinc-400 hover:text-zinc-200" data-lang="js">JS
+                    <button type="button" class="code-tab px-3 py-1 rounded text-zinc-400 hover:text-zinc-200" data-lang="js">JS
                     </button>
                 </div>
             </div>
@@ -223,9 +155,6 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODALE LECTEUR ARTICLE / BLOG              -->
-    <!-- ========================================== -->
     <div id="article-modal"
          class="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
         <div class="bg-zinc-950 border border-zinc-800 rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
@@ -233,7 +162,7 @@
             <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
                 <span id="article-modal-category"
                       class="text-xs font-mono text-accent [html[data-mode='photo']_&]:text-amber-400">CATEGORY</span>
-                <button class="text-zinc-500 hover:text-zinc-200 font-mono text-sm close-modal">✕ Fermer</button>
+                <button type="button" class="text-zinc-500 hover:text-zinc-200 font-mono text-sm close-modal">✕ Fermer</button>
             </div>
 
             <div class="p-6 md:p-8 overflow-y-auto space-y-4">
@@ -246,86 +175,6 @@
         </div>
     </div>
 
-    <!-- Script d'interaction des modales -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const codeModal = document.getElementById('code-modal');
-            const articleModal = document.getElementById('article-modal');
-            const codeContent = document.getElementById('code-content');
-            const codeTitle = document.getElementById('code-modal-title');
-            const codeTabs = document.querySelectorAll('.code-tab');
-
-            let currentSnippet = {html: '', css: '', js: ''};
-
-            // 1. Ouverture Modale Code
-            document.querySelectorAll('.open-code-modal').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    currentSnippet = {
-                        html: btn.dataset.html || '<!-- Pas de code HTML -->',
-                        css: btn.dataset.css || '/* Pas de CSS */',
-                        js: btn.dataset.js || '// Pas de JS'
-                    };
-
-                    codeTitle.textContent = btn.dataset.title || 'Console';
-                    switchTab('html');
-                    codeModal.classList.remove('hidden');
-                    codeModal.classList.add('flex');
-                });
-            });
-
-            // Gestion des onglets de code
-            codeTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    codeTabs.forEach(t => t.classList.remove('bg-zinc-800', 'text-accent', 'active'));
-                    tab.classList.add('bg-zinc-800', 'text-accent', 'active');
-                    switchTab(tab.dataset.lang);
-                });
-            });
-
-            function switchTab(lang) {
-                codeContent.textContent = currentSnippet[lang] || '';
-            }
-
-            // 2. Ouverture Modale Article (WYSIWYG & HTML/Texte)
-            document.querySelectorAll('.open-article-modal').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.getElementById('article-modal-title').textContent = btn.dataset.title;
-                    document.getElementById('article-modal-category').textContent = btn.dataset.category;
-
-                    const articleBody = document.getElementById('article-modal-body');
-                    if (btn.dataset.content.includes('<')) {
-                        articleBody.innerHTML = btn.dataset.content;
-                    } else {
-                        articleBody.textContent = btn.dataset.content;
-                    }
-
-                    articleModal.classList.remove('hidden');
-                    articleModal.classList.add('flex');
-                });
-            });
-
-            // 3. Fermeture des modales
-            document.querySelectorAll('.close-modal').forEach(btn => {
-                btn.addEventListener('click', closeModal);
-            });
-
-            [codeModal, articleModal].forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) closeModal();
-                });
-            });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeModal();
-            });
-
-            function closeModal() {
-                codeModal.classList.add('hidden');
-                codeModal.classList.remove('flex');
-                articleModal.classList.add('hidden');
-                articleModal.classList.remove('flex');
-            }
-        });
-    </script>
+    <script src="/js/lab.js?v=20261014" defer></script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

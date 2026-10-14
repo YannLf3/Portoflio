@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../models/settings.php';
+require_once __DIR__ . '/Controller.php';
+require_once __DIR__ . '/../models/Setting.php';
+require_once __DIR__ . '/../models/Project.php';
 require_once __DIR__ . '/../core/Response.php';
 
 /**
@@ -10,17 +12,12 @@ require_once __DIR__ . '/../core/Response.php';
  * Sécurité : seules les clés listées explicitement ici sont exposées (liste blanche).
  * La table `settings` peut contenir d'autres réglages : ils ne quittent jamais le serveur.
  */
-class ApiController
+final class ApiController extends Controller
 {
-    /** Valeurs de repli, identiques à celles des partials, si la clé est absente en BDD. */
-    private const DEFAULT_SKILLS = 'HTML / CSS, JavaScript, React, PHP, SQL, Python, Sass, BEM CSS, Tailwind, Bootstrap, Git / Github';
-    private const DEFAULT_TOOLS = 'VS CODE, JETBRAINS IDE, FIGMA, SHELL, ADOBE, AFFINITY, APACHE, MAC';
-    private const DEFAULT_INTERESTS = 'Open Source, Développement web, Photographie, Gaming, Badminton, Apple';
-    private const DEFAULT_LANGUAGES = [
-        ['name' => 'Français', 'level' => 'Natif', 'percent' => 100],
-        ['name' => 'Espagnol', 'level' => 'B2+ / C1', 'percent' => 85],
-        ['name' => 'Anglais', 'level' => 'B1', 'percent' => 60],
-    ];
+    /**
+     * Contacts de repli de l'API : ceux du site, SANS le numéro de téléphone
+     * (le terminal n'expose volontairement aucune donnée téléphonique).
+     */
     private const DEFAULT_CONTACTS = [
         ['label' => 'EMAIL', 'value' => 'yann.lfhc@icloud.com', 'href' => 'mailto:yann.lfhc@icloud.com'],
         ['label' => 'GITHUB', 'value' => 'github.com/YannLf3', 'href' => 'https://github.com/YannLf3'],
@@ -42,7 +39,8 @@ class ApiController
     public function terminal(): never
     {
         try {
-            $content = Setting::getAll();
+            $settings = Setting::load();
+            $projects = Project::findAll();
         } catch (Throwable $e) {
             // Erreur SQL : détail en log serveur uniquement, message générique côté client
             error_log('ApiController::terminal — ' . $e->getMessage());
@@ -50,17 +48,28 @@ class ApiController
         }
 
         Response::json([
-            'name' => $this->text($content['hero_name'] ?? 'Yann Le Flohic'),
-            'status' => $this->text($content['dispo_text'] ?? 'Disponible pour un stage · 8-12 semaines'),
-            'location' => $this->text($content['location'] ?? 'Châteauroux — FR'),
-            'school' => $this->text($content['status'] ?? '2° Année MMI'),
-            'skills' => $this->splitList($content['skills_tech'] ?? self::DEFAULT_SKILLS),
-            'tools' => $this->splitList($content['skills_tools'] ?? self::DEFAULT_TOOLS),
-            'interests' => $this->splitList($content['interests'] ?? self::DEFAULT_INTERESTS),
-            'languages' => $this->publicLanguages($content['langues'] ?? self::DEFAULT_LANGUAGES),
-            'contacts' => $this->publicContacts($content['contacts'] ?? self::DEFAULT_CONTACTS),
-            'projects' => $this->publicProjects($content['projects'] ?? []),
+            'name' => $this->text($settings->get('hero_name')),
+            'status' => $this->text($settings->get('dispo_text')),
+            'location' => $this->text($settings->get('location')),
+            'school' => $this->text($settings->get('status')),
+            'skills' => $this->splitWords($settings->get('skills_tech')),
+            'tools' => $this->splitWords($settings->get('skills_tools')),
+            'interests' => $this->splitWords($settings->get('interests')),
+            'languages' => $this->publicLanguages($settings->get('langues')),
+            'contacts' => $this->publicContacts($settings->getRaw('contacts') ?? self::DEFAULT_CONTACTS),
+            'projects' => array_map([$this, 'publicProject'], $projects),
         ], 200, self::CACHE_SECONDS);
+    }
+
+    /**
+     * GET /api/terminal appelé avec une autre méthode HTTP : réponse 405.
+     *
+     * @return never
+     */
+    public function methodNotAllowed(): never
+    {
+        header('Allow: GET');
+        Response::json(['error' => 'Méthode non autorisée.'], 405);
     }
 
     /**
@@ -75,12 +84,12 @@ class ApiController
     }
 
     /**
-     * Découpe une liste « a, b, c » en tableau de chaînes non vides.
+     * Découpe une liste « a, b, c » en tableau JSON de chaînes non vides (ré-indexé).
      *
      * @param mixed $raw Chaîne séparée par des virgules.
      * @return list<string>
      */
-    private function splitList(mixed $raw): array
+    private function splitWords(mixed $raw): array
     {
         if (!is_string($raw)) {
             return [];
@@ -109,21 +118,14 @@ class ApiController
      */
     private function publicLanguages(mixed $raw): array
     {
-        if (!is_array($raw)) {
-            return [];
-        }
-        $languages = [];
-        foreach ($raw as $lang) {
-            if (!is_array($lang)) {
-                continue;
-            }
-            $languages[] = [
-                'name' => $this->text($lang['name'] ?? ''),
-                'level' => $this->text($lang['level'] ?? ''),
-                'percent' => max(0, min(100, (int)($lang['percent'] ?? 0))),
-            ];
-        }
-        return $languages;
+        return array_values(array_map(
+            fn(array $language): array => [
+                'name' => $this->text($language['name'] ?? ''),
+                'level' => $this->text($language['level'] ?? ''),
+                'percent' => max(0, min(100, (int)($language['percent'] ?? 0))),
+            ],
+            self::rows($raw)
+        ));
     }
 
     /**
@@ -134,46 +136,29 @@ class ApiController
      */
     private function publicContacts(mixed $raw): array
     {
-        if (!is_array($raw)) {
-            return [];
-        }
-        $contacts = [];
-        foreach ($raw as $contact) {
-            if (!is_array($contact)) {
-                continue;
-            }
-            $contacts[] = [
+        return array_values(array_map(
+            fn(array $contact): array => [
                 'label' => $this->text($contact['label'] ?? ''),
                 'value' => $this->text($contact['value'] ?? ''),
                 'href' => $this->safeUrl($contact['href'] ?? ''),
-            ];
-        }
-        return $contacts;
+            ],
+            self::rows($raw)
+        ));
     }
 
     /**
-     * Ne conserve que les champs publics des projets (titre, méta, catégorie, lien filtré).
+     * Ne conserve que les champs publics d'un projet (titre, méta, catégorie, lien filtré).
      *
-     * @param mixed $raw Tableau issu de la BDD.
-     * @return list<array{title: string, meta: string, category: string, link: string}>
+     * @param Project $project
+     * @return array{title: string, meta: string, category: string, link: string}
      */
-    private function publicProjects(mixed $raw): array
+    private function publicProject(Project $project): array
     {
-        if (!is_array($raw)) {
-            return [];
-        }
-        $projects = [];
-        foreach ($raw as $project) {
-            if (!is_array($project)) {
-                continue;
-            }
-            $projects[] = [
-                'title' => $this->text($project['title'] ?? ''),
-                'meta' => $this->text($project['meta'] ?? ''),
-                'category' => $this->text($project['category'] ?? ''),
-                'link' => $this->safeUrl($project['link'] ?? ''),
-            ];
-        }
-        return $projects;
+        return [
+            'title' => $this->text($project->getTitle()),
+            'meta' => $this->text($project->getMeta()),
+            'category' => $this->text($project->getCategory()),
+            'link' => $this->safeUrl($project->getLink()),
+        ];
     }
 }

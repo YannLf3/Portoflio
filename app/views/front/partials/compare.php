@@ -1,29 +1,6 @@
-<?php
-/*
- * Section « Avant / Après » — visible et active en Mode Photo uniquement.
- *
- * Comparateur glissable (souris, doigt, clavier) entre la photo brute (RAW) et le
- * rendu final étalonné (Lightroom / DaVinci). Logique : public/js/photo-mode.js ;
- * styles : composant .compare (input.css § 12).
- *
- * Contenus éditables dans le back-office (onglet Galerie → Comparateur) :
- *   compare_before (image brute), compare_after (image finale), compare_title,
- *   compare_caption, compare_tools.
- * Sans image brute fournie, le « RAW » est SIMULÉ en CSS à partir de l'image finale
- * (désaturation + contraste aplati) et l'interface l'indique explicitement.
- */
-$compareAfter = trim((string)($content['compare_after'] ?? '')) ?: '/assets/images/gallery/gallery-2.webp';
-$compareBefore = trim((string)($content['compare_before'] ?? ''));
-$isSimulated = $compareBefore === '';
-$compareTitle = trim((string)($content['compare_title'] ?? '')) ?: "Du RAW à l'image finale.";
-$compareCaption = trim((string)($content['compare_caption'] ?? ''))
-        ?: "Balance des blancs, courbes, séparation des tons et grain : glissez la poignée pour comparer le fichier brut et l'étalonnage final.";
-$compareTools = array_filter(array_map('trim', explode(',', (string)($content['compare_tools'] ?? 'Lightroom Classic, DaVinci Resolve'))));
-?>
 <section id="post-traitement" class="mt-24 w-full hidden [html[data-mode='photo']_&]:flex flex-col gap-10"
          aria-labelledby="compare-title">
 
-    <!-- En-tête éditorial -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-end">
         <div class="lg:col-span-7 flex flex-col items-start gap-3">
             <span class="text-xs font-mono tracking-widest text-accent uppercase">
@@ -38,28 +15,25 @@ $compareTools = array_filter(array_map('trim', explode(',', (string)($content['c
         </div>
         <div class="lg:col-span-5 flex flex-col gap-4">
             <p class="text-sm text-muted-foreground leading-relaxed"><?= htmlspecialchars($compareCaption) ?></p>
-            <?php if (!empty($compareTools)): ?>
+            <?php if ($compareTools !== []): ?>
                 <div class="flex flex-wrap gap-2">
-                    <?php foreach ($compareTools as $tool): ?>
+                    <?php array_walk($compareTools, static function (string $tool): void { ?>
                         <span class="px-3 py-1 rounded-full border border-border-strong text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
                             <?= htmlspecialchars($tool) ?>
                         </span>
-                    <?php endforeach; ?>
+                    <?php }); ?>
                 </div>
             <?php endif; ?>
         </div>
     </div>
 
-    <!-- Comparateur : --_pos (0 → 100 %) piloté par photo-mode.js ; data-cursor : cercle « Glisser » -->
     <div class="compare grain" data-compare data-cursor="drag" data-cursor-label="Glisser">
-        <!-- Calque du dessous : rendu final -->
         <img class="compare__img" src="<?= htmlspecialchars($compareAfter) ?>"
-             alt="Photographie après étalonnage colorimétrique" loading="lazy" decoding="async" draggable="false">
+             alt="Photographie après étalonnage colorimétrique" width="1600" height="1200" loading="lazy" decoding="async" draggable="false">
 
-        <!-- Calque du dessus : brut (découpé à gauche de la poignée) -->
         <div class="compare__before">
             <img class="compare__img<?= $isSimulated ? ' compare__img--simulated' : '' ?>"
-                 src="<?= htmlspecialchars($isSimulated ? $compareAfter : $compareBefore) ?>"
+                 src="<?= htmlspecialchars($compareBeforeSrc) ?>" width="1600" height="1200"
                  alt="<?= $isSimulated ? 'Aperçu simulé du fichier brut, avant étalonnage' : 'Photographie brute (RAW), avant étalonnage' ?>"
                  loading="lazy" decoding="async" draggable="false">
         </div>
@@ -67,7 +41,6 @@ $compareTools = array_filter(array_map('trim', explode(',', (string)($content['c
         <span class="compare__tag compare__tag--before"><?= $isSimulated ? 'RAW · simulé' : 'RAW' ?></span>
         <span class="compare__tag compare__tag--after">Étalonné</span>
 
-        <!-- Poignée : rôle ARIA « slider » (flèches, Page ↑/↓, Début/Fin au clavier) -->
         <div class="compare__handle" role="slider" tabindex="0"
              aria-label="Comparer la photo brute et la photo étalonnée"
              aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50 % de photo brute">

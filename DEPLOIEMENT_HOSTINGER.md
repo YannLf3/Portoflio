@@ -14,6 +14,8 @@ Procédure de mise en production du portfolio, à suivre **dans l'ordre, case pa
 
 > 📘 Le fonctionnement technique est documenté dans **[`README.md`](README.md)**. Ce fichier ne traite **que** de la mise en ligne.
 
+> 🧱 **Restructuration MVC (14/10/2026)** : elle se déploie **après** cette procédure, avec son propre guide **[`MISE_EN_PRODUCTION_RESTRUCTURATION.md`](MISE_EN_PRODUCTION_RESTRUCTURATION.md)** (migration SQL de la table `projects`, nouveaux fichiers, suppression de `app/models/settings.php`).
+
 ---
 
 ## 📋 Sommaire
@@ -255,7 +257,7 @@ Aucun fichier actuellement en ligne ne les appelle : les envoyer ne change rien 
 
 ### Phase 3 — Modèles
 
-- [ ] **18.** `app/models/settings.php`
+- [ ] **18.** `app/models/settings.php` — *renommé `Setting.php` par la restructuration MVC : voir [`MISE_EN_PRODUCTION_RESTRUCTURATION.md`](MISE_EN_PRODUCTION_RESTRUCTURATION.md)*
 - [ ] **19.** `app/models/Project.php`
 
 **✅ Test phase 3**

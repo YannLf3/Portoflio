@@ -1,361 +1,262 @@
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * @file admin.js
+ * @description Interactions du back-office (app/views/admin/dashboard.php).
+ *
+ * - Onglets : un seul panneau de formulaire visible à la fois.
+ * - Listes répétables (parcours, langues, projets, photos, contacts, snippets, articles) :
+ *   ajout d'une ligne par clonage d'un gabarit <template> (remplacement de {{index}} et {{number}}),
+ *   suppression après confirmation.
+ * - Index d'une nouvelle ligne = plus grand index existant + 1 : après une suppression, aucune
+ *   ligne ne réutilise l'index d'une autre (sinon PHP écraserait ses champs à l'envoi).
+ *
+ * Architecture M/V/C stricte :
+ *  - M (Modèle)     : classes des onglets, message de confirmation, calcul des index.
+ *  - V (Vue)        : lecture du DOM, gabarits, déclaration des écouteurs (délégation sur le document).
+ *  - C (Contrôleur) : handlers qui interrogent M puis mettent à jour V.
+ *
+ * Chargé en `defer` depuis le <head> du dashboard.
+ */
 
-    // ==========================================
-    // 1. BASCULE DES ONGLETS (TABS)
-    // ==========================================
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+// IIFE : M, V et C restent privés.
+(() => {
+    'use strict';
 
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            tabBtns.forEach(b => {
-                b.classList.remove('active', 'border-accent', 'bg-accent/10', 'text-accent');
-                b.classList.add('border-border-strong', 'text-muted-foreground');
-            });
+    /* =======================================================================
+       M — MODÈLE
+       ======================================================================= */
+    const M = {};
 
-            tabContents.forEach(content => {
-                content.classList.add('hidden');
-                content.classList.remove('flex');
-            });
+    /** Classes d'état des boutons d'onglet. */
+    M.tabClasses = {
+        active: ['active', 'border-accent', 'bg-accent/10', 'text-accent'],
+        inactive: ['border-border-strong', 'text-muted-foreground']
+    };
 
-            btn.classList.add('active', 'border-accent', 'bg-accent/10', 'text-accent');
-            btn.classList.remove('border-border-strong', 'text-muted-foreground');
+    /** Message de confirmation avant suppression d'une ligne. */
+    M.removeMessage = 'Voulez-vous vraiment supprimer cet élément ?';
 
-            const targetId = btn.getAttribute('data-target');
-            const targetContent = document.getElementById(targetId);
-            if (targetContent) {
-                targetContent.classList.remove('hidden');
-                targetContent.classList.add('flex');
-            }
+    /**
+     * Index de la prochaine ligne d'une liste : plus grand index existant + 1 (0 pour une liste vide).
+     * @param {number[]} indexes - Index déjà utilisés dans la liste.
+     * @returns {number}
+     */
+    M.nextIndex = function (indexes) {
+        return indexes.length > 0 ? Math.max(...indexes) + 1 : 0;
+    };
+
+    /**
+     * Numéro affiché dans le titre d'une nouvelle ligne (« Nouveau Projet #4 »).
+     * @param {number} rowCount - Nombre de lignes déjà présentes.
+     * @returns {number}
+     */
+    M.rowNumber = function (rowCount) {
+        return rowCount + 1;
+    };
+
+    /* =======================================================================
+       V — VUE
+       ======================================================================= */
+    const V = {};
+
+    /** Listes répétables : bouton d'ajout → conteneur des lignes et gabarit <template>. */
+    V.lists = {
+        'add-snippet-btn': {container: 'snippets-container', template: 'tpl-admin-snippet'},
+        'add-article-btn': {container: 'articles-container', template: 'tpl-admin-article'},
+        'add-project-btn': {container: 'projects-container', template: 'tpl-admin-project'},
+        'add-photo-btn': {container: 'galerie-container', template: 'tpl-admin-photo'},
+        'add-parcours-btn': {container: 'parcours-container', template: 'tpl-admin-parcours'},
+        'add-langue-btn': {container: 'langues-container', template: 'tpl-admin-langue'},
+        'add-contact-btn': {container: 'contact-container', template: 'tpl-admin-contact'}
+    };
+
+    /** Lignes supprimables. */
+    V.itemSelector = '.snippet-item, .article-item, .project-item, .photo-item, .parcours-item, .langue-item, .contact-item';
+
+    /**
+     * Point d'entrée de la Vue : déclare les écouteurs, par délégation sur le document.
+     * @param {{onTabClick:Function, onAddClick:Function, onRemoveClick:Function}} handlers
+     * @returns {void}
+     */
+    V.init = function (handlers) {
+        document.addEventListener('click', handlers.onTabClick);
+        document.addEventListener('click', handlers.onAddClick);
+        document.addEventListener('click', handlers.onRemoveClick);
+    };
+
+    /**
+     * Bouton d'onglet visé par un clic.
+     * @param {EventTarget} target
+     * @returns {HTMLElement|null}
+     */
+    V.tabFrom = function (target) {
+        return target instanceof Element ? target.closest('.tab-btn') : null;
+    };
+
+    /**
+     * Active un onglet : style des boutons et affichage du seul panneau ciblé (data-target).
+     * @param {HTMLElement} tab - Bouton cliqué.
+     * @param {{active:string[], inactive:string[]}} classes - Classes d'état.
+     * @returns {void}
+     */
+    V.activateTab = function (tab, classes) {
+        document.querySelectorAll('.tab-btn').forEach((button) => {
+            button.classList.remove(...classes.active);
+            button.classList.add(...classes.inactive);
         });
-    });
-
-    // ==========================================
-    // 2. ÉDITEUR WYSIWYG
-    // ==========================================
-    const wysiwygBtns = document.querySelectorAll('.wysiwyg-btn');
-    const wysiwygSelects = document.querySelectorAll('.wysiwyg-select');
-    const editor = document.getElementById('editor');
-    const hiddenInput = document.getElementById('article_content_hidden');
-    const form = document.getElementById('admin-form');
-
-    wysiwygBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const cmd = btn.getAttribute('data-cmd');
-            document.execCommand(cmd, false, null);
-            if (editor) editor.focus();
+        document.querySelectorAll('.tab-content').forEach((panel) => {
+            panel.classList.add('hidden');
+            panel.classList.remove('flex');
         });
-    });
 
-    wysiwygSelects.forEach(select => {
-        select.addEventListener('change', (e) => {
-            const cmd = select.getAttribute('data-cmd');
-            const val = e.target.value;
-            document.execCommand(cmd, false, val);
-            if (editor) editor.focus();
-        });
-    });
+        tab.classList.add(...classes.active);
+        tab.classList.remove(...classes.inactive);
 
-    if (form && editor && hiddenInput) {
-        form.addEventListener('submit', () => {
-            hiddenInput.value = editor.innerHTML;
-        });
-    }
-
-    // ==========================================
-    // 3. SUPPRESSION UNIVERSELLE D'ÉLÉMENTS
-    // ==========================================
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-item-btn')) {
-            if (confirm('Voulez-vous vraiment supprimer cet élément ?')) {
-                const item = e.target.closest('.snippet-item, .article-item, .project-item, .photo-item, .parcours-item, .langue-item, .contact-item');
-                if (item) item.remove();
-            }
+        const panel = document.getElementById(tab.getAttribute('data-target'));
+        if (panel) {
+            panel.classList.remove('hidden');
+            panel.classList.add('flex');
         }
-    });
+    };
 
-    // ==========================================
-    // 4. AJOUT DYNAMIQUE DE SNIPPETS (LAB)
-    // ==========================================
-    const addSnippetBtn = document.getElementById('add-snippet-btn');
-    const snippetsContainer = document.getElementById('snippets-container');
+    /**
+     * Liste répétable dont le bouton d'ajout est visé par un clic.
+     * @param {EventTarget} target
+     * @returns {string|null} Identifiant du bouton d'ajout (clé de V.lists).
+     */
+    V.addButtonFrom = function (target) {
+        if (!(target instanceof Element)) return null;
+        const button = target.closest(Object.keys(this.lists).map((id) => `#${id}`).join(', '));
+        return button ? button.id : null;
+    };
 
-    if (addSnippetBtn && snippetsContainer) {
-        addSnippetBtn.addEventListener('click', () => {
-            const index = snippetsContainer.children.length;
-            const html = `
-                <div class="snippet-item border border-border-strong bg-background/40 p-5 rounded-xl flex flex-col gap-6 relative">
-                    <div class="flex justify-between items-center border-b border-border-strong pb-3">
-                        <span class="text-xs font-mono text-accent">Nouveau Snippet #${index + 1}</span>
-                        <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2.5 py-1 rounded hover:text-red-400 hover:border-red-400">SUPPRIMER</button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre de l'expérience</label>
-                            <input type="text" name="snippets[${index}][title]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Tag / Catégorie</label>
-                            <input type="text" name="snippets[${index}][category]" placeholder="CSS Modern" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Note bas de carte</label>
-                            <input type="text" name="snippets[${index}][badge]" placeholder="Tested on Chrome" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">HTML</label>
-                            <textarea name="snippets[${index}][html]" rows="6" class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"></textarea>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">CSS</label>
-                            <textarea name="snippets[${index}][css]" rows="6" class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"></textarea>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">JS</label>
-                            <textarea name="snippets[${index}][js]" rows="6" class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"></textarea>
-                        </div>
-                    </div>
-                </div>`;
-            snippetsContainer.insertAdjacentHTML('beforeend', html);
+    /**
+     * Conteneur des lignes d'une liste.
+     * @param {string} listId - Clé de V.lists.
+     * @returns {HTMLElement|null}
+     */
+    V.container = function (listId) {
+        return document.getElementById(this.lists[listId].container);
+    };
+
+    /**
+     * Index déjà utilisés dans une liste, lus dans les noms des champs (ex : projects[3][title] → 3).
+     * @param {string} listId - Clé de V.lists.
+     * @returns {number[]}
+     */
+    V.readIndexes = function (listId) {
+        const container = this.container(listId);
+        if (!container) return [];
+        return [...container.querySelectorAll('[name]')]
+            .map((field) => field.getAttribute('name').match(/^\w+\[(\d+)\]/))
+            .filter(Boolean)
+            .map((match) => Number(match[1]));
+    };
+
+    /**
+     * Nombre de lignes affichées dans une liste.
+     * @param {string} listId - Clé de V.lists.
+     * @returns {number}
+     */
+    V.countRows = function (listId) {
+        const container = this.container(listId);
+        return container ? container.children.length : 0;
+    };
+
+    /**
+     * Ajoute une ligne à partir du gabarit de la liste.
+     * @param {string} listId - Clé de V.lists.
+     * @param {number} index - Index des champs (name="liste[index][champ]").
+     * @param {number} number - Numéro affiché dans le titre de la ligne.
+     * @returns {void}
+     */
+    V.appendRow = function (listId, index, number) {
+        const container = this.container(listId);
+        const template = document.getElementById(this.lists[listId].template);
+        if (!container || !template) return;
+
+        const html = template.innerHTML
+            .replace(/{{index}}/g, String(index))
+            .replace(/{{number}}/g, String(number));
+        container.insertAdjacentHTML('beforeend', html);
+    };
+
+    /**
+     * Bouton de suppression visé par un clic.
+     * @param {EventTarget} target
+     * @returns {HTMLElement|null}
+     */
+    V.removeButtonFrom = function (target) {
+        return target instanceof Element && target.classList.contains('remove-item-btn') ? target : null;
+    };
+
+    /**
+     * Demande confirmation à l'utilisateur.
+     * @param {string} message
+     * @returns {boolean}
+     */
+    V.confirm = function (message) {
+        return window.confirm(message);
+    };
+
+    /**
+     * Supprime la ligne contenant le bouton.
+     * @param {HTMLElement} button - Bouton « Supprimer » de la ligne.
+     * @returns {void}
+     */
+    V.removeRow = function (button) {
+        const item = button.closest(this.itemSelector);
+        if (item) item.remove();
+    };
+
+    /* =======================================================================
+       C — CONTRÔLEUR
+       ======================================================================= */
+    const C = {};
+
+    /**
+     * Point d'entrée.
+     * @returns {void}
+     */
+    C.init = function () {
+        V.init({
+            onTabClick: C.handler_tabClick,
+            onAddClick: C.handler_addRow,
+            onRemoveClick: C.handler_removeRow
         });
-    }
+    };
 
-    // ==========================================
-    // 5. AJOUT DYNAMIQUE D'ARTICLES (LAB)
-    // ==========================================
-    const addArticleBtn = document.getElementById('add-article-btn');
-    const articlesContainer = document.getElementById('articles-container');
+    /**
+     * Clic sur un onglet : affichage de son panneau.
+     * @param {MouseEvent} ev
+     * @returns {void}
+     */
+    C.handler_tabClick = function (ev) {
+        const tab = V.tabFrom(ev.target);
+        if (!tab) return;
+        V.activateTab(tab, M.tabClasses);
+    };
 
-    if (addArticleBtn && articlesContainer) {
-        addArticleBtn.addEventListener('click', () => {
-            const index = articlesContainer.children.length;
-            const html = `
-                <div class="article-item border border-border-strong bg-background/40 p-5 rounded-xl flex flex-col gap-6 relative">
-                    <div class="flex justify-between items-center border-b border-border-strong pb-3">
-                        <span class="text-xs font-mono text-amber-400">Nouvel Article #${index + 1}</span>
-                        <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2.5 py-1 rounded hover:text-red-400 hover:border-red-400">SUPPRIMER</button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre de l'article</label>
-                            <input type="text" name="articles[${index}][title]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-amber-400 outline-none">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Catégorie & Date</label>
-                            <input type="text" name="articles[${index}][meta]" placeholder="MACOS / DEV — 2026" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-amber-400 outline-none">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-mono uppercase text-muted-foreground">Contenu</label>
-                        <textarea name="articles[${index}][content]" rows="6" class="w-full bg-background-2/50 border border-border-strong rounded-lg p-4 text-sm focus:border-amber-400 outline-none resize-y leading-relaxed"></textarea>
-                    </div>
-                </div>`;
-            articlesContainer.insertAdjacentHTML('beforeend', html);
-        });
-    }
+    /**
+     * Clic sur un bouton « + Ajouter » : nouvelle ligne avec un index inutilisé.
+     * @param {MouseEvent} ev
+     * @returns {void}
+     */
+    C.handler_addRow = function (ev) {
+        const listId = V.addButtonFrom(ev.target);
+        if (!listId) return;
+        V.appendRow(listId, M.nextIndex(V.readIndexes(listId)), M.rowNumber(V.countRows(listId)));
+    };
 
-    // ==========================================
-    // 6. AJOUT DYNAMIQUE DE PROJETS
-    // ==========================================
-    const addProjectBtn = document.getElementById('add-project-btn');
-    const projectsContainer = document.getElementById('projects-container');
+    /**
+     * Clic sur « Supprimer » : retrait de la ligne après confirmation.
+     * @param {MouseEvent} ev
+     * @returns {void}
+     */
+    C.handler_removeRow = function (ev) {
+        const button = V.removeButtonFrom(ev.target);
+        if (!button) return;
+        if (V.confirm(M.removeMessage)) V.removeRow(button);
+    };
 
-    if (addProjectBtn && projectsContainer) {
-        addProjectBtn.addEventListener('click', () => {
-            const index = projectsContainer.children.length;
-            const html = `
-                <div class="project-item border border-border-strong bg-background-2/20 p-6 rounded-xl flex flex-col gap-6 relative">
-                    <div class="flex justify-between items-center border-b border-border-strong pb-4">
-                        <h3 class="font-serif text-xl text-accent italic">Nouveau Projet #${index + 1}</h3>
-                        <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-3 py-1 rounded hover:text-red-400 hover:border-red-400 transition-colors">SUPPRIMER</button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre du projet</label>
-                            <input type="text" name="projects[${index}][title]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Meta</label>
-                            <input type="text" name="projects[${index}][meta]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-mono uppercase text-muted-foreground">Description</label>
-                        <textarea name="projects[${index}][description]" rows="3" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"></textarea>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Image (URL ou Upload)</label>
-                            <div class="flex flex-col gap-3">
-                                <input type="text" name="projects[${index}][image]" placeholder="URL..." class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
-                                <input type="file" name="projects_image_file[${index}]" accept="image/*" class="w-full text-xs text-muted-foreground file:mr-2 file:py-1 file:px-3 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Lien (URL)</label>
-                            <input type="text" name="projects[${index}][link]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono uppercase text-muted-foreground">Catégorie</label>
-                            <input type="text" name="projects[${index}][category]" value="Web" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-mono uppercase text-muted-foreground">Tags (séparés par des virgules)</label>
-                        <input type="text" name="projects[${index}][tags]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
-                    </div>
-                </div>`;
-            projectsContainer.insertAdjacentHTML('beforeend', html);
-        });
-    }
-
-    // ==========================================
-    // 7. AJOUT DYNAMIQUE DE PHOTOS (GALERIE)
-    // ==========================================
-    const addPhotoBtn = document.getElementById('add-photo-btn');
-    const galerieContainer = document.getElementById('galerie-container');
-
-    if (addPhotoBtn && galerieContainer) {
-        addPhotoBtn.addEventListener('click', () => {
-            const index = galerieContainer.children.length;
-            const html = `
-                <div class="photo-item border border-border-strong bg-background-2/20 p-5 rounded-xl flex flex-col gap-4 relative">
-                    <div class="flex justify-between items-center border-b border-border-strong pb-3">
-                        <span class="text-xs font-mono text-accent">Nouvelle Photo #${index + 1}</span>
-                        <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2.5 py-1 rounded hover:text-red-400 hover:border-red-400">SUPPRIMER</button>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-mono uppercase text-muted-foreground">URL Image (Prioritaire ou Upload)</label>
-                        <div class="flex flex-col gap-3">
-                            <input type="text" name="photos[${index}][url]" placeholder="URL..." class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                            <input type="file" name="photos_url_file[${index}]" accept="image/*" class="w-full text-[10px] text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-mono uppercase text-muted-foreground">ID Unsplash (Optionnel)</label>
-                        <input type="text" name="photos[${index}][unsplash_id]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-mono uppercase text-muted-foreground">Légende</label>
-                        <input type="text" name="photos[${index}][legend]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-mono uppercase text-muted-foreground">Texte Alt</label>
-                        <input type="text" name="photos[${index}][alt]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-mono uppercase text-muted-foreground">Format</label>
-                        <select name="photos[${index}][format]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                            <option value="portrait">Portrait (3:4 Dev · 4:5 Photo)</option>
-                            <option value="landscape" selected>Paysage (16:10 Dev · 16:9 Photo)</option>
-                            <option value="panorama">Panorama cinéma (21:9 Photo, pleine largeur)</option>
-                        </select>
-                    </div>
-                </div>`;
-            galerieContainer.insertAdjacentHTML('beforeend', html);
-        });
-    }
-
-    // ==========================================
-    // 8. AJOUT DYNAMIQUE DE PARCOURS
-    // ==========================================
-    const addParcoursBtn = document.getElementById('add-parcours-btn');
-    const parcoursContainer = document.getElementById('parcours-container');
-
-    if (addParcoursBtn && parcoursContainer) {
-        addParcoursBtn.addEventListener('click', () => {
-            const index = parcoursContainer.children.length;
-            const html = `
-                <div class="parcours-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col gap-4 relative">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-mono text-accent">Nouvelle Étape #${index + 1}</span>
-                        <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2.5 py-1 rounded hover:text-red-400 hover:border-red-400">SUPPRIMER</button>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-[10px] font-mono text-muted-foreground uppercase">Période</label>
-                            <input type="text" name="parcours[${index}][period]" placeholder="2026 — Actuel" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono text-muted-foreground uppercase">Type</label>
-                            <input type="text" name="parcours[${index}][type]" placeholder="Formation / Expérience" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-mono text-muted-foreground uppercase">Titre</label>
-                        <input type="text" name="parcours[${index}][title]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-mono text-muted-foreground uppercase">Détail</label>
-                        <textarea name="parcours[${index}][detail]" rows="2" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent resize-y"></textarea>
-                    </div>
-                </div>`;
-            parcoursContainer.insertAdjacentHTML('beforeend', html);
-        });
-    }
-
-    // ==========================================
-    // 9. AJOUT DYNAMIQUE DE LANGUES
-    // ==========================================
-    const addLangueBtn = document.getElementById('add-langue-btn');
-    const languesContainer = document.getElementById('langues-container');
-
-    if (addLangueBtn && languesContainer) {
-        addLangueBtn.addEventListener('click', () => {
-            const index = languesContainer.children.length;
-            const html = `
-                <div class="langue-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-                        <div>
-                            <label class="text-[10px] font-mono text-muted-foreground uppercase">Langue</label>
-                            <input type="text" name="langues[${index}][name]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono text-muted-foreground uppercase">Niveau</label>
-                            <input type="text" name="langues[${index}][level]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono text-muted-foreground uppercase">Maîtrise (%)</label>
-                            <input type="number" name="langues[${index}][percent]" value="80" min="0" max="100" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                    </div>
-                    <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2 py-1.5 rounded hover:text-red-400 hover:border-red-400 self-end sm:self-center">Suppr.</button>
-                </div>`;
-            languesContainer.insertAdjacentHTML('beforeend', html);
-        });
-    }
-
-    // ==========================================
-    // 10. AJOUT DYNAMIQUE DE CONTACTS
-    // ==========================================
-    const addContactBtn = document.getElementById('add-contact-btn');
-    const contactContainer = document.getElementById('contact-container');
-
-    if (addContactBtn && contactContainer) {
-        addContactBtn.addEventListener('click', () => {
-            const index = contactContainer.children.length;
-            const html = `
-                <div class="contact-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-                        <div>
-                            <label class="text-[10px] font-mono text-muted-foreground uppercase">Libellé</label>
-                            <input type="text" name="contacts[${index}][label]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono text-muted-foreground uppercase">Valeur affichée</label>
-                            <input type="text" name="contacts[${index}][value]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono text-muted-foreground uppercase">Lien (href)</label>
-                            <input type="text" name="contacts[${index}][href]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                        </div>
-                    </div>
-                    <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2 py-1.5 rounded hover:text-red-400 hover:border-red-400 self-end sm:self-center">Suppr.</button>
-                </div>`;
-            contactContainer.insertAdjacentHTML('beforeend', html);
-        });
-    }
-});
+    C.init();
+})();

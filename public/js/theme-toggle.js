@@ -22,223 +22,222 @@
     /* =======================================================================
        M — MODÈLE
        ======================================================================= */
-    const M = {
-        /** Modes disponibles (le premier est le mode par défaut). */
-        modes: ['dev', 'photo'],
-        /** Clé de mémorisation (partagée avec le script inline du <head>). */
-        storageKey: 'portfolio-mode',
-        /** Mode courant. */
-        current: 'dev',
-        /** Durée de la révélation circulaire (ms). */
-        revealDuration: 750,
+    const M = {};
 
-        /**
-         * Ramène une valeur quelconque à un mode valide.
-         * @param {*} mode
-         * @returns {'dev'|'photo'}
-         */
-        normalize(mode) {
-            return this.modes.includes(mode) ? mode : this.modes[0];
-        },
+    /** Modes disponibles (le premier est le mode par défaut). */
+    M.modes = ['dev', 'photo'];
 
-        /**
-         * Mode opposé au mode courant.
-         * @returns {'dev'|'photo'}
-         */
-        other() {
-            return this.current === 'dev' ? 'photo' : 'dev';
-        },
+    /** Clé de mémorisation (partagée avec le script inline du <head>). */
+    M.storageKey = 'portfolio-mode';
 
-        /**
-         * Définit le mode courant et le mémorise.
-         * try/catch : localStorage peut être bloqué (navigation privée stricte, cookies refusés).
-         * @param {'dev'|'photo'} mode
-         * @returns {void}
-         */
-        set(mode) {
-            this.current = this.normalize(mode);
-            try {
-                localStorage.setItem(this.storageKey, this.current);
-            } catch (error) {
-                // Mémorisation impossible : la bascule fonctionne quand même pour la page courante
-            }
+    /** Mode courant. */
+    M.current = 'dev';
+
+    /** Durée de la révélation circulaire (ms). */
+    M.revealDuration = 750;
+
+    /**
+     * Ramène une valeur quelconque à un mode valide.
+     * @param {*} mode
+     * @returns {'dev'|'photo'}
+     */
+    M.normalize = function (mode) {
+        return this.modes.includes(mode) ? mode : this.modes[0];
+    };
+
+    /**
+     * Mode opposé au mode courant.
+     * @returns {'dev'|'photo'}
+     */
+    M.other = function () {
+        return this.current === 'dev' ? 'photo' : 'dev';
+    };
+
+    /**
+     * Définit le mode courant et le mémorise.
+     * try/catch : localStorage peut être bloqué (navigation privée stricte, cookies refusés).
+     * @param {'dev'|'photo'} mode
+     * @returns {void}
+     */
+    M.set = function (mode) {
+        this.current = this.normalize(mode);
+        try {
+            localStorage.setItem(this.storageKey, this.current);
+        } catch (error) {
+            // Mémorisation impossible : la bascule fonctionne quand même pour la page courante
         }
     };
 
     /* =======================================================================
        V — VUE
        ======================================================================= */
-    const V = {
-        root: document.documentElement,
-        switchEl: null,
-        overlay: null,
+    const V = {};
 
-        /**
-         * Récupère l'interrupteur et l'overlay de repli.
-         * @returns {boolean} false si l'interrupteur est absent.
-         */
-        init() {
-            this.switchEl = document.getElementById('mode-switch');
-            this.overlay = document.getElementById('theme-transition-overlay');
-            return Boolean(this.switchEl);
-        },
+    V.root = document.documentElement;
 
-        /**
-         * @returns {string} Mode actuellement appliqué sur <html>.
-         */
-        readMode() {
-            return this.root.dataset.mode;
-        },
+    V.switchEl = null;
 
-        /**
-         * Applique un mode : attribut data-mode (CSS) + état ARIA de l'interrupteur.
-         * @param {'dev'|'photo'} mode
-         * @returns {void}
-         */
-        render(mode) {
-            this.root.dataset.mode = mode;
-            this.switchEl.setAttribute('aria-checked', String(mode === 'photo'));
-        },
+    V.overlay = null;
 
-        /**
-         * Déclare les écouteurs : clic sur l'interrupteur, demandes externes (mode:request).
-         * @param {{onToggle:Function, onRequest:Function}} handlers
-         * @returns {void}
-         */
-        bind(handlers) {
-            this.switchEl.addEventListener('click', handlers.onToggle);
-            document.addEventListener('mode:request', handlers.onRequest);
-        },
+    /**
+     * Récupère l'interrupteur et l'overlay de repli, puis déclare les écouteurs :
+     * clic sur l'interrupteur, demandes externes (mode:request).
+     * @param {{onToggle:Function, onRequest:Function}} handlers
+     * @returns {boolean} false si l'interrupteur est absent (aucun écouteur déclaré).
+     */
+    V.init = function (handlers) {
+        this.switchEl = document.getElementById('mode-switch');
+        this.overlay = document.getElementById('theme-transition-overlay');
+        if (!this.switchEl) return false;
 
-        /**
-         * @returns {boolean} true si l'utilisateur préfère réduire les animations.
-         */
-        prefersReducedMotion() {
-            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        },
+        this.switchEl.addEventListener('click', handlers.onToggle);
+        document.addEventListener('mode:request', handlers.onRequest);
+        return true;
+    };
 
-        /**
-         * @returns {boolean} true si la View Transitions API est disponible.
-         */
-        supportsViewTransition() {
-            return typeof document.startViewTransition === 'function';
-        },
+    /**
+     * @returns {string} Mode actuellement appliqué sur <html>.
+     */
+    V.readMode = function () {
+        return this.root.dataset.mode;
+    };
 
-        /**
-         * Centre de l'interrupteur dans le viewport (origine de la révélation circulaire).
-         * @returns {{x:number, y:number}}
-         */
-        getOrigin() {
-            const rect = this.switchEl.getBoundingClientRect();
-            return {x: rect.left + rect.width / 2, y: rect.top + rect.height / 2};
-        },
+    /**
+     * Applique un mode : attribut data-mode (CSS) + état ARIA de l'interrupteur.
+     * @param {'dev'|'photo'} mode
+     * @returns {void}
+     */
+    V.render = function (mode) {
+        this.root.dataset.mode = mode;
+        this.switchEl.setAttribute('aria-checked', String(mode === 'photo'));
+    };
 
-        /**
-         * Bascule avec la View Transitions API : le navigateur capture l'ancien état, applique
-         * la mise à jour, puis on révèle le nouvel état par un cercle qui grandit depuis l'origine.
-         * Les photos de la galerie (view-transition-name dédié) se déplacent seules vers leur
-         * nouvelle place dans la mise en page magazine.
-         * @param {Function} update - Mise à jour du DOM (application du mode).
-         * @param {{x:number, y:number}} origin - Origine du cercle.
-         * @param {number} duration - Durée (ms).
-         * @returns {void}
-         */
-        transitionWithViewTransition(update, origin, duration) {
-            const transition = document.startViewTransition(update);
-            transition.ready.then(() => {
-                // Rayon final = distance jusqu'au coin le plus éloigné : le cercle couvre tout l'écran
-                const radius = Math.hypot(
-                    Math.max(origin.x, window.innerWidth - origin.x),
-                    Math.max(origin.y, window.innerHeight - origin.y)
-                );
-                this.root.animate(
-                    {clipPath: [`circle(0px at ${origin.x}px ${origin.y}px)`, `circle(${radius}px at ${origin.x}px ${origin.y}px)`]},
-                    {duration, easing: 'cubic-bezier(0.76, 0, 0.24, 1)', pseudoElement: '::view-transition-new(root)'}
-                );
-            }).catch(() => {
-                // Transition annulée (onglet masqué, nouvelle bascule rapide) : le DOM est déjà à jour
-            });
-        },
+    /**
+     * @returns {boolean} true si l'utilisateur préfère réduire les animations.
+     */
+    V.prefersReducedMotion = function () {
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    };
 
-        /**
-         * Bascule de repli : onde colorée (#theme-transition-overlay) partant de l'interrupteur.
-         * Séquence : expansion (500 ms) → fondu (300 ms) → remise à zéro invisible.
-         * @param {Function} update - Mise à jour du DOM.
-         * @param {{x:number, y:number}} origin - Origine de l'onde.
-         * @returns {void}
-         */
-        transitionWithOverlay(update, origin) {
-            if (!this.overlay) {
-                update();
-                return;
-            }
-            this.overlay.style.setProperty('--ripple-x', `${origin.x}px`);
-            this.overlay.style.setProperty('--ripple-y', `${origin.y}px`);
-            this.overlay.classList.add('active');
+    /**
+     * @returns {boolean} true si la View Transitions API est disponible.
+     */
+    V.supportsViewTransition = function () {
+        return typeof document.startViewTransition === 'function';
+    };
+
+    /**
+     * Centre de l'interrupteur dans le viewport (origine de la révélation circulaire).
+     * @returns {{x:number, y:number}}
+     */
+    V.getOrigin = function () {
+        const rect = this.switchEl.getBoundingClientRect();
+        return {x: rect.left + rect.width / 2, y: rect.top + rect.height / 2};
+    };
+
+    /**
+     * Bascule avec la View Transitions API : le navigateur capture l'ancien état, applique
+     * la mise à jour, puis on révèle le nouvel état par un cercle qui grandit depuis l'origine.
+     * Les photos de la galerie (view-transition-name dédié) se déplacent seules vers leur
+     * nouvelle place dans la mise en page magazine.
+     * @param {Function} update - Mise à jour du DOM (application du mode).
+     * @param {{x:number, y:number}} origin - Origine du cercle.
+     * @param {number} duration - Durée (ms).
+     * @returns {void}
+     */
+    V.transitionWithViewTransition = function (update, origin, duration) {
+        const transition = document.startViewTransition(update);
+        transition.ready.then(() => {
+            // Rayon final = distance jusqu'au coin le plus éloigné : le cercle couvre tout l'écran
+            const radius = Math.hypot(
+                Math.max(origin.x, window.innerWidth - origin.x),
+                Math.max(origin.y, window.innerHeight - origin.y)
+            );
+            this.root.animate(
+                {clipPath: [`circle(0px at ${origin.x}px ${origin.y}px)`, `circle(${radius}px at ${origin.x}px ${origin.y}px)`]},
+                {duration, easing: 'cubic-bezier(0.76, 0, 0.24, 1)', pseudoElement: '::view-transition-new(root)'}
+            );
+        }).catch(() => {
+            // Transition annulée (onglet masqué, nouvelle bascule rapide) : le DOM est déjà à jour
+        });
+    };
+
+    /**
+     * Bascule de repli : onde colorée (#theme-transition-overlay) partant de l'interrupteur.
+     * Séquence : expansion (500 ms) → fondu (300 ms) → remise à zéro invisible.
+     * @param {Function} update - Mise à jour du DOM.
+     * @param {{x:number, y:number}} origin - Origine de l'onde.
+     * @returns {void}
+     */
+    V.transitionWithOverlay = function (update, origin) {
+        if (!this.overlay) {
             update();
-
-            setTimeout(() => {
-                this.overlay.style.opacity = '0';
-                setTimeout(() => {
-                    this.overlay.classList.remove('active');
-                    this.overlay.style.opacity = '';
-                }, 300);
-            }, 500);
+            return;
         }
+        this.overlay.style.setProperty('--ripple-x', `${origin.x}px`);
+        this.overlay.style.setProperty('--ripple-y', `${origin.y}px`);
+        this.overlay.classList.add('active');
+        update();
+
+        setTimeout(() => {
+            this.overlay.style.opacity = '0';
+            setTimeout(() => {
+                this.overlay.classList.remove('active');
+                this.overlay.style.opacity = '';
+            }, 300);
+        }, 500);
     };
 
     /* =======================================================================
        C — CONTRÔLEUR
        ======================================================================= */
-    const C = {
+    const C = {};
 
-        /**
-         * Point d'entrée : synchronise l'interrupteur avec le mode déjà appliqué par le <head>.
-         * @returns {void}
-         */
-        init() {
-            if (!V.init()) return;
-            M.current = M.normalize(V.readMode());
-            V.render(M.current);
-            V.bind({onToggle: C.handleToggle, onRequest: C.handleRequest});
-        },
+    /**
+     * Point d'entrée : synchronise l'interrupteur avec le mode déjà appliqué par le <head>.
+     * @returns {void}
+     */
+    C.init = function () {
+        if (!V.init({onToggle: C.handler_toggle, onRequest: C.handler_request})) return;
+        M.current = M.normalize(V.readMode());
+        V.render(M.current);
+    };
 
-        /**
-         * Clic sur l'interrupteur : passage au mode opposé.
-         * @returns {void}
-         */
-        handleToggle() {
-            C.switchTo(M.other());
-        },
+    /**
+     * Clic sur l'interrupteur : passage au mode opposé.
+     * @returns {void}
+     */
+    C.handler_toggle = function () {
+        C.switchTo(M.other());
+    };
 
-        /**
-         * Demande externe (CustomEvent « mode:request », detail.mode = 'dev' | 'photo').
-         * @param {CustomEvent} e
-         * @returns {void}
-         */
-        handleRequest(e) {
-            C.switchTo(e.detail?.mode);
-        },
+    /**
+     * Demande externe (CustomEvent « mode:request », detail.mode = 'dev' | 'photo').
+     * @param {CustomEvent} e
+     * @returns {void}
+     */
+    C.handler_request = function (e) {
+        C.switchTo(e.detail?.mode);
+    };
 
-        /**
-         * Change de mode avec la meilleure transition disponible.
-         * @param {*} requested - Mode demandé.
-         * @returns {void}
-         */
-        switchTo(requested) {
-            const mode = M.normalize(requested);
-            if (mode === M.current) return;
+    /**
+     * Change de mode avec la meilleure transition disponible.
+     * @param {*} requested - Mode demandé.
+     * @returns {void}
+     */
+    C.switchTo = function (requested) {
+        const mode = M.normalize(requested);
+        if (mode === M.current) return;
 
-            M.set(mode);
-            const update = () => V.render(mode);
+        M.set(mode);
+        const update = () => V.render(mode);
 
-            if (V.prefersReducedMotion()) {
-                update();
-            } else if (V.supportsViewTransition()) {
-                V.transitionWithViewTransition(update, V.getOrigin(), M.revealDuration);
-            } else {
-                V.transitionWithOverlay(update, V.getOrigin());
-            }
+        if (V.prefersReducedMotion()) {
+            update();
+        } else if (V.supportsViewTransition()) {
+            V.transitionWithViewTransition(update, V.getOrigin(), M.revealDuration);
+        } else {
+            V.transitionWithOverlay(update, V.getOrigin());
         }
     };
 

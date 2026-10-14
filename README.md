@@ -126,20 +126,21 @@ Portoflio/
 ├── .env.example                  # Modèle documenté du .env (sans aucune vraie valeur)
 ├── app/
 │   ├── config/
-│   │   └── database.php          # getPDOConnection() : identifiants lus UNIQUEMENT dans le .env
+│   │   └── database.php          # getPDOConnection() (identifiants lus UNIQUEMENT dans le .env) + runInTransaction()
 │   ├── core/
 │   │   ├── Response.php          # Response::json() : sortie JSON centralisée
 │   │   ├── Csrf.php              # Jeton anti-CSRF (session) : token(), field(), isValid(), rotate()
 │   │   └── ImageUploader.php     # Validation et enregistrement sécurisés des images
 │   ├── controllers/
-│   │   ├── HomeController.php    # Accueil, Lab, Mentions légales
+│   │   ├── Controller.php        # Classe parente : render() d'une vue, isAdmin(), redirect(), aides de préparation
+│   │   ├── HomeController.php    # Accueil, Lab, Mentions légales (prépare toutes les données des vues)
 │   │   ├── AuthController.php    # Connexion (CSRF) / déconnexion
 │   │   ├── AdminController.php   # Back-office : CSRF, uploads, messages flash (accès protégé dès le constructeur)
 │   │   └── ApiController.php     # GET /api/terminal
 │   ├── models/
-│   │   ├── settings.php          # Setting::getAll() / filterInput() (liste blanche) / updateAll() (transaction)
-│   │   ├── User.php              # User::findByEmail()
-│   │   └── Project.php
+│   │   ├── Setting.php           # Setting::load() / fromInput() (liste blanche) / save() ; valeurs par défaut (DEFAULTS)
+│   │   ├── User.php              # Entité : User::findByEmail(), verifyPassword()
+│   │   └── Project.php           # Entité : Project::findAll() / fromInput() / replaceAll() (table projects)
 │   └── views/
 │       ├── layouts/              # header.php (head, loader, canvas, nav), footer.php (curseur, terminal, scripts)
 │       ├── front/                # home.php, lab.php, legal.php
@@ -155,16 +156,20 @@ Portoflio/
 │   │   ├── animations.js         # WebGL, curseur, révélations, tilt (M/V/C)
 │   │   ├── terminal.js           # Terminal CLI (M/V/C)
 │   │   ├── photo-mode.js         # Visionneuse de la galerie + comparateur avant / après (M/V/C)
-│   │   └── admin.js              # Scripts du back-office
+│   │   ├── projects-filter.js    # Filtres de la section Projets (M/V/C)
+│   │   ├── lab.js                # Modales console de code / lecteur d'article de la page Lab (M/V/C)
+│   │   └── admin.js              # Back-office : onglets, lignes dynamiques par <template> (M/V/C)
 │   ├── assets/                   # icons/, images/, videos/, uploads/ (+ .htaccess anti-exécution)
 │   ├── robots.txt
 │   └── sitemap.xml
 ├── src/css/input.css             # SOURCE Tailwind : tokens, @theme inline, composants
-├── database/schema.sql           # Schéma importé automatiquement par Docker
+├── database/
+│   ├── schema.sql                # Schéma importé automatiquement par Docker (users, settings, projects)
+│   └── migrations/               # Scripts SQL à exécuter une fois sur une base existante (production)
 ├── Dockerfile                    # php:8.3-apache, pdo_mysql, rewrite, headers, DocumentRoot = public/
 ├── docker-compose.yml            # web (8000), db MySQL (3306), phpMyAdmin (8080)
 ├── package.json                  # Scripts npm run dev / build (Tailwind CLI)
-├── CLAUDE.md                     # Directives de développement de l'assistant IA
+├── AGENTS.md                     # Directives de développement de l'assistant IA
 ├── DEPLOIEMENT_HOSTINGER.md      # Procédure de mise en production
 └── README.md                     # Ce document
 ```
@@ -298,8 +303,8 @@ Toute la partie animation concernant les 'points' en en background et les traits
 | Particules WebGL | `animations.js` → `M.particles`, `V.particles` | `.fx-particles` | `layouts/header.php` |
 | Curseur magnétique | `M.cursor`, `V.cursor`, `V.magnet` | `.cursor` + bloc hors `@layer` | `layouts/footer.php`, `[data-magnetic]` |
 | Boutons Glow | — (100 % CSS) | `.btn-glow` | `home.php`, `partials/projects.php` |
-| Révélation des titres | `V.reveal`, `C.handleTitleIntersect` | `.reveal-title` | `home.php`, `lab.php`, 4 partials |
-| Cartes : cascade + tilt | `M.tilt`, `V.tilt`, `C.handleCardIntersect` | `.tilt-card` | `partials/projects.php` |
+| Révélation des titres | `V.reveal`, `C.handler_titleIntersect` | `.reveal-title` | `home.php`, `lab.php`, 4 partials |
+| Cartes : cascade + tilt | `M.tilt`, `V.tilt`, `C.handler_cardIntersect` | `.tilt-card` | `partials/projects.php` |
 
 Une **seule boucle `requestAnimationFrame`** fait tourner à la fois les particules et le curseur. Les écouteurs `mousemove` / `mouseout` / `mousedown` / `mouseup` / `resize` sont posés **une seule fois** sur `window` et partagés.
 
@@ -518,7 +523,7 @@ Section `#post-traitement` (`partials/compare.php`), **visible en mode Photo uni
 | `public/js/animations.js` | État « view » du curseur, libellé, réévaluation au défilement, pause des particules en mode Photo |
 | `public/js/terminal.js` | Commande `theme` via `mode:request` |
 | `app/views/admin/dashboard.php`, `public/js/admin.js` | Format `panorama`, champs du comparateur |
-| `app/models/settings.php`, `app/controllers/AdminController.php` | Clés `compare_*` en liste blanche, upload des images du comparateur |
+| `app/models/Setting.php`, `app/controllers/AdminController.php` | Clés `compare_*` en liste blanche, upload des images du comparateur |
 
 ---
 
@@ -578,7 +583,7 @@ Section `#post-traitement` (`partials/compare.php`), **visible en mode Photo uni
 ### 10.3 Flux technique
 
 ```
-saisie ─► C.handleSubmit ─► M.execute(raw, {currentMode})
+saisie ─► C.handler_submit ─► M.execute(raw, {currentMode})
                                │  needsData ? ─► await M.loadData() ─► fetch('/api/terminal')
                                ▼
                     {lines, effect?}   ← données pures, jamais de HTML dans le Modèle
@@ -647,7 +652,7 @@ Accept: application/json
 | Vol de session par JavaScript (XSS) | Cookie `HttpOnly`, `SameSite=Lax` | `public/index.php` |
 | Fixation de session | `session_regenerate_id(true)` à la connexion | `AuthController::login()` |
 | **Requêtes forgées (CSRF)** | **Jeton synchronisé en session** sur le login et le back-office | `app/core/Csrf.php` → [§ 12.2](#122-protection-csrf) |
-| **Mass assignment** (champs ajoutés à la main dans la requête) | **Liste blanche** des clés et sous-champs enregistrables | `Setting::filterInput()` → [§ 12.3](#123-liste-blanche-des-contenus-enregistrés) |
+| **Mass assignment** (champs ajoutés à la main dans la requête) | **Liste blanche** des clés et sous-champs enregistrables | `Setting::fromInput()` / `Project::fromInput()` → [§ 12.3](#123-liste-blanche-des-contenus-enregistrés) |
 | **Upload malveillant** (script déguisé en image) | **Type réel + décodage image + nom aléatoire** ; `.htaccess` anti-exécution en seconde barrière | `app/core/ImageUploader.php` → [§ 12.4](#124-uploads-dimages-sécurisés) |
 | **Fuite d'identifiants** | **Aucun secret dans le code** : `.env` obligatoire, non versionné | `app/config/database.php` → [§ 12.5](#125-identifiants-et-secrets) |
 | Injection SQL | Requêtes préparées PDO, `ATTR_EMULATE_PREPARES = false` | Modèles |
@@ -655,7 +660,7 @@ Accept: application/json
 | Mots de passe | Hachage `password_hash` / `password_verify` | Table `users` |
 | Exposition de données par l'API | Liste blanche + filtrage des schémas d'URL | `ApiController` |
 | Fuite d'informations | 404 neutre, erreurs détaillées uniquement dans le log serveur | `public/index.php`, contrôleurs |
-| Écriture partielle en BDD | Enregistrement en **transaction** (tout ou rien) | `Setting::updateAll()` |
+| Écriture partielle en BDD | Enregistrement en **transaction** (tout ou rien) | `runInTransaction()` (réglages + projets) |
 
 ### 12.2 Protection CSRF
 
@@ -673,18 +678,19 @@ Accept: application/json
 
 ### 12.3 Liste blanche des contenus enregistrés
 
-Avant cette correction, `Setting::updateAll($_POST)` enregistrait **n'importe quelle clé** reçue. Désormais, `Setting::filterInput()` applique les règles suivantes :
+Avant cette correction, `Setting::updateAll($_POST)` enregistrait **n'importe quelle clé** reçue. Désormais, `Setting::fromInput()` (via `Setting::set()`) et `Project::fromInput()` appliquent les règles suivantes :
 
 | Règle | Détail |
 | --- | --- |
-| Clés simples autorisées (16) | `hero_name`, `hero_dev`, `hero_photo`, `hero_avatar`, `dispo_text`, `location`, `status`, `parcours_intro`, `skills_tech`, `skills_tools`, `interests`, `contact_title`, `contact_subtitle`, `project_cat_1` → `3` |
-| Listes autorisées (7) et leurs sous-champs | `parcours` (period, type, title, detail) · `langues` (name, level, percent) · `projects` (id, title, meta, description, image, link, category, tags) · `photos` (url, unsplash_id, legend, alt, format) · `contacts` (label, value, href) · `snippets` (title, category, badge, html, css, js) · `articles` (title, meta, content) |
+| Clés simples autorisées (21) | `hero_name`, `hero_dev`, `hero_photo`, `hero_avatar`, `dispo_text`, `location`, `status`, `parcours_intro`, `skills_tech`, `skills_tools`, `interests`, `contact_title`, `contact_subtitle`, `project_cat_1` → `3`, `compare_before`, `compare_after`, `compare_title`, `compare_caption`, `compare_tools` |
+| Listes autorisées (6) et leurs sous-champs | `parcours` (period, type, title, detail) · `langues` (name, level, percent) · `photos` (url, unsplash_id, legend, alt, format) · `contacts` (label, value, href) · `snippets` (title, category, badge, html, css, js) · `articles` (title, meta, content) |
+| Projets (table `projects`) | `Project::FIELDS` : title, meta, description, image, link, category, tags (+ identifiant caché `id`) ; ordre d'affichage = ordre du formulaire (`position`) |
 | Valeurs | Converties en chaînes ; un tableau injecté à la place d'un texte devient une chaîne vide |
 | Listes | Ré-indexées (0, 1, 2…) |
 | Clés absentes | **Non modifiées** (jamais vidées par erreur) |
-| Enregistrement | En **transaction** : en cas d'erreur, `rollBack()` et rien n'est modifié |
+| Enregistrement | Réglages et projets dans **une seule transaction** (`runInTransaction()`) : en cas d'erreur, `rollBack()` et rien n'est modifié |
 
-> 💡 **Ajouter un nouveau réglage au back-office** se fait en 3 temps : ajouter le champ dans `dashboard.php` (et `admin.js` si la ligne est dynamique), **puis déclarer la clé dans `Setting::SCALAR_KEYS` ou `Setting::LIST_SCHEMAS`**. Sans cette dernière étape, le champ est ignoré silencieusement.
+> 💡 **Ajouter un nouveau réglage au back-office** se fait en 3 temps : ajouter le champ dans `dashboard.php` (et dans le gabarit `<template id="tpl-admin-…">` correspondant si la ligne est dynamique), **puis déclarer la clé dans `Setting::SCALAR_KEYS` ou `Setting::LIST_SCHEMAS`** (et sa valeur proposée dans `AdminController::FORM_FIELDS`). Sans cette dernière étape, le champ est ignoré silencieusement.
 
 ### 12.4 Uploads d'images sécurisés
 

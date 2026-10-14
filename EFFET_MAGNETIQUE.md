@@ -20,11 +20,11 @@ Quand tu passes la souris sur un bouton ou un lien du menu, il **se déplace lé
 
 | Élément | Fichier |
 |---|---|
-| Logo « Yann Le Flohic » | [header.php:141](app/views/layouts/header.php#L141) |
-| Liens du menu (Parcours, Compétences, Projets, Contact, Lab) | [header.php:149-170](app/views/layouts/header.php#L149-L170) |
-| Interrupteur Dev / Photo | [header.php:180](app/views/layouts/header.php#L180) |
-| Boutons « Projets » et « Contact » de l'accueil | [home.php:49,55](app/views/front/home.php#L49) |
-| Bouton flottant du terminal | [footer.php:50](app/views/layouts/footer.php#L50) |
+| Logo « Yann Le Flohic » | [header.php:121](app/views/layouts/header.php#L121) |
+| Liens du menu (Parcours, Compétences, Projets, Contact, Lab) | [header.php:128-170](app/views/layouts/header.php#L128-L170) |
+| Interrupteur Dev / Photo | [header.php:155](app/views/layouts/header.php#L155) |
+| Boutons « Projets » et « Contact » de l'accueil | [home.php:36,55](app/views/front/home.php#L36) |
+| Bouton flottant du terminal | [footer.php:45](app/views/layouts/footer.php#L45) |
 
 **Pour aimanter un nouvel élément : ajoute simplement `data-magnetic` dessus.** Aucun JS à écrire.
 
@@ -49,22 +49,22 @@ Quand tu passes la souris sur un bouton ou un lien du menu, il **se déplace lé
 
 ### Étape 1. La souris bouge
 
-Un seul écouteur global ([animations.js:436](public/js/animations.js#L436)) :
+Un seul écouteur global ([animations.js:451](public/js/animations.js#L451)) :
 
 ```js
 window.addEventListener('mousemove', handlers.onMouseMove, {passive: true});
 ```
 
-Il appelle `C.handleMouseMove(e)` ([animations.js:1098](public/js/animations.js#L1098)), qui note la position puis appelle `C.updateCursorTarget(e.target, x, y)`. `e.target` est l'élément sous la souris.
+Il appelle `C.handler_mouseMove(e)` ([animations.js:1127](public/js/animations.js#L1127)), qui note la position puis appelle `C.updateCursorTarget(e.target, x, y)`. `e.target` est l'élément sous la souris.
 
 > Un seul écouteur sert à tous les boutons : pas besoin d'en poser un par bouton (*délégation d'événements*).
 
 ### Étape 2. Quel élément aimanté est sous la souris ?
 
 ```js
-findMagnetic(target) {
+V.cursor.findMagnetic = function (target) {
     return target instanceof Element ? target.closest('[data-magnetic]') : null;
-}
+};
 ```
 
 `closest()` remonte du point survolé vers ses parents jusqu'à trouver un `data-magnetic`. Ainsi, survoler **l'icône ou le texte à l'intérieur** d'un bouton compte comme survoler le bouton.
@@ -81,7 +81,7 @@ if (magnetic !== M.cursor.magneticEl) {
 
 Si tu glisses d'un lien du menu au suivant, le premier revient pendant que le second est attiré.
 
-### Étape 4. Calcul du décalage : `computeMagnet()` ([animations.js:345](public/js/animations.js#L345))
+### Étape 4. Calcul du décalage : `computeMagnet()` ([animations.js:359](public/js/animations.js#L359))
 
 ```js
 const cx = rect.left + rect.width / 2 - this.applied.x;   // centre « au repos » du bouton
@@ -103,7 +103,7 @@ Les trois réglages sont dans `M.config.cursor` ([animations.js:51-56](public/js
 | `magnetMax` | 14 px | Déplacement maximal, dans chaque direction |
 | `cursorPull` | 0,35 | Le point du curseur est attiré à 35 % vers le centre du bouton |
 
-### Étape 5. Application : `V.magnet.apply()` ([animations.js:838](public/js/animations.js#L838))
+### Étape 5. Application : `V.magnet.apply()` ([animations.js:864](public/js/animations.js#L864))
 
 ```js
 el.style.translate = `${x.toFixed(1)}px ${y.toFixed(1)}px`;
@@ -154,7 +154,7 @@ C'est la partie la plus subtile du code.
 
 **Problème.** Le bouton se déplace. À la prochaine souris-move, `getBoundingClientRect()` renvoie la position **déjà décalée**. Si on recalculait l'écart depuis ce centre décalé, le bouton « poursuivrait » son propre mouvement et dériverait.
 
-**Solution** (une ligne, [animations.js:347](public/js/animations.js#L347)) :
+**Solution** (une ligne, [animations.js:361](public/js/animations.js#L361)) :
 
 ```js
 const cx = rect.left + rect.width / 2 - this.applied.x;   // on retire le décalage déjà appliqué
@@ -177,7 +177,7 @@ On retrouve le centre « au repos » en soustrayant le décalage courant. Le cal
 
 Exemple concret : `.btn-glow:active { scale: 0.97; }` (effet d'enfoncement au clic) fonctionne en même temps que le déplacement magnétique, parce que `scale` et `translate` sont des propriétés séparées.
 
-Le commentaire du code le dit ([animations.js:831-832](public/js/animations.js#L831-L832)) : *« indépendante de `transform` : n'écrase pas les utilitaires scale/rotate de Tailwind »*.
+Le commentaire du code le dit ([animations.js:857-832](public/js/animations.js#L857-L832)) : *« indépendante de `transform` : n'écrase pas les utilitaires scale/rotate de Tailwind »*.
 
 > Les liens du menu utilisent `transition-all` de Tailwind, qui inclut `translate` : la fluidité y est donc aussi assurée.
 
@@ -185,7 +185,7 @@ Le commentaire du code le dit ([animations.js:831-832](public/js/animations.js#L
 
 ## 5. Le point du curseur réagit en même temps
 
-Dans la même fonction `updateCursorTarget` ([animations.js:1128](public/js/animations.js#L1128)) :
+Dans la même fonction `updateCursorTarget` ([animations.js:1157](public/js/animations.js#L1157)) :
 
 ```js
 if (magnetic) {
@@ -210,7 +210,7 @@ Le point devient un grand halo translucide centré sur le bouton, ce qui renforc
 
 ### Le lissage du point
 
-Le point ne suit pas instantanément la souris. À chaque image (`C.tick`), `M.cursor.follow()` ([animations.js:323](public/js/animations.js#L323)) le rapproche de sa cible :
+Le point ne suit pas instantanément la souris. À chaque image (`C.tick`), `M.cursor.follow()` ([animations.js:337](public/js/animations.js#L337)) le rapproche de sa cible :
 
 ```js
 const k = 1 - Math.pow(1 - 0.22, dt * 60);   // facteur de lissage indépendant du framerate
@@ -228,10 +228,10 @@ Il rattrape sa cible en environ 22 % de l'écart restant par image : c'est ce qu
 
 | Situation | Comportement |
 |---|---|
-| Écran tactile (pas de souris) | `(hover: hover) and (pointer: fine)` faux → `M.cursor.enabled = false`, **aucun effet** ([animations.js:1089](public/js/animations.js#L1089)) |
-| `prefers-reduced-motion` | Les boutons **ne bougent pas** (`magnetic = null`), seul le point grossit ([animations.js:1131](public/js/animations.js#L1131)) ; transitions réduites à 0,01 ms |
-| La souris sort de la fenêtre | `handleMouseOut` relâche le bouton aimanté et masque le point |
-| Page défilée sans bouger la souris | `handleScroll` ré-évalue l'élément sous le pointeur (une fois par image) pour ne pas laisser un bouton attiré par erreur |
+| Écran tactile (pas de souris) | `(hover: hover) and (pointer: fine)` faux → `M.cursor.enabled = false`, **aucun effet** ([animations.js:1118](public/js/animations.js#L1118)) |
+| `prefers-reduced-motion` | Les boutons **ne bougent pas** (`magnetic = null`), seul le point grossit ([animations.js:1160](public/js/animations.js#L1160)) ; transitions réduites à 0,01 ms |
+| La souris sort de la fenêtre | `handler_mouseOut` relâche le bouton aimanté et masque le point |
+| Page défilée sans bouger la souris | `handler_scroll` ré-évalue l'élément sous le pointeur (une fois par image) pour ne pas laisser un bouton attiré par erreur |
 | Modales ouvertes (terminal, lightbox…) | Le curseur custom est masqué par le CSS ([input.css:472-498](src/css/input.css#L472-L498)) |
 | `#custom-cursor` absent du HTML | `V.cursor.init()` renvoie `false` : rien ne s'active |
 
@@ -280,8 +280,8 @@ Les classes `.btn-glow`, `.cli-launcher` ([input.css:1015](src/css/input.css#L10
 | Le bouton **saute** au lieu de glisser | Pas de `transition` sur `translate` | Ajouter `translate 0.35s var(--ease-out-expo)` dans la transition |
 | Le bouton ne revient pas à sa place | Style inline `translate` resté posé (mouseout non reçu) | Recharger ; vérifier qu'aucun autre script ne gère `mousemove` |
 | Le bouton ne bouge pas mais le point grossit | `prefers-reduced-motion` actif | Normal : seul le grossissement est conservé |
-| Le point n'apparaît pas | `#custom-cursor` manquant ou `has-custom-cursor` non posé | Vérifier [footer.php:87](app/views/layouts/footer.php#L87) |
-| Effet doublé / saccadé | Un second écouteur `mousemove` a été ajouté (ex. dans `main.js`) | Retirer le doublon : `main.js` précise de ne pas en réintroduire ([main.js:70-71](public/js/main.js#L70-L71)) |
+| Le point n'apparaît pas | `#custom-cursor` manquant ou `has-custom-cursor` non posé | Vérifier [footer.php:77](app/views/layouts/footer.php#L77) |
+| Effet doublé / saccadé | Un second écouteur `mousemove` a été ajouté (ex. dans `main.js`) | Retirer le doublon : un seul écouteur `mousemove` global, déclaré dans `V.init` de `animations.js` |
 | Le bouton écrase son `scale` / `rotate` | L'élément utilise `transform` au lieu des propriétés individuelles | Utiliser `scale:` / `rotate:` ou laisser Tailwind v4 |
 | Modification CSS sans effet | Édition de `public/css/style.css` (compilé) | Éditer `src/css/input.css`, recompiler Tailwind |
 

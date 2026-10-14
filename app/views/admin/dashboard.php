@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($title ?? 'Back-Office Admin') ?></title>
+    <title><?= htmlspecialchars($title) ?></title>
     <link rel="stylesheet" href="/css/style.css">
-    <script src="/js/admin.js" defer></script>
+    <script src="/js/admin.js?v=20261014" defer></script>
 </head>
 <body class="font-body bg-background text-foreground min-h-screen flex flex-col">
 
-<!-- HEADER ADMIN -->
 <header class="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border-strong px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div class="flex flex-col">
         <span class="text-xs font-mono tracking-widest text-accent uppercase">YLF.36 — Admin</span>
@@ -32,7 +31,6 @@
     </div>
 </header>
 
-<!-- NAVIGATION DES ONGLETS -->
 <nav class="px-4 sm:px-6 py-4 border-b border-border-strong overflow-x-auto whitespace-nowrap scrollbar-hide">
     <div class="flex gap-2 font-mono text-xs uppercase tracking-wider" id="admin-tabs">
         <button type="button"
@@ -73,39 +71,25 @@
     </div>
 </nav>
 
-<!-- FORMULAIRE GLOBAL -->
 <main class="flex-grow p-4 sm:p-6 max-w-5xl mx-auto w-full">
 
-    <?php if (!empty($flash) && is_array($flash)):
-        // Couleur du bandeau selon la nature du message (succès / avertissement / erreur)
-        $flashStyles = [
-                'success' => 'border-accent/40 bg-accent/10 text-accent',
-                'warning' => 'border-amber-400/40 bg-amber-400/10 text-amber-300',
-                'error' => 'border-red-500/40 bg-red-500/10 text-red-300',
-        ];
-        $flashClass = $flashStyles[$flash['type'] ?? 'error'] ?? $flashStyles['error'];
-        ?>
-        <!-- Message flash (Post/Redirect/Get) : affiché une seule fois après un enregistrement -->
-        <div role="<?= ($flash['type'] ?? '') === 'error' ? 'alert' : 'status' ?>"
-             class="mb-8 rounded-lg border px-4 py-3 text-sm <?= $flashClass ?>">
-            <p><?= htmlspecialchars($flash['message'] ?? '') ?></p>
-            <?php if (!empty($flash['details']) && is_array($flash['details'])): ?>
+    <?php if ($flash !== null): ?>
+        <div role="<?= $flash['role'] ?>"
+             class="mb-8 rounded-lg border px-4 py-3 text-sm <?= $flash['class'] ?>">
+            <p><?= htmlspecialchars($flash['message']) ?></p>
+            <?php if ($flash['details'] !== []): ?>
                 <ul class="mt-2 list-disc pl-5 text-xs opacity-90">
-                    <?php foreach ($flash['details'] as $detail): ?>
-                        <li><?= htmlspecialchars((string)$detail) ?></li>
-                    <?php endforeach; ?>
+                    <?php array_walk($flash['details'], static function (string $detail): void { ?>
+                        <li><?= htmlspecialchars($detail) ?></li>
+                    <?php }); ?>
                 </ul>
             <?php endif; ?>
         </div>
     <?php endif; ?>
 
     <form id="admin-form" action="/admin/save" method="POST" enctype="multipart/form-data" class="flex flex-col gap-12">
-        <!-- Jeton anti-CSRF (vérifié par AdminController::save) -->
         <?= Csrf::field() ?>
 
-        <!-- ========================================== -->
-        <!-- 1. ONGLET : DISPONIBILITÉ & HERO           -->
-        <!-- ========================================== -->
         <section id="dispo" class="tab-content flex flex-col gap-8">
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
                 <h2 class="font-display text-sm text-accent">En-tête &amp; Textes d'accroche</h2>
@@ -114,7 +98,7 @@
                     <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Badge de
                         disponibilité</label>
                     <input type="text" name="dispo_text"
-                           value="<?= htmlspecialchars($content['dispo_text'] ?? 'Disponible pour un stage · 8-12 semaines') ?>"
+                           value="<?= htmlspecialchars($fields['dispo_text']) ?>"
                            class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                 </div>
 
@@ -123,7 +107,7 @@
                         <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Prénom
                             &amp; Nom (Titre Hero)</label>
                         <input type="text" name="hero_name"
-                               value="<?= htmlspecialchars($content['hero_name'] ?? 'Yann Le Flohic') ?>"
+                               value="<?= htmlspecialchars($fields['hero_name']) ?>"
                                class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                     </div>
                     <div class="flex flex-col gap-2">
@@ -131,7 +115,7 @@
                             Image Memoji (URL ou Upload)</label>
                         <div class="flex flex-col gap-3">
                             <input type="text" name="hero_avatar"
-                                   value="<?= htmlspecialchars($content['hero_avatar'] ?? '') ?>"
+                                   value="<?= htmlspecialchars($fields['hero_avatar']) ?>"
                                    placeholder="URL de l'image..."
                                    class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                             <input type="file" name="hero_avatar_file" accept="image/*"
@@ -144,37 +128,34 @@
                     <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Accroche
                         principale (Mode Dev)</label>
                     <textarea name="hero_dev" rows="3"
-                              class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars($content['hero_dev'] ?? 'Développeur web full-stack — je conçois et code des interfaces sur-mesure, du front au back, jusqu\'à l\'hébergement.') ?></textarea>
+                              class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars($fields['hero_dev']) ?></textarea>
                 </div>
 
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Accroche
                         alternative (Mode Photographe)</label>
                     <textarea name="hero_photo" rows="3"
-                              class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars($content['hero_photo'] ?? 'Photographe — je capture la lumière, la matière et l\'instant, entre portraits, rue et paysages cinématographiques.') ?></textarea>
+                              class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars($fields['hero_photo']) ?></textarea>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Localisation</label>
                         <input type="text" name="location"
-                               value="<?= htmlspecialchars($content['location'] ?? 'Châteauroux — FR') ?>"
+                               value="<?= htmlspecialchars($fields['location']) ?>"
                                class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                     </div>
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Statut /
                             Études</label>
                         <input type="text" name="status"
-                               value="<?= htmlspecialchars($content['status'] ?? '2° année MMI') ?>"
+                               value="<?= htmlspecialchars($fields['status']) ?>"
                                class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- 2. ONGLET : PARCOURS (TIMELINE)            -->
-        <!-- ========================================== -->
         <section id="parcours" class="tab-content hidden flex-col gap-8">
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
                 <div class="flex justify-between items-center border-b border-border-strong pb-4">
@@ -189,24 +170,11 @@
                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Texte d'introduction de la
                         section</label>
                     <textarea name="parcours_intro" rows="3"
-                              class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars($content['parcours_intro'] ?? 'Étudiant en deuxième année de BUT MMI et développeur freelance, je navigue entre le développement web sur-mesure et la photographie.') ?></textarea>
+                              class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars($fields['parcours_intro']) ?></textarea>
                 </div>
 
-                <!-- Liste des étapes -->
                 <div id="parcours-container" class="flex flex-col gap-6">
-                    <?php
-                    $parcoursList = $parcours ?? [];
-                    if (is_string($parcoursList)) {
-                        $parcoursList = json_decode($parcoursList, true) ?? [];
-                    }
-                    if (!is_array($parcoursList) || empty($parcoursList)) {
-                        $parcoursList = [
-                                ['period' => '2025 — Actuel', 'type' => 'Formation', 'title' => 'BUT Métiers du Multimédia et de l\'Internet (MMI)', 'detail' => 'Parcours Web et dispositifs interactifs · IUT du Limousin, Limoges'],
-                                ['period' => '2025 — Actuel', 'type' => 'Expérience', 'title' => 'Freelance développeur Full-stack', 'detail' => 'Développement web sur-mesure, gestion de projets clients et intégration UI/UX.']
-                        ];
-                    }
-                    foreach ($parcoursList as $idx => $item):
-                        ?>
+                    <?php array_walk($parcours, static function (array $item, int|string $idx): void { ?>
                         <div class="parcours-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col gap-4 relative">
                             <div class="flex justify-between items-center">
                                 <span class="text-xs font-mono text-accent">Étape #<?= $idx + 1 ?></span>
@@ -219,40 +187,36 @@
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Période</label>
                                     <input type="text" name="parcours[<?= $idx ?>][period]"
-                                           value="<?= htmlspecialchars($item['period'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($item['period']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Type (Formation
                                         / Expérience)</label>
                                     <input type="text" name="parcours[<?= $idx ?>][type]"
-                                           value="<?= htmlspecialchars($item['type'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($item['type']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                             </div>
                             <div>
                                 <label class="text-[10px] font-mono text-muted-foreground uppercase">Titre</label>
                                 <input type="text" name="parcours[<?= $idx ?>][title]"
-                                       value="<?= htmlspecialchars($item['title'] ?? '') ?>"
+                                       value="<?= htmlspecialchars($item['title']) ?>"
                                        class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                             </div>
                             <div>
                                 <label class="text-[10px] font-mono text-muted-foreground uppercase">Détail /
                                     Établissement</label>
                                 <textarea name="parcours[<?= $idx ?>][detail]" rows="2"
-                                          class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent resize-y"><?= htmlspecialchars($item['detail'] ?? '') ?></textarea>
+                                          class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent resize-y"><?= htmlspecialchars($item['detail']) ?></textarea>
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                    <?php }); ?>
                 </div>
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- 3. ONGLET : COMPÉTENCES & LANGUES          -->
-        <!-- ========================================== -->
         <section id="skills" class="tab-content hidden flex-col gap-8">
-            <!-- Badges Tech -->
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
                 <h2 class="font-display text-sm text-accent">Compétences Techniques &amp; Outils</h2>
 
@@ -260,7 +224,7 @@
                     <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Stack Technique
                         (Séparés par des virgules)</label>
                     <input type="text" name="skills_tech"
-                           value="<?= htmlspecialchars($content['skills_tech'] ?? 'HTML / CSS, JavaScript, React, PHP, SQL, Python, Sass, BEM CSS, Tailwind, Bootstrap, Git / Github') ?>"
+                           value="<?= htmlspecialchars($fields['skills_tech']) ?>"
                            class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                 </div>
 
@@ -268,12 +232,11 @@
                     <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Outils &amp;
                         Logiciels (Séparés par des virgules)</label>
                     <input type="text" name="skills_tools"
-                           value="<?= htmlspecialchars($content['skills_tools'] ?? 'VS Code, Figma, Shell, Adobe, Affinity, Apache, Mac') ?>"
+                           value="<?= htmlspecialchars($fields['skills_tools']) ?>"
                            class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                 </div>
             </div>
 
-            <!-- Langues -->
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
                 <div class="flex justify-between items-center border-b border-border-strong pb-4">
                     <h2 class="font-display text-sm text-accent">Langues parlées</h2>
@@ -284,38 +247,26 @@
                 </div>
 
                 <div id="langues-container" class="flex flex-col gap-4">
-                    <?php
-                    $languesList = $langues ?? [];
-                    if (is_string($languesList)) {
-                        $languesList = json_decode($languesList, true) ?? [];
-                    }
-                    if (!is_array($languesList) || empty($languesList)) {
-                        $languesList = [
-                                ['name' => 'Français', 'level' => 'Natif', 'percent' => 100],
-                                ['name' => 'Espagnol', 'level' => 'B2+ / C1', 'percent' => 82]
-                        ];
-                    }
-                    foreach ($languesList as $idx => $lang):
-                        ?>
+                    <?php array_walk($langues, static function (array $lang, int|string $idx): void { ?>
                         <div class="langue-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Langue</label>
                                     <input type="text" name="langues[<?= $idx ?>][name]"
-                                           value="<?= htmlspecialchars($lang['name'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($lang['name']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Niveau</label>
                                     <input type="text" name="langues[<?= $idx ?>][level]"
-                                           value="<?= htmlspecialchars($lang['level'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($lang['level']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Maîtrise
                                         (%)</label>
                                     <input type="number" name="langues[<?= $idx ?>][percent]"
-                                           value="<?= htmlspecialchars($lang['percent'] ?? 80) ?>" min="0" max="100"
+                                           value="<?= htmlspecialchars($lang['percent']) ?>" min="0" max="100"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                             </div>
@@ -324,14 +275,11 @@
                                 Suppr.
                             </button>
                         </div>
-                    <?php endforeach; ?>
+                    <?php }); ?>
                 </div>
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- 4. ONGLET : PROJETS                        -->
-        <!-- ========================================== -->
         <section id="projects" class="tab-content hidden flex-col gap-8">
             <div class="flex justify-between items-center border-b border-border-strong pb-4">
                 <h2 class="font-display text-sm text-accent">Gestion des Projets du Portfolio</h2>
@@ -341,34 +289,26 @@
                 </button>
             </div>
 
-            <!-- Filtres de projets -->
             <div class="border border-border-strong bg-background-2/20 p-4 rounded-xl flex flex-col gap-3">
                 <label class="text-[10px] font-mono uppercase text-muted-foreground">Catégories de filtres
                     principaux</label>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <input type="text" name="project_cat_1"
-                           value="<?= htmlspecialchars($content['project_cat_1'] ?? 'Scolaires') ?>"
+                           value="<?= htmlspecialchars($fields['project_cat_1']) ?>"
                            class="bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none">
                     <input type="text" name="project_cat_2"
-                           value="<?= htmlspecialchars($content['project_cat_2'] ?? 'Personnels') ?>"
+                           value="<?= htmlspecialchars($fields['project_cat_2']) ?>"
                            class="bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none">
                     <input type="text" name="project_cat_3"
-                           value="<?= htmlspecialchars($content['project_cat_3'] ?? 'Professionnels') ?>"
+                           value="<?= htmlspecialchars($fields['project_cat_3']) ?>"
                            class="bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none">
                 </div>
             </div>
 
             <div id="projects-container" class="flex flex-col gap-8">
-                <?php
-                $projectsList = $projects ?? [];
-                if (is_string($projectsList)) {
-                    $projectsList = json_decode($projectsList, true) ?? [];
-                }
-                if (is_array($projectsList) && !empty($projectsList)):
-                    foreach ($projectsList as $index => $project):
-                        ?>
+                <?php array_walk($projects, static function (array $project, int|string $index): void { ?>
                         <div class="project-item border border-border-strong bg-background-2/20 p-6 rounded-xl flex flex-col gap-6 relative">
-                            <input type="hidden" name="projects[<?= $index ?>][id]" value="<?= $project['id'] ?? '' ?>">
+                            <input type="hidden" name="projects[<?= $index ?>][id]" value="<?= $project['id'] ?>">
 
                             <div class="flex justify-between items-center border-b border-border-strong pb-4">
                                 <h3 class="font-display text-xl text-accent italic">Projet
@@ -384,14 +324,14 @@
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre du
                                         projet</label>
                                     <input type="text" name="projects[<?= $index ?>][title]"
-                                           value="<?= htmlspecialchars($project['title'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($project['title']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                                 </div>
                                 <div class="flex flex-col gap-2">
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Meta (ex:
                                         Client · Full-stack)</label>
                                     <input type="text" name="projects[<?= $index ?>][meta]"
-                                           value="<?= htmlspecialchars($project['meta'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($project['meta']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                                 </div>
                             </div>
@@ -399,7 +339,7 @@
                             <div class="flex flex-col gap-2">
                                 <label class="text-[10px] font-mono uppercase text-muted-foreground">Description</label>
                                 <textarea name="projects[<?= $index ?>][description]" rows="3"
-                                          class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars($project['description'] ?? '') ?></textarea>
+                                          class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars($project['description']) ?></textarea>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -408,7 +348,7 @@
                                         Upload)</label>
                                     <div class="flex flex-col gap-3">
                                         <input type="text" name="projects[<?= $index ?>][image]"
-                                               value="<?= htmlspecialchars($project['image'] ?? '') ?>"
+                                               value="<?= htmlspecialchars($project['image']) ?>"
                                                placeholder="URL..."
                                                class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                                         <input type="file" name="projects_image_file[<?= $index ?>]" accept="image/*"
@@ -419,14 +359,14 @@
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Lien du projet
                                         (URL)</label>
                                     <input type="text" name="projects[<?= $index ?>][link]"
-                                           value="<?= htmlspecialchars($project['link'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($project['link']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                                 </div>
                                 <div class="flex flex-col gap-2">
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Catégorie de
                                         filtre</label>
                                     <input type="text" name="projects[<?= $index ?>][category]"
-                                           value="<?= htmlspecialchars($project['category'] ?? 'Web') ?>"
+                                           value="<?= htmlspecialchars($project['category']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                                 </div>
                             </div>
@@ -435,20 +375,14 @@
                                 <label class="text-[10px] font-mono uppercase text-muted-foreground">Tags techniques
                                     (séparés par des virgules)</label>
                                 <input type="text" name="projects[<?= $index ?>][tags]"
-                                       value="<?= htmlspecialchars($project['tags'] ?? '') ?>"
+                                       value="<?= htmlspecialchars($project['tags']) ?>"
                                        class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                             </div>
                         </div>
-                    <?php
-                    endforeach;
-                endif;
-                ?>
+                <?php }); ?>
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- 5. ONGLET : GALERIE PHOTO (REGARDER AUTREMENT) -->
-        <!-- ========================================== -->
         <section id="galerie" class="tab-content hidden flex-col gap-8">
             <div class="flex justify-between items-center border-b border-border-strong pb-4">
                 <div>
@@ -463,19 +397,7 @@
             </div>
 
             <div id="galerie-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <?php
-                $photosList = $photos ?? [];
-                if (is_string($photosList)) {
-                    $photosList = json_decode($photosList, true) ?? [];
-                }
-                if (!is_array($photosList) || empty($photosList)) {
-                    $photosList = [
-                            ['url' => '/assets/images/gallery/gallery-6.webp', 'unsplash_id' => '', 'legend' => 'FLEURS ROSES · LUMIÈRE NATURELLE', 'alt' => 'Fleurs du jardin roses', 'format' => 'portrait'],
-                            ['url' => '/assets/images/gallery/gallery-1.webp', 'unsplash_id' => '', 'legend' => 'PAYSAGE · MARMOTTES', 'alt' => 'Paysage Marmottes', 'format' => 'landscape']
-                    ];
-                }
-                foreach ($photosList as $idx => $photo):
-                    ?>
+                <?php array_walk($photos, static function (array $photo, int|string $idx): void { ?>
                     <div class="photo-item border border-border-strong bg-background-2/20 p-5 rounded-xl flex flex-col gap-4 relative">
                         <div class="flex justify-between items-center border-b border-border-strong pb-3">
                             <span class="text-xs font-mono text-accent">Photo #<?= $idx + 1 ?></span>
@@ -490,7 +412,7 @@
                                 (Prioritaire ou Upload)</label>
                             <div class="flex flex-col gap-3">
                                 <input type="text" name="photos[<?= $idx ?>][url]"
-                                       value="<?= htmlspecialchars($photo['url'] ?? '') ?>"
+                                       value="<?= htmlspecialchars($photo['url']) ?>"
                                        placeholder="URL..."
                                        class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 <input type="file" name="photos_url_file[<?= $idx ?>]" accept="image/*"
@@ -502,7 +424,7 @@
                             <label class="text-[10px] font-mono uppercase text-muted-foreground">ID Unsplash
                                 (Optionnel)</label>
                             <input type="text" name="photos[<?= $idx ?>][unsplash_id]"
-                                   value="<?= htmlspecialchars($photo['unsplash_id'] ?? '') ?>"
+                                   value="<?= htmlspecialchars($photo['unsplash_id']) ?>"
                                    class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                         </div>
 
@@ -510,7 +432,7 @@
                             <label class="text-[10px] font-mono uppercase text-muted-foreground">Légende (Au
                                 survol)</label>
                             <input type="text" name="photos[<?= $idx ?>][legend]"
-                                   value="<?= htmlspecialchars($photo['legend'] ?? '') ?>"
+                                   value="<?= htmlspecialchars($photo['legend']) ?>"
                                    class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                         </div>
 
@@ -518,7 +440,7 @@
                             <label class="text-[10px] font-mono uppercase text-muted-foreground">Texte alternatif
                                 (Alt)</label>
                             <input type="text" name="photos[<?= $idx ?>][alt]"
-                                   value="<?= htmlspecialchars($photo['alt'] ?? '') ?>"
+                                   value="<?= htmlspecialchars($photo['alt']) ?>"
                                    class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                         </div>
 
@@ -527,22 +449,21 @@
                                 d'affichage</label>
                             <select name="photos[<?= $idx ?>][format]"
                                     class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
-                                <option value="portrait" <?= ($photo['format'] ?? '') === 'portrait' ? 'selected' : '' ?>>
+                                <option value="portrait" <?= ($photo['format']) === 'portrait' ? 'selected' : '' ?>>
                                     Portrait (3:4 Dev · 4:5 Photo)
                                 </option>
-                                <option value="landscape" <?= ($photo['format'] ?? '') === 'landscape' ? 'selected' : '' ?>>
+                                <option value="landscape" <?= ($photo['format']) === 'landscape' ? 'selected' : '' ?>>
                                     Paysage (16:10 Dev · 16:9 Photo)
                                 </option>
-                                <option value="panorama" <?= ($photo['format'] ?? '') === 'panorama' ? 'selected' : '' ?>>
+                                <option value="panorama" <?= ($photo['format']) === 'panorama' ? 'selected' : '' ?>>
                                     Panorama cinéma (21:9 Photo, pleine largeur)
                                 </option>
                             </select>
                         </div>
                     </div>
-                <?php endforeach; ?>
+                <?php }); ?>
             </div>
 
-            <!-- Comparateur Avant / Après (section « Post-traitement », visible en Mode Photo) -->
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
                 <div>
                     <h2 class="font-display text-sm text-accent">Comparateur Avant / Après (Mode Photo)</h2>
@@ -556,7 +477,7 @@
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-mono uppercase text-muted-foreground">Image AVANT (brute) : URL ou upload</label>
                         <input type="text" name="compare_before"
-                               value="<?= htmlspecialchars($content['compare_before'] ?? '') ?>"
+                               value="<?= htmlspecialchars($fields['compare_before']) ?>"
                                placeholder="Vide = brut simulé"
                                class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                         <input type="file" name="compare_before_file" accept="image/jpeg,image/png,image/webp"
@@ -565,7 +486,7 @@
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-mono uppercase text-muted-foreground">Image APRÈS (étalonnée) : URL ou upload</label>
                         <input type="text" name="compare_after"
-                               value="<?= htmlspecialchars($content['compare_after'] ?? '') ?>"
+                               value="<?= htmlspecialchars($fields['compare_after']) ?>"
                                placeholder="/assets/images/gallery/gallery-2.webp"
                                class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                         <input type="file" name="compare_after_file" accept="image/jpeg,image/png,image/webp"
@@ -576,27 +497,24 @@
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre de la section</label>
                     <input type="text" name="compare_title"
-                           value="<?= htmlspecialchars($content['compare_title'] ?? '') ?>"
+                           value="<?= htmlspecialchars($fields['compare_title']) ?>"
                            placeholder="Du RAW à l'image finale."
                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                 </div>
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Texte d'accompagnement</label>
                     <textarea name="compare_caption" rows="2"
-                              class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent resize-y"><?= htmlspecialchars($content['compare_caption'] ?? '') ?></textarea>
+                              class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent resize-y"><?= htmlspecialchars($fields['compare_caption']) ?></textarea>
                 </div>
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Outils (séparés par des virgules)</label>
                     <input type="text" name="compare_tools"
-                           value="<?= htmlspecialchars($content['compare_tools'] ?? 'Lightroom Classic, DaVinci Resolve') ?>"
+                           value="<?= htmlspecialchars($fields['compare_tools']) ?>"
                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                 </div>
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- 6. ONGLET : CONTACT & SOCIAUX             -->
-        <!-- ========================================== -->
         <section id="contact" class="tab-content hidden flex-col gap-8">
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
                 <h2 class="font-display text-sm text-accent">Titres &amp; Textes de Contact</h2>
@@ -604,20 +522,19 @@
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre de section</label>
                         <input type="text" name="contact_title"
-                               value="<?= htmlspecialchars($content['contact_title'] ?? 'Un projet web ou photo ?') ?>"
+                               value="<?= htmlspecialchars($fields['contact_title']) ?>"
                                class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                     </div>
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-mono uppercase text-muted-foreground">Sous-titre / Appel à
                             l'action</label>
                         <input type="text" name="contact_subtitle"
-                               value="<?= htmlspecialchars($content['contact_subtitle'] ?? 'Parlons-en.') ?>"
+                               value="<?= htmlspecialchars($fields['contact_subtitle']) ?>"
                                class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                     </div>
                 </div>
             </div>
 
-            <!-- Liens de contact -->
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-6">
                 <div class="flex justify-between items-center border-b border-border-strong pb-4">
                     <h2 class="font-display text-sm text-accent">Coordonnées &amp; Liens Réseaux</h2>
@@ -628,41 +545,27 @@
                 </div>
 
                 <div id="contact-container" class="flex flex-col gap-4">
-                    <?php
-                    $contactsList = $contacts ?? [];
-                    if (is_string($contactsList)) {
-                        $contactsList = json_decode($contactsList, true) ?? [];
-                    }
-                    if (!is_array($contactsList) || empty($contactsList)) {
-                        $contactsList = [
-                                ['label' => 'Email', 'value' => 'yann.lfhc@icloud.com', 'href' => 'mailto:yann.lfhc@icloud.com'],
-                                ['label' => 'Téléphone', 'value' => '+33 6 46 13 31 35', 'href' => 'tel:+33646133135'],
-                                ['label' => 'GitHub', 'value' => 'github.com/YannLf3', 'href' => 'https://github.com/YannLf3'],
-                                ['label' => 'LinkedIn', 'value' => 'in/yann-le-flohic', 'href' => 'https://linkedin.com/in/yann-le-flohic']
-                        ];
-                    }
-                    foreach ($contactsList as $idx => $link):
-                        ?>
+                    <?php array_walk($contacts, static function (array $link, int|string $idx): void { ?>
                         <div class="contact-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Libellé</label>
                                     <input type="text" name="contacts[<?= $idx ?>][label]"
-                                           value="<?= htmlspecialchars($link['label'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($link['label']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Valeur
                                         affichée</label>
                                     <input type="text" name="contacts[<?= $idx ?>][value]"
-                                           value="<?= htmlspecialchars($link['value'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($link['value']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-mono text-muted-foreground uppercase">Lien
                                         (href)</label>
                                     <input type="text" name="contacts[<?= $idx ?>][href]"
-                                           value="<?= htmlspecialchars($link['href'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($link['href']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                             </div>
@@ -671,33 +574,28 @@
                                 Suppr.
                             </button>
                         </div>
-                    <?php endforeach; ?>
+                    <?php }); ?>
                 </div>
             </div>
 
-            <!-- Centres d'intérêt -->
             <div class="border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl flex flex-col gap-4">
                 <h2 class="font-display text-sm text-accent">Centres d'intérêt (Footer)</h2>
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Tags séparés par des
                         virgules</label>
                     <input type="text" name="interests"
-                           value="<?= htmlspecialchars($content['interests'] ?? 'Open Source, Développement web, Photographie, Gaming, Badminton, Apple') ?>"
+                           value="<?= htmlspecialchars($fields['interests']) ?>"
                            class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
                 </div>
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- 7. ONGLET : LAB & VEILLE (DYNAMIQUE)       -->
-        <!-- ========================================== -->
         <section id="lab" class="tab-content hidden flex-col gap-12">
 
-            <!-- SECTION SNIPPETS / EXPÉRIMENTATIONS -->
             <div class="flex flex-col gap-6 border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl">
                 <div class="flex justify-between items-center border-b border-border-strong pb-4">
                     <div>
-                        <h3 class="font-display text-sm text-accent">Expérimentations &amp; Snippets Console</h3>
+                        <h2 class="font-display text-sm text-accent">Expérimentations &amp; Snippets Console</h2>
                         <p class="text-xs text-muted-foreground mt-1">Ajoutez ou modifiez vos snippets de code
                             interactifs.</p>
                     </div>
@@ -708,25 +606,7 @@
                 </div>
 
                 <div id="snippets-container" class="flex flex-col gap-8">
-                    <?php
-                    $snippetsList = $snippets ?? [];
-                    if (is_string($snippetsList)) {
-                        $snippetsList = json_decode($snippetsList, true) ?? [];
-                    }
-                    if (!is_array($snippetsList) || empty($snippetsList)) {
-                        $snippetsList = [
-                                [
-                                        'title' => 'Glow Effect & Dynamic Border',
-                                        'category' => 'CSS Modern',
-                                        'badge' => 'Tested on Chrome / Safari',
-                                        'html' => '<button class="glow-button">Survole-moi !</button>',
-                                        'css' => ".glow-button {\n  background: #18181b;\n  border: 1px solid transparent;\n}",
-                                        'js' => "// Pas de JavaScript requis"
-                                ]
-                        ];
-                    }
-                    foreach ($snippetsList as $idx => $snip):
-                        ?>
+                    <?php array_walk($snippets, static function (array $snip, int|string $idx): void { ?>
                         <div class="snippet-item border border-border-strong bg-background/40 p-5 rounded-xl flex flex-col gap-6 relative">
                             <div class="flex justify-between items-center border-b border-border-strong pb-3">
                                 <span class="text-xs font-mono text-accent">Snippet #<?= $idx + 1 ?></span>
@@ -741,21 +621,21 @@
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre de
                                         l'expérience</label>
                                     <input type="text" name="snippets[<?= $idx ?>][title]"
-                                           value="<?= htmlspecialchars($snip['title'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($snip['title']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div class="flex flex-col gap-2">
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Tag / Catégorie
                                         (ex: CSS Modern)</label>
                                     <input type="text" name="snippets[<?= $idx ?>][category]"
-                                           value="<?= htmlspecialchars($snip['category'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($snip['category']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                                 <div class="flex flex-col gap-2">
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Note bas de
                                         carte (ex: Performance 60 FPS)</label>
                                     <input type="text" name="snippets[<?= $idx ?>][badge]"
-                                           value="<?= htmlspecialchars($snip['badge'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($snip['badge']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
                                 </div>
                             </div>
@@ -766,33 +646,32 @@
                                         <span>Code HTML</span><span class="text-orange-400">&lt;/&gt;</span>
                                     </label>
                                     <textarea name="snippets[<?= $idx ?>][html]" rows="6"
-                                              class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"><?= htmlspecialchars($snip['html'] ?? '') ?></textarea>
+                                              class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"><?= htmlspecialchars($snip['html']) ?></textarea>
                                 </div>
                                 <div class="flex flex-col gap-2">
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground flex justify-between">
                                         <span>Code CSS</span><span class="text-blue-400">#</span>
                                     </label>
                                     <textarea name="snippets[<?= $idx ?>][css]" rows="6"
-                                              class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"><?= htmlspecialchars($snip['css'] ?? '') ?></textarea>
+                                              class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"><?= htmlspecialchars($snip['css']) ?></textarea>
                                 </div>
                                 <div class="flex flex-col gap-2">
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground flex justify-between">
                                         <span>Code JS</span><span class="text-yellow-400">{}</span>
                                     </label>
                                     <textarea name="snippets[<?= $idx ?>][js]" rows="6"
-                                              class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"><?= htmlspecialchars($snip['js'] ?? '') ?></textarea>
+                                              class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"><?= htmlspecialchars($snip['js']) ?></textarea>
                                 </div>
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                    <?php }); ?>
                 </div>
             </div>
 
-            <!-- SECTION ARTICLES DE BLOG -->
             <div class="flex flex-col gap-6 border border-border-strong bg-background-2/20 p-5 sm:p-6 rounded-xl">
                 <div class="flex justify-between items-center border-b border-border-strong pb-4">
                     <div>
-                        <h3 class="font-display text-sm text-amber-400">Articles de Blog &amp; Notes d'expérience</h3>
+                        <h2 class="font-display text-sm text-amber-400">Articles de Blog &amp; Notes d'expérience</h2>
                         <p class="text-xs text-muted-foreground mt-1">Rédigez et organisez vos publications.</p>
                     </div>
                     <button type="button" id="add-article-btn"
@@ -802,22 +681,7 @@
                 </div>
 
                 <div id="articles-container" class="flex flex-col gap-8">
-                    <?php
-                    $articlesList = $articles ?? [];
-                    if (is_string($articlesList)) {
-                        $articlesList = json_decode($articlesList, true) ?? [];
-                    }
-                    if (!is_array($articlesList) || empty($articlesList)) {
-                        $articlesList = [
-                                [
-                                        'title' => "Passer d'Illustrator à Affinity V3 : Mon retour d'expérience en vectoriel",
-                                        'meta' => 'AFFINITY DESIGNER — 12 SEP 2026',
-                                        'content' => "Après plusieurs mois d'utilisation intensive d'Affinity Designer V3 dans mes projets web..."
-                                ]
-                        ];
-                    }
-                    foreach ($articlesList as $idx => $art):
-                        ?>
+                    <?php array_walk($articles, static function (array $art, int|string $idx): void { ?>
                         <div class="article-item border border-border-strong bg-background/40 p-5 rounded-xl flex flex-col gap-6 relative">
                             <div class="flex justify-between items-center border-b border-border-strong pb-3">
                                 <span class="text-xs font-mono text-amber-400">Article #<?= $idx + 1 ?></span>
@@ -832,14 +696,14 @@
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre de
                                         l'article</label>
                                     <input type="text" name="articles[<?= $idx ?>][title]"
-                                           value="<?= htmlspecialchars($art['title'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($art['title']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-amber-400 outline-none">
                                 </div>
                                 <div class="flex flex-col gap-2">
                                     <label class="text-[10px] font-mono uppercase text-muted-foreground">Catégorie &amp;
                                         Date (ex: MACOS / DEV — 02 SEP 2026)</label>
                                     <input type="text" name="articles[<?= $idx ?>][meta]"
-                                           value="<?= htmlspecialchars($art['meta'] ?? '') ?>"
+                                           value="<?= htmlspecialchars($art['meta']) ?>"
                                            class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-amber-400 outline-none">
                                 </div>
                             </div>
@@ -848,16 +712,217 @@
                                 <label class="text-[10px] font-mono uppercase text-muted-foreground">Contenu de
                                     l'article</label>
                                 <textarea name="articles[<?= $idx ?>][content]" rows="6"
-                                          class="w-full bg-background-2/50 border border-border-strong rounded-lg p-4 text-sm focus:border-amber-400 outline-none resize-y leading-relaxed"><?= htmlspecialchars($art['content'] ?? '') ?></textarea>
+                                          class="w-full bg-background-2/50 border border-border-strong rounded-lg p-4 text-sm focus:border-amber-400 outline-none resize-y leading-relaxed"><?= htmlspecialchars($art['content']) ?></textarea>
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                    <?php }); ?>
                 </div>
             </div>
         </section>
 
     </form>
 </main>
+
+<template id="tpl-admin-snippet">
+    <div class="snippet-item border border-border-strong bg-background/40 p-5 rounded-xl flex flex-col gap-6 relative">
+        <div class="flex justify-between items-center border-b border-border-strong pb-3">
+            <span class="text-xs font-mono text-accent">Nouveau Snippet #{{number}}</span>
+            <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2.5 py-1 rounded hover:text-red-400 hover:border-red-400">SUPPRIMER</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre de l'expérience</label>
+                <input type="text" name="snippets[{{index}}][title]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">Tag / Catégorie</label>
+                <input type="text" name="snippets[{{index}}][category]" placeholder="CSS Modern" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">Note bas de carte</label>
+                <input type="text" name="snippets[{{index}}][badge]" placeholder="Tested on Chrome" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">HTML</label>
+                <textarea name="snippets[{{index}}][html]" rows="6" class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"></textarea>
+            </div>
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">CSS</label>
+                <textarea name="snippets[{{index}}][css]" rows="6" class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"></textarea>
+            </div>
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">JS</label>
+                <textarea name="snippets[{{index}}][js]" rows="6" class="w-full bg-zinc-950 border border-border-strong rounded p-3 font-mono text-xs text-zinc-300 focus:border-accent outline-none resize-y"></textarea>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="tpl-admin-article">
+    <div class="article-item border border-border-strong bg-background/40 p-5 rounded-xl flex flex-col gap-6 relative">
+        <div class="flex justify-between items-center border-b border-border-strong pb-3">
+            <span class="text-xs font-mono text-amber-400">Nouvel Article #{{number}}</span>
+            <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2.5 py-1 rounded hover:text-red-400 hover:border-red-400">SUPPRIMER</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre de l'article</label>
+                <input type="text" name="articles[{{index}}][title]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-amber-400 outline-none">
+            </div>
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">Catégorie & Date</label>
+                <input type="text" name="articles[{{index}}][meta]" placeholder="MACOS / DEV — 2026" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-amber-400 outline-none">
+            </div>
+        </div>
+        <div>
+            <label class="text-[10px] font-mono uppercase text-muted-foreground">Contenu</label>
+            <textarea name="articles[{{index}}][content]" rows="6" class="w-full bg-background-2/50 border border-border-strong rounded-lg p-4 text-sm focus:border-amber-400 outline-none resize-y leading-relaxed"></textarea>
+        </div>
+    </div>
+</template>
+<template id="tpl-admin-project">
+    <div class="project-item border border-border-strong bg-background-2/20 p-6 rounded-xl flex flex-col gap-6 relative">
+        <div class="flex justify-between items-center border-b border-border-strong pb-4">
+            <h3 class="font-serif text-xl text-accent italic">Nouveau Projet #{{number}}</h3>
+            <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-3 py-1 rounded hover:text-red-400 hover:border-red-400 transition-colors">SUPPRIMER</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">Titre du projet</label>
+                <input type="text" name="projects[{{index}}][title]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+            </div>
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">Meta</label>
+                <input type="text" name="projects[{{index}}][meta]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+            </div>
+        </div>
+        <div>
+            <label class="text-[10px] font-mono uppercase text-muted-foreground">Description</label>
+            <textarea name="projects[{{index}}][description]" rows="3" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"></textarea>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="flex flex-col gap-2">
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">Image (URL ou Upload)</label>
+                <div class="flex flex-col gap-3">
+                    <input type="text" name="projects[{{index}}][image]" placeholder="URL..." class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                    <input type="file" name="projects_image_file[{{index}}]" accept="image/*" class="w-full text-xs text-muted-foreground file:mr-2 file:py-1 file:px-3 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
+                </div>
+            </div>
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">Lien (URL)</label>
+                <input type="text" name="projects[{{index}}][link]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+            </div>
+            <div>
+                <label class="text-[10px] font-mono uppercase text-muted-foreground">Catégorie</label>
+                <input type="text" name="projects[{{index}}][category]" value="Web" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+            </div>
+        </div>
+        <div>
+            <label class="text-[10px] font-mono uppercase text-muted-foreground">Tags (séparés par des virgules)</label>
+            <input type="text" name="projects[{{index}}][tags]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+        </div>
+    </div>
+</template>
+<template id="tpl-admin-photo">
+    <div class="photo-item border border-border-strong bg-background-2/20 p-5 rounded-xl flex flex-col gap-4 relative">
+        <div class="flex justify-between items-center border-b border-border-strong pb-3">
+            <span class="text-xs font-mono text-accent">Nouvelle Photo #{{number}}</span>
+            <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2.5 py-1 rounded hover:text-red-400 hover:border-red-400">SUPPRIMER</button>
+        </div>
+        <div class="flex flex-col gap-2">
+            <label class="text-[10px] font-mono uppercase text-muted-foreground">URL Image (Prioritaire ou Upload)</label>
+            <div class="flex flex-col gap-3">
+                <input type="text" name="photos[{{index}}][url]" placeholder="URL..." class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+                <input type="file" name="photos_url_file[{{index}}]" accept="image/*" class="w-full text-[10px] text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
+            </div>
+        </div>
+        <div>
+            <label class="text-[10px] font-mono uppercase text-muted-foreground">ID Unsplash (Optionnel)</label>
+            <input type="text" name="photos[{{index}}][unsplash_id]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+        </div>
+        <div>
+            <label class="text-[10px] font-mono uppercase text-muted-foreground">Légende</label>
+            <input type="text" name="photos[{{index}}][legend]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+        </div>
+        <div>
+            <label class="text-[10px] font-mono uppercase text-muted-foreground">Texte Alt</label>
+            <input type="text" name="photos[{{index}}][alt]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+        </div>
+        <div>
+            <label class="text-[10px] font-mono uppercase text-muted-foreground">Format</label>
+            <select name="photos[{{index}}][format]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+                <option value="portrait">Portrait (3:4 Dev · 4:5 Photo)</option>
+                <option value="landscape" selected>Paysage (16:10 Dev · 16:9 Photo)</option>
+                <option value="panorama">Panorama cinéma (21:9 Photo, pleine largeur)</option>
+            </select>
+        </div>
+    </div>
+</template>
+<template id="tpl-admin-parcours">
+    <div class="parcours-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col gap-4 relative">
+        <div class="flex justify-between items-center">
+            <span class="text-xs font-mono text-accent">Nouvelle Étape #{{number}}</span>
+            <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2.5 py-1 rounded hover:text-red-400 hover:border-red-400">SUPPRIMER</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="text-[10px] font-mono text-muted-foreground uppercase">Période</label>
+                <input type="text" name="parcours[{{index}}][period]" placeholder="2026 — Actuel" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+            <div>
+                <label class="text-[10px] font-mono text-muted-foreground uppercase">Type</label>
+                <input type="text" name="parcours[{{index}}][type]" placeholder="Formation / Expérience" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+        </div>
+        <div>
+            <label class="text-[10px] font-mono text-muted-foreground uppercase">Titre</label>
+            <input type="text" name="parcours[{{index}}][title]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+        </div>
+        <div>
+            <label class="text-[10px] font-mono text-muted-foreground uppercase">Détail</label>
+            <textarea name="parcours[{{index}}][detail]" rows="2" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent resize-y"></textarea>
+        </div>
+    </div>
+</template>
+<template id="tpl-admin-langue">
+    <div class="langue-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+            <div>
+                <label class="text-[10px] font-mono text-muted-foreground uppercase">Langue</label>
+                <input type="text" name="langues[{{index}}][name]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+            <div>
+                <label class="text-[10px] font-mono text-muted-foreground uppercase">Niveau</label>
+                <input type="text" name="langues[{{index}}][level]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+            <div>
+                <label class="text-[10px] font-mono text-muted-foreground uppercase">Maîtrise (%)</label>
+                <input type="number" name="langues[{{index}}][percent]" value="80" min="0" max="100" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+        </div>
+        <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2 py-1.5 rounded hover:text-red-400 hover:border-red-400 self-end sm:self-center">Suppr.</button>
+    </div>
+</template>
+<template id="tpl-admin-contact">
+    <div class="contact-item border border-border-strong bg-background/40 p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+            <div>
+                <label class="text-[10px] font-mono text-muted-foreground uppercase">Libellé</label>
+                <input type="text" name="contacts[{{index}}][label]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+            <div>
+                <label class="text-[10px] font-mono text-muted-foreground uppercase">Valeur affichée</label>
+                <input type="text" name="contacts[{{index}}][value]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+            <div>
+                <label class="text-[10px] font-mono text-muted-foreground uppercase">Lien (href)</label>
+                <input type="text" name="contacts[{{index}}][href]" class="w-full bg-background-2/50 border border-border-strong rounded px-3 py-2 text-xs outline-none focus:border-accent">
+            </div>
+        </div>
+        <button type="button" class="remove-item-btn text-[10px] font-mono border border-border-strong px-2 py-1.5 rounded hover:text-red-400 hover:border-red-400 self-end sm:self-center">Suppr.</button>
+    </div>
+</template>
 
 </body>
 </html>

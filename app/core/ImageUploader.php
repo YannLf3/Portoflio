@@ -113,20 +113,19 @@ final class ImageUploader
             return [];
         }
 
-        $stored = [];
-        foreach (array_keys($field['tmp_name']) as $index) {
-            $file = [
+        // array_map sur un seul tableau conserve les clés : chaque URL reste rattachée à l'index de sa ligne
+        $urls = array_map(
+            fn(int|string $index): ?string => $this->store([
                 'name' => $field['name'][$index] ?? '',
                 'tmp_name' => $field['tmp_name'][$index] ?? '',
                 'error' => $field['error'][$index] ?? UPLOAD_ERR_NO_FILE,
                 'size' => $field['size'][$index] ?? 0,
-            ];
-            $url = $this->store($file, $prefix);
-            if ($url !== null) {
-                $stored[$index] = $url;
-            }
-        }
-        return $stored;
+            ], $prefix),
+            array_combine(array_keys($field['tmp_name']), array_keys($field['tmp_name']))
+        );
+
+        // Fichiers absents ou refusés (null) écartés
+        return array_filter($urls, static fn(?string $url): bool => $url !== null);
     }
 
     /**

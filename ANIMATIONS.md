@@ -14,9 +14,9 @@ Guide pédagogique des trois effets visuels du portfolio :
 
 | Effet | HTML (où l'élément existe) | CSS (l'apparence) | JS (le cerveau) |
 |---|---|---|---|
-| Points de fond | [header.php:131](app/views/layouts/header.php#L131) : `<canvas id="fx-particles">` | [input.css:548-569](src/css/input.css#L548-L569) | [animations.js](public/js/animations.js) (tout le moteur) |
-| Traits sous les titres | [home.php:22](app/views/front/home.php#L22), [lab.php](app/views/front/lab.php) : classes `reveal-title` | [input.css:821-872](src/css/input.css#L821-L872) | [animations.js:1255-1306](public/js/animations.js#L1255-L1306) (déclenchement au scroll) |
-| Glitch du logo | [header.php:141](app/views/layouts/header.php#L141) : classe `glitch` + `data-glitch` | [input.css:945-988](src/css/input.css#L945-L988) et [input.css:1784-1890](src/css/input.css#L1784-L1890) | **Aucun JS** : 100 % CSS |
+| Points de fond | [header.php:114](app/views/layouts/header.php#L114) : `<canvas id="fx-particles">` | [input.css:548-569](src/css/input.css#L548-L569) | [animations.js](public/js/animations.js) (tout le moteur) |
+| Traits sous les titres | [home.php:13](app/views/front/home.php#L13), [lab.php](app/views/front/lab.php) : classes `reveal-title` | [input.css:821-872](src/css/input.css#L821-L872) | [animations.js:1284-1306](public/js/animations.js#L1284-L1306) (déclenchement au scroll) |
+| Glitch du logo | [header.php:121](app/views/layouts/header.php#L121) : classe `glitch` + `data-glitch` | [input.css:945-988](src/css/input.css#L945-L988) et [input.css:1784-1890](src/css/input.css#L1784-L1890) | **Aucun JS** : 100 % CSS |
 
 > `public/css/style.css` est le fichier **compilé** par Tailwind à partir de `src/css/input.css`.
 > On modifie toujours `src/css/input.css`, jamais `style.css`.
@@ -56,7 +56,7 @@ Deux autres fichiers jouent un rôle de **soutien** :
 | **V** (Vue) | Lire/écrire le DOM, dessiner en WebGL, déclarer les écouteurs | Faire de la logique |
 | **C** (Contrôleur) | Reçoit les événements, appelle M puis V | — |
 
-Le Modèle et la Vue ne se parlent **jamais** directement : tout passe par C. Le tout est dans une IIFE `(() => { ... })()` pour ne pas polluer la portée globale, et `C.init()` est appelé tout à la fin ([animations.js:1372](public/js/animations.js#L1372)).
+Le Modèle et la Vue ne se parlent **jamais** directement : tout passe par C. Le tout est dans une IIFE `(() => { ... })()` pour ne pas polluer la portée globale, et `C.init()` est appelé tout à la fin ([animations.js:1400](public/js/animations.js#L1400)).
 
 ---
 
@@ -74,10 +74,10 @@ Le Modèle et la Vue ne se parlent **jamais** directement : tout passe par C. Le
 
 | # | Ingrédient | Où |
 |---|---|---|
-| 1 | Un `<canvas>` plein écran, placé derrière le contenu | [header.php:131](app/views/layouts/header.php#L131) |
-| 2 | Une liste de particules avec leur physique | `M.particles` ([animations.js:84-288](public/js/animations.js#L84-L288)) |
-| 3 | Un rendu WebGL (dessin par la carte graphique) | `V.particles` ([animations.js:505-730](public/js/animations.js#L505-L730)) |
-| 4 | Une boucle qui répète « calcule puis dessine » 60 fois par seconde | `C.tick` ([animations.js:1212](public/js/animations.js#L1212)) |
+| 1 | Un `<canvas>` plein écran, placé derrière le contenu | [header.php:114](app/views/layouts/header.php#L114) |
+| 2 | Une liste de particules avec leur physique | `M.particles` ([animations.js:35-288](public/js/animations.js#L35-L288)) |
+| 3 | Un rendu WebGL (dessin par la carte graphique) | `V.particles` ([animations.js:35-730](public/js/animations.js#L35-L730)) |
+| 4 | Une boucle qui répète « calcule puis dessine » 60 fois par seconde | `C.tick` ([animations.js:1241](public/js/animations.js#L1241)) |
 
 ### 1.3 Le canvas (la « toile »)
 
@@ -97,7 +97,7 @@ Et son CSS ([input.css:548](src/css/input.css#L548)) :
 
 ### 1.4 Une particule = un petit objet
 
-Créée par `spawn()` ([animations.js:110](public/js/animations.js#L110)) :
+Créée par `spawn()` ([animations.js:117](public/js/animations.js#L117)) :
 
 | Champ | Signification |
 |---|---|
@@ -120,9 +120,9 @@ nombre = (largeur × hauteur) / 12000   // borné entre 40 et 160
 
 Exemple : un écran 1440×900 donne 1 296 000 / 12 000 ≈ 108 points. La densité reste constante quelle que soit la taille de la fenêtre.
 
-Les points sont conservés lors d'un redimensionnement (leurs positions sont mises à l'échelle), donc pas de « saut » visuel ([animations.js:146-166](public/js/animations.js#L146-L166)).
+Les points sont conservés lors d'un redimensionnement (leurs positions sont mises à l'échelle), donc pas de « saut » visuel ([animations.js:153-166](public/js/animations.js#L153-L166)).
 
-### 1.6 Chaque image : la fonction `step()` ([animations.js:179](public/js/animations.js#L179))
+### 1.6 Chaque image : la fonction `step()` ([animations.js:186](public/js/animations.js#L186))
 
 Pour **chaque** particule, dans l'ordre :
 
@@ -170,7 +170,7 @@ twinkle = 0.7 + 0.3 * Math.sin(temps * fréquence + phase)   // oscille entre 0,
 
 **Étape F. Écrire le résultat** dans un tableau `pointData` : `[x, y, taille, alpha]` par point, prêt pour la carte graphique.
 
-### 1.7 Les traits entre points : `buildLinks()` ([animations.js:245](public/js/animations.js#L245))
+### 1.7 Les traits entre points : `buildLinks()` ([animations.js:252](public/js/animations.js#L252))
 
 C'est ici que naissent les « formes ». Deux étapes :
 
@@ -200,28 +200,28 @@ Les points repoussés par la souris laissent un « trou » au centre, et les tra
 
 WebGL envoie des données à la carte graphique (GPU) qui dessine des milliers d'éléments en parallèle, bien plus vite que le CSS ou un canvas 2D.
 
-| Pièce | Rôle ([animations.js:515-542](public/js/animations.js#L515-L542)) |
+| Pièce | Rôle ([animations.js:537-542](public/js/animations.js#L537-L542)) |
 |---|---|
 | **Vertex shader** | Convertit les pixels écran (0 → largeur) en coordonnées GPU (-1 → +1), et fixe la taille du point |
 | **Fragment shader** | Colorie chaque pixel. Pour un **point** : un disque à bord flou (`smoothstep`). Pour une **ligne** : un trait plein. |
 | **Buffers** | Deux « boîtes » de données envoyées au GPU : une pour les points, une pour les lignes |
 
-`draw()` ([animations.js:707](public/js/animations.js#L707)) fait, à chaque image :
+`draw()` ([animations.js:729](public/js/animations.js#L729)) fait, à chaque image :
 1. Efface le canvas.
 2. Envoie les traits au GPU et les dessine (`gl.LINES`) **d'abord**, pour qu'ils passent sous les points.
 3. Envoie les points et les dessine (`gl.POINTS`).
 
-**La couleur** vient de la variable CSS `--accent` ([animations.js:655](public/js/animations.js#L655)). Le JS la lit, la fait résoudre par un mini canvas 2D d'1 pixel (astuce pour accepter n'importe quel format CSS : hex, oklch…), puis la donne au GPU. En mode Photo, `--accent` passe à l'ambre et la couleur change toute seule.
+**La couleur** vient de la variable CSS `--accent` ([animations.js:677](public/js/animations.js#L677)). Le JS la lit, la fait résoudre par un mini canvas 2D d'1 pixel (astuce pour accepter n'importe quel format CSS : hex, oklch…), puis la donne au GPU. En mode Photo, `--accent` passe à l'ambre et la couleur change toute seule.
 
 ### 1.9 La boucle d'animation
 
 ```js
-tick(now) {
+C.tick = function (now) {
     dt = min(temps depuis dernière image, 0.05 s)   // borne à 50 ms
     renderParticles(dt);        // step() puis draw()
     // ... déplace aussi le curseur custom
     requestAnimationFrame(tick); // se rappelle à la prochaine image
-}
+};
 ```
 
 `requestAnimationFrame` s'exécute à la cadence de l'écran (60 fois/s en général) et se met en pause quand l'onglet est caché. La borne de 50 ms évite un bond si on revient sur un onglet resté inactif longtemps.
@@ -229,7 +229,7 @@ tick(now) {
 ### 1.10 D'où vient la position de la souris ?
 
 ```js
-window.addEventListener('mousemove', handleMouseMove)    // animations.js:436
+window.addEventListener('mousemove', handler_mouseMove)    // animations.js:451
 → M.pointer.x = e.clientX; M.pointer.y = e.clientY; M.pointer.active = true
 ```
 
@@ -241,7 +241,7 @@ Un seul écouteur global sur `window` alimente tout. Quand la souris quitte la f
 |---|---|
 | `prefers-reduced-motion` (accessibilité) | **Une image fixe**, pas de boucle, pas d'interaction |
 | Mode Photo | Rendu suspendu, canvas invisible (économie de batterie) |
-| Retour en mode Dev | `handleModeChange` relance la boucle |
+| Retour en mode Dev | `handler_modeChange` relance la boucle |
 | Écran Retina | Résolution du canvas plafonnée à ×1,75 (`maxDpr`) pour ne pas surcharger le GPU |
 | WebGL indisponible | Le canvas est supprimé, le site fonctionne sans |
 | Perte du contexte GPU (veille, trop d'onglets) | Rendu suspendu puis shaders recompilés à la restauration |
@@ -274,7 +274,7 @@ Cela se joue **une seule fois** par titre.
 
 ### 2.2 Le HTML : 3 couches imbriquées
 
-Exemple dans [lab.php:10](app/views/front/lab.php#L10) :
+Exemple dans [lab.php:9](app/views/front/lab.php#L9) :
 
 ```html
 <h1 class="reveal-title reveal-title--short ...">
@@ -323,11 +323,11 @@ Le trait se déploie vers la droite car `transform-origin: left center` : il gra
 
 ### 2.4 Le JS : un seul rôle, ajouter `.is-revealed`
 
-Dans [animations.js:1259](public/js/animations.js#L1259) (`initReveal`) :
+Dans [animations.js:1288](public/js/animations.js#L1288) (`initReveal`) :
 
 ```js
 const titles = V.reveal.getTitles();       // tous les .reveal-title de la page
-V.observe(titles, C.handleTitleIntersect, {
+V.observe(titles, C.handler_titleIntersect, {
     threshold: 0.35,                       // 35 % du titre doit être visible
     rootMargin: '0px 0px -8% 0px'          // et au-dessus des 8 % du bas de l'écran
 });
@@ -336,13 +336,13 @@ V.observe(titles, C.handleTitleIntersect, {
 `IntersectionObserver` est une API du navigateur qui prévient quand un élément **entre dans la zone visible**. Pas besoin d'écouter le scroll à la main.
 
 ```js
-handleTitleIntersect(entries, observer) {
+C.handler_titleIntersect = function (entries, observer) {
     entries.forEach((entry) => {
         if (!entry.isIntersecting) return;      // pas encore visible → on ignore
         V.reveal.show(entry.target);            // ajoute la classe is-revealed
         observer.unobserve(entry.target);       // on arrête d'observer : une seule fois
     });
-}
+};
 ```
 
 `is-revealed` retire l'état masqué du CSS, ce qui **déclenche les transitions**.
@@ -403,7 +403,7 @@ Au survol du logo, pendant **0,5 s** : le texte tremble et deux copies colorées
 
 **Il n'y a aucun JavaScript.** Tout est dans [input.css:945-988](src/css/input.css#L945-L988) et les `@keyframes` en fin de fichier.
 
-### 3.2 Le HTML ([header.php:141](app/views/layouts/header.php#L141))
+### 3.2 Le HTML ([header.php:121](app/views/layouts/header.php#L121))
 
 ```html
 <a href="/" data-glitch="Yann Le Flohic" class="glitch ...">

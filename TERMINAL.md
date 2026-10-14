@@ -14,10 +14,10 @@ Un faux terminal `zsh` dans lequel le visiteur tape des commandes (`whoami`, `sk
 
 | Couche | Fichier | Rôle |
 |---|---|---|
-| HTML | [footer.php:46-84](app/views/layouts/footer.php#L46-L84) | Bouton lanceur, `<dialog>` du terminal, 3 gabarits `<template>` |
+| HTML | [footer.php:45-84](app/views/layouts/footer.php#L45-L84) | Bouton lanceur, `<dialog>` du terminal, 3 gabarits `<template>` |
 | CSS | [input.css](src/css/input.css) (section « 7. TERMINAL CLI », classes `.cli*`) | Apparence |
 | JS | [terminal.js](public/js/terminal.js) | Tout le comportement |
-| Route | [index.php:57](public/index.php#L57) | Route `/api/terminal` |
+| Route | [index.php:69](public/index.php#L69) | Route `/api/terminal` |
 | API PHP | [ApiController.php](app/controllers/ApiController.php) | Renvoie les données du portfolio en JSON |
 | Soutien | [theme-toggle.js](public/js/theme-toggle.js) | Reçoit l'événement `mode:request` pour la commande `theme` |
 
@@ -26,7 +26,7 @@ Un faux terminal `zsh` dans lequel le visiteur tape des commandes (`whoami`, `sk
 ```
 1. L'utilisateur tape "skills" + Entrée
         │
-2. C.handleSubmit  (Contrôleur)  intercepte le formulaire
+2. C.handler_submit  (Contrôleur)  intercepte le formulaire
         │
 3. C.run           affiche la ligne tapée, l'ajoute à l'historique
         │
@@ -52,7 +52,7 @@ Règle clé : **une commande ne modifie jamais la page elle-même.** Elle renvoi
 
 ---
 
-## 1. Le HTML ([footer.php](app/views/layouts/footer.php#L46))
+## 1. Le HTML ([footer.php](app/views/layouts/footer.php#L45))
 
 ### 1.1 Trois éléments
 
@@ -74,7 +74,7 @@ Règle clé : **une commande ne modifie jamais la page elle-même.** Elle renvoi
 | Retour du focus | Au bouton lanceur à la fermeture |
 | `closedby="any"` | Ferme aussi au clic extérieur et au geste retour mobile |
 
-Safari ne gère pas encore `closedby` : le JS fournit un **repli** (`isBackdropClick`, [terminal.js:642](public/js/terminal.js#L642)) qui détecte un clic hors de la boîte.
+Safari ne gère pas encore `closedby` : le JS fournit un **repli** (`isBackdropClick`, [terminal.js:638](public/js/terminal.js#L638)) qui détecte un clic hors de la boîte.
 
 ### 1.3 Structure du `<dialog>`
 
@@ -90,12 +90,12 @@ Safari ne gère pas encore `closedby` : le JS fournit un **repli** (`isBackdropC
 
 | Déclencheur | Code |
 |---|---|
-| Clic sur le bouton | `V.el.launcher` → `C.toggle` ([terminal.js:835](public/js/terminal.js#L835)) |
-| ⌘K / Ctrl+K | `document` `keydown` → `C.handleShortcut` ([terminal.js:860](public/js/terminal.js#L860)) |
+| Clic sur le bouton | `V.el.launcher` → `C.toggle` ([terminal.js:830](public/js/terminal.js#L830)) |
+| ⌘K / Ctrl+K | `document` `keydown` → `C.handler_shortcut` ([terminal.js:855](public/js/terminal.js#L855)) |
 
-`handleShortcut` vérifie : touche Cmd ou Ctrl enfoncée, ni Alt ni Maj, touche `k`. Puis `e.preventDefault()` (supprime l'action native du navigateur sur ce raccourci) et `toggle()`. `!e.repeat` empêche l'ouverture/fermeture en rafale si la touche reste enfoncée.
+`handler_shortcut` vérifie : touche Cmd ou Ctrl enfoncée, ni Alt ni Maj, touche `k`. Puis `e.preventDefault()` (supprime l'action native du navigateur sur ce raccourci) et `toggle()`. `!e.repeat` empêche l'ouverture/fermeture en rafale si la touche reste enfoncée.
 
-`C.open()` ([terminal.js:844](public/js/terminal.js#L844)) fait 4 choses :
+`C.open()` ([terminal.js:839](public/js/terminal.js#L839)) fait 4 choses :
 
 1. `V.open()` → `dialog.showModal()`.
 2. **Première ouverture seulement** (`M.state.booted`) : affiche la bannière d'accueil (art ASCII « YLF »).
@@ -227,7 +227,7 @@ L'historique vit **en mémoire** : il disparaît au rechargement de la page.
 
 ### 4.1 Rôle
 
-`GET /api/terminal` renvoie du JSON construit depuis la table des réglages (`Setting::getAll()`). **Les données du terminal sont donc les mêmes que celles du site** et suivent ce que tu modifies dans le back-office.
+`GET /api/terminal` renvoie du JSON construit depuis la table des réglages (`Setting::load()` pour les réglages, `Project::findAll()` pour les projets). **Les données du terminal sont donc les mêmes que celles du site** et suivent ce que tu modifies dans le back-office.
 
 ### 4.2 Exemple de réponse
 
@@ -274,7 +274,7 @@ Définis dans [footer.php](app/views/layouts/footer.php) :
 
 `V.init()` copie leur contenu dans `V.tpl`. Les `{{…}}` sont des **trous** à remplir.
 
-### 5.2 Remplissage par chaîne : `V.fill()` ([terminal.js:560](public/js/terminal.js#L560))
+### 5.2 Remplissage par chaîne : `V.fill()` ([terminal.js:571](public/js/terminal.js#L571))
 
 ```js
 template.replace(/\{\{(\w+)\}\}/g, (match, key) => values[key] ?? '')
@@ -291,7 +291,7 @@ Remplace tous les `{{clé}}` en **une seule passe**, avec une **fonction** de re
 
 **Toute donnée est passée par `V.escape()`** avant d'entrer dans un gabarit : `& < > " '` deviennent `&amp; &lt; &gt; &quot; &#39;`. Si un projet s'appelait `<script>alert(1)</script>`, il s'afficherait en texte, sans s'exécuter.
 
-### 5.4 Construction du rendu : `V.renderLines()` ([terminal.js:708](public/js/terminal.js#L708))
+### 5.4 Construction du rendu : `V.renderLines()` ([terminal.js:704](public/js/terminal.js#L704))
 
 ```js
 let html = '';
@@ -311,7 +311,7 @@ this.el.output.scrollTop = this.el.output.scrollHeight;  // auto-scroll en bas
 
 ### 5.5 Liens et sécurité d'ouverture
 
-Dans `renderSegment` ([terminal.js:683](public/js/terminal.js#L683)) :
+Dans `renderSegment` ([terminal.js:679](public/js/terminal.js#L679)) :
 
 | Type de lien | Comportement |
 |---|---|
@@ -322,16 +322,16 @@ Dans `renderSegment` ([terminal.js:683](public/js/terminal.js#L683)) :
 
 ## 6. Le Contrôleur : événements et effets
 
-### 6.1 Tous les écouteurs ([terminal.js:595](public/js/terminal.js#L595))
+### 6.1 Tous les écouteurs ([terminal.js:524](public/js/terminal.js#L524))
 
 | Écouteur | Handler | Rôle |
 |---|---|---|
 | clic sur le bouton | `C.toggle` | Ouvrir / fermer |
-| `keydown` document | `C.handleShortcut` | ⌘K / Ctrl+K |
-| `submit` formulaire | `C.handleSubmit` | Entrée = valider |
-| `keydown` champ | `C.handleKeyDown` | ↑ ↓ Tab Ctrl+L |
-| `click` dialog | `C.handleDialogClick` | **Délégation** : chips, bouton ✕, clic backdrop, clic dans la sortie |
-| `close` dialog | `C.handleClose` | Remise à zéro de l'état ARIA et de l'historique |
+| `keydown` document | `C.handler_shortcut` | ⌘K / Ctrl+K |
+| `submit` formulaire | `C.handler_submit` | Entrée = valider |
+| `keydown` champ | `C.handler_keyDown` | ↑ ↓ Tab Ctrl+L |
+| `click` dialog | `C.handler_dialogClick` | **Délégation** : chips, bouton ✕, clic backdrop, clic dans la sortie |
+| `close` dialog | `C.handler_close` | Remise à zéro de l'état ARIA et de l'historique |
 
 Le clic sur les chips utilise la **délégation d'événements** : un seul écouteur sur le `<dialog>`, qui cherche `[data-cli-run]` via `closest()`. Les chips étant créées dynamiquement à chaque commande, un écouteur par chip serait perdu ou à recréer.
 
@@ -339,16 +339,16 @@ Le clic sur les chips utilise la **délégation d'événements** : un seul écou
 
 | Touche | Action | Où |
 |---|---|---|
-| ⌘K / Ctrl+K | Ouvrir / fermer | [terminal.js:860](public/js/terminal.js#L860) |
-| Entrée | Exécuter | `handleSubmit` |
-| ↑ / ↓ | Historique | [terminal.js:973-978](public/js/terminal.js#L973-L978) |
-| Tab | Autocomplétion | [terminal.js:979](public/js/terminal.js#L979) |
-| Ctrl+L | Effacer | [terminal.js:985](public/js/terminal.js#L985) |
+| ⌘K / Ctrl+K | Ouvrir / fermer | [terminal.js:855](public/js/terminal.js#L855) |
+| Entrée | Exécuter | `handler_submit` |
+| ↑ / ↓ | Historique | [terminal.js:968-978](public/js/terminal.js#L968-L978) |
+| Tab | Autocomplétion | [terminal.js:974](public/js/terminal.js#L974) |
+| Ctrl+L | Effacer | [terminal.js:980](public/js/terminal.js#L980) |
 | Échap | Fermer | Natif (`<dialog>`) |
 
-`handleKeyDown` s'arrête immédiatement si `state.busy` est vrai (voir la séquence § 7).
+`handler_keyDown` s'arrête immédiatement si `state.busy` est vrai (voir la séquence § 7).
 
-### 6.3 `C.run()` ([terminal.js:884](public/js/terminal.js#L884))
+### 6.3 `C.run()` ([terminal.js:879](public/js/terminal.js#L879))
 
 ```js
 V.renderLines([M.line('command', entry || ' ')]);   // 1. écho de la commande tapée
@@ -361,7 +361,7 @@ if (result.effect) await C.applyEffect(result.effect);               // 6. effet
 
 Le contexte `{currentMode}` est lu côté Vue puis donné au Modèle : le Modèle ne lit jamais le DOM lui-même.
 
-### 6.4 Les 5 effets : `C.applyEffect()` ([terminal.js:900](public/js/terminal.js#L900))
+### 6.4 Les 5 effets : `C.applyEffect()` ([terminal.js:895](public/js/terminal.js#L895))
 
 | Effet | Action |
 |---|---|
@@ -371,7 +371,7 @@ Le contexte `{currentMode}` est lu côté Vue puis donné au Modèle : le Modèl
 | `goto` | Voir ci-dessous |
 | `sequence` | Joue une série de lignes temporisées |
 
-**`goto`** ([terminal.js:925](public/js/terminal.js#L925)) :
+**`goto`** ([terminal.js:920](public/js/terminal.js#L920)) :
 
 | Cas | Comportement |
 |---|---|
@@ -401,7 +401,7 @@ Contact direct → <email>  ·  LinkedIn
 
 ### 7.2 Comment c'est fait
 
-Le Modèle construit une liste d'**étapes** `{delay, line}` avec `M.hireSequence(data)` ([terminal.js:379](public/js/terminal.js#L379)). Le Contrôleur les joue avec `C.playSequence` ([terminal.js:944](public/js/terminal.js#L944)) :
+Le Modèle construit une liste d'**étapes** `{delay, line}` avec `M.hireSequence(data)` ([terminal.js:379](public/js/terminal.js#L379)). Le Contrôleur les joue avec `C.playSequence` ([terminal.js:939](public/js/terminal.js#L939)) :
 
 ```js
 M.state.busy = true;  V.setBusy(true);          // verrouille la saisie
@@ -414,7 +414,7 @@ M.state.busy = false; V.setBusy(false); V.focusInput();  // déverrouille
 
 | Détail | Explication |
 |---|---|
-| `busy` | Empêche de taper une autre commande pendant la séquence (`handleSubmit`, `handleKeyDown` et les chips vérifient tous `state.busy`) |
+| `busy` | Empêche de taper une autre commande pendant la séquence (`handler_submit`, `handler_keyDown` et les chips vérifient tous `state.busy`) |
 | `readOnly` plutôt que `disabled` | Le champ **garde le focus clavier** |
 | Classe `is-busy` | Permet de styler l'état en CSS |
 | Mouvement réduit | Délai de 0 : tout s'affiche d'un coup |
@@ -463,7 +463,7 @@ Ajouter `needsData: true`, puis lire `data` dans `run(args, {data})`. Si le cham
 ### 9.3 Ajouter une commande qui agit sur la page
 
 1. Elle renvoie `effect: {type: 'monEffet', ...}`.
-2. Ajouter `case 'monEffet':` dans `C.applyEffect` ([terminal.js:900](public/js/terminal.js#L900)).
+2. Ajouter `case 'monEffet':` dans `C.applyEffect` ([terminal.js:895](public/js/terminal.js#L895)).
 3. Si le DOM est touché, créer la méthode correspondante dans `V`.
 
 ### 9.4 Ajouter une section à `goto`
@@ -489,7 +489,7 @@ Les classes `.cli`, `.cli__bar`, `.cli__output`, `.cli__line--error`, `.cli__chi
 | Saisie bloquée | `state.busy` resté `true` (séquence interrompue par une erreur) | Recharger la page ; chercher l'erreur en console |
 | Données obsolètes dans le terminal | Cache API de 300 s | Attendre 5 min ou recharger en vidant le cache |
 | Modification JS sans effet | Cache navigateur | Changer `?v=20261005` dans `footer.php` |
-| Clic hors fenêtre ne ferme pas (Safari) | `closedby` non supporté | Le repli JS le gère ; vérifier `handleDialogClick` |
+| Clic hors fenêtre ne ferme pas (Safari) | `closedby` non supporté | Le repli JS le gère ; vérifier `handler_dialogClick` |
 
 ---
 
@@ -498,7 +498,7 @@ Les classes `.cli`, `.cli__bar`, `.cli__output`, `.cli__line--error`, `.cli__chi
 ```
  ⌘K / clic bouton ──► <dialog>.showModal()  ──► bannière (1re fois) + préchargement API
                                                         │
- Saisie + Entrée ──► C.handleSubmit ──► C.run ──► M.execute ──► commande.run()
+ Saisie + Entrée ──► C.handler_submit ──► C.run ──► M.execute ──► commande.run()
                                                         │              │
                                               (needsData ?)            ▼
                                               fetch /api/terminal   { lines, effect? }

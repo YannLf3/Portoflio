@@ -1,10 +1,8 @@
-<!-- Intégration du Header -->
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
 <main class="w-full min-h-screen px-6 sm:px-12 pt-32 pb-24 flex justify-center">
     <div class="w-full max-w-3xl flex flex-col gap-16">
 
-        <!-- En-tête -->
         <div class="flex flex-col items-start gap-4">
             <span class="text-xs font-mono tracking-widest text-accent uppercase">
                 Légal
@@ -14,10 +12,8 @@
             </h1>
         </div>
 
-        <!-- Contenu Légal -->
         <div class="flex flex-col gap-12 text-sm sm:text-base text-muted-foreground leading-relaxed">
 
-            <!-- 1. Éditeur & Directeur de la publication -->
             <section class="flex flex-col gap-4">
                 <h2 class="text-lg font-medium text-foreground">1. Éditeur et Directeur de la publication</h2>
                 <div class="flex flex-col gap-2">
@@ -41,7 +37,6 @@
                 </div>
             </section>
 
-            <!-- 2. Hébergement -->
             <section class="flex flex-col gap-4">
                 <h2 class="text-lg font-medium text-foreground">2. Hébergement du site</h2>
                 <p>
@@ -55,7 +50,6 @@
                 </ul>
             </section>
 
-            <!-- 3. Propriété Intellectuelle -->
             <section class="flex flex-col gap-4">
                 <h2 class="text-lg font-medium text-foreground">3. Propriété intellectuelle et Droits d'auteur</h2>
                 <p>
@@ -75,7 +69,6 @@
                 </p>
             </section>
 
-            <!-- 4. Données personnelles & Cookies -->
             <section class="flex flex-col gap-4">
                 <h2 class="text-lg font-medium text-foreground">4. Données personnelles (RGPD) et Cookies</h2>
                 <p>
@@ -105,5 +98,4 @@
     </div>
 </main>
 
-<!-- Intégration du Footer -->
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>
