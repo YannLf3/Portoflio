@@ -13,7 +13,7 @@
 > Portfolio personnel et professionnel conçu sur-mesure pour présenter mes projets de développement web full-stack et mes travaux photographiques.
 > 🌐 En ligne : **[yannleflohic.fr](https://yannleflohic.fr/)**
 
-> 📦 **Mise en production :** toute la procédure Hostinger (vérifications serveur, paquet ZIP, check-lists, rollback) est dans **[`DEPLOIEMENT_HOSTINGER.md`](DEPLOIEMENT_HOSTINGER.md)**.
+> 📦 **Mise en production :** toute la procédure Hostinger (vérifications serveur, transfert fichier par fichier, check-lists, rollback) est dans **[`DEPLOIEMENT_HOSTINGER.md`](DEPLOIEMENT_HOSTINGER.md)**.
 
 ---
 
@@ -955,13 +955,13 @@ Connecté au back-office, la même requête sans jeton redirige vers `/admin`, a
 
 ## 18. 📦 Déploiement
 
-La mise en production sur Hostinger est entièrement décrite dans **[`DEPLOIEMENT_HOSTINGER.md`](DEPLOIEMENT_HOSTINGER.md)**. Elle couvre les prérequis (PHP ≥ 8.1), les vérifications serveur bloquantes, le build, le paquet ZIP, la sauvegarde, le transfert, les check-lists, le diagnostic et le retour arrière.
+La mise en production sur Hostinger est entièrement décrite dans **[`DEPLOIEMENT_HOSTINGER.md`](DEPLOIEMENT_HOSTINGER.md)**. Elle couvre les prérequis (PHP ≥ 8.1), les vérifications serveur bloquantes, le build, la sauvegarde, le **transfert fichier par fichier** (39 fichiers en 9 phases ordonnées, avec un test après chaque phase), le contrôle des fichiers inchangés, les check-lists, le diagnostic et le retour arrière.
 
 En résumé :
 
 1. **Vérifier que le `.env` du serveur contient les 4 clés BDD** (étape bloquante depuis la suppression des valeurs de repli).
-2. `npm run build`, puis construire le paquet `app/` + `public/` (commande `rsync` + `zip`, sans `.env`, sans `.htaccess` racine, sans les images d'`uploads/`).
-3. Sauvegarder le site, puis extraire le paquet dans `public_html/`.
+2. `npm run build`, vérifications locales, sauvegarde du site en ligne.
+3. Transférer les 39 fichiers **dans l'ordre des phases**. Il ne faut jamais envoyer le `.env`, le `.htaccess` racine ni les images d'`uploads/`.
 4. Purger le cache LiteSpeed et dérouler la check-list.
 
 ### 18.1 Commit et push

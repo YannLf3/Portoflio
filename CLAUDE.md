@@ -31,6 +31,7 @@ Tu es un assistant de développement web expert. Tu dois STRICTEMENT respecter l
 - Protéger l'état interne des objets via l'encapsulation (propriétés `private` ou `protected`) et utiliser des getters/setters pour valider la donnée avant mutation[cite: 5].
 - Favoriser le chaînage des méthodes (Fluent Interface) en retournant `$this` dans les setters[cite: 5].
 - Utiliser l'abstraction et le polymorphisme pour factoriser les comportements communs dans des classes mères abstraites tout en manipulant les instances via un type commun[cite: 5].
+- N'utilise JAMAIS de boucles foreach, remplace les systématiquement autrement par autre chose.
 
 ## 5. Back-End : Base de données, API & Sécurité
 
