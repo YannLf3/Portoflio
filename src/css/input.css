@@ -998,7 +998,7 @@ html:has(#lightbox[open]) {
 
         position: fixed;
         right: 1rem;
-        bottom: 1rem;
+        bottom: 3.75rem;
         z-index: 40;
         display: inline-flex;
         align-items: center;

@@ -502,6 +502,14 @@
     };
 
     /**
+     * Indique si le navigateur prend en charge IntersectionObserver.
+     * @returns {boolean}
+     */
+    V.canObserve = function () {
+        return 'IntersectionObserver' in window;
+    };
+
+    /**
      * Crée un IntersectionObserver et observe une liste d'éléments.
      * @param {Element[]} elements - Éléments à observer.
      * @param {IntersectionObserverCallback} handler - Handler du contrôleur.
@@ -1289,7 +1297,7 @@
         const titles = V.reveal.getTitles();
         const cards = V.reveal.getCards();
 
-        if (M.prefs.reducedMotion || !('IntersectionObserver' in window)) {
+        if (M.prefs.reducedMotion || !V.canObserve()) {
             [...titles, ...cards].forEach((el) => V.reveal.show(el));
             return;
         }
