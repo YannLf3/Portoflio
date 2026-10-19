@@ -88,6 +88,53 @@ final class HomeController extends Controller
     }
 
     /**
+     * Page de la politique de confidentialité (non indexée, comme les autres pages légales).
+     *
+     * @return void
+     */
+    public function privacy(): void
+    {
+        $this->render('front/privacy', [
+            'title' => 'Politique de confidentialité | Yann Le Flohic',
+            'pageDesc' => 'Données collectées, durées de conservation, cookies et droits RGPD sur le site de Yann Le Flohic.',
+            'canonical' => 'https://yannleflohic.fr/politique-de-confidentialite',
+            'noindex' => true,
+        ]);
+    }
+
+    /**
+     * Page des conditions générales de vente (non indexée, comme les autres pages légales).
+     *
+     * @return void
+     */
+    public function terms(): void
+    {
+        $this->render('front/terms', [
+            'title' => 'Conditions générales de vente | Yann Le Flohic',
+            'pageDesc' => 'Conditions générales de vente des prestations web et photo de Yann Le Flohic (YannLf3).',
+            'canonical' => 'https://yannleflohic.fr/cgv',
+            'noindex' => true,
+        ]);
+    }
+
+    /**
+     * Page 404 personnalisée : code HTTP 404 et exclusion de l'index des moteurs de recherche.
+     *
+     * @return void
+     */
+    public function notFound(): void
+    {
+        http_response_code(404);
+
+        $this->render('front/404', [
+            'title' => 'Page introuvable | Yann Le Flohic',
+            'pageDesc' => 'Cette page n\'existe pas ou a été déplacée. Retournez à l\'accueil du portfolio de Yann Le Flohic.',
+            'canonical' => 'https://yannleflohic.fr/',
+            'noindex' => true,
+        ]);
+    }
+
+    /**
      * En-tête de l'accueil : disponibilité, nom (prénom / nom séparés), accroches, avatar.
      *
      * @param Setting $settings
@@ -252,10 +299,28 @@ final class HomeController extends Controller
             'format' => $format,
             'width' => self::GALLERY_FORMATS[$format]['width'],
             'height' => self::GALLERY_FORMATS[$format]['height'],
-            'alt' => $photo['alt'] ?? 'Photographie Yann Le Flohic',
+            // Alt vide en base : on retombe sur la légende, puis sur un texte unique par photo (numéro)
+            'alt' => self::photoAlt($photo, $index),
             'legend' => $photo['legend'] ?? '',
             'number' => sprintf('N° %02d', $index + 1),
         ];
+    }
+
+    /**
+     * Texte alternatif d'une photo : alt saisi, sinon légende, sinon libellé numéroté (jamais deux alt identiques).
+     *
+     * @param array<string, mixed> $photo Ligne issue de la BDD.
+     * @param int                  $index Position dans la galerie (0 = première).
+     * @return string
+     */
+    private static function photoAlt(array $photo, int $index): string
+    {
+        $candidates = array_filter([
+            trim((string)($photo['alt'] ?? '')),
+            trim((string)($photo['legend'] ?? '')),
+        ]);
+
+        return (string)(reset($candidates) ?: sprintf('Photographie de Yann Le Flohic n° %d', $index + 1));
     }
 
     /**

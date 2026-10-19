@@ -19,16 +19,24 @@
     <meta property="og:title" content="<?= htmlspecialchars($title ?? 'Yann Le Flohic — Développeur Web Full-Stack') ?>">
     <meta property="og:description" content="<?= htmlspecialchars($pageDesc ?? 'Portfolio de Yann Le Flohic. Découvre mes projets full-stack et mon lab.') ?>">
     <meta property="og:image" content="https://yannleflohic.fr/assets/images/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Aperçu du portfolio de Yann Le Flohic, développeur web freelance">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:site_name" content="Yann Le Flohic">
 
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:title" content="<?= htmlspecialchars($title ?? 'Yann Le Flohic — Développeur Web Full-Stack') ?>">
     <meta property="twitter:description" content="<?= htmlspecialchars($pageDesc ?? 'Portfolio de Yann Le Flohic. Découvre mes projets full-stack et mon lab.') ?>">
     <meta property="twitter:image" content="https://yannleflohic.fr/assets/images/og-image.jpg">
+    <meta property="twitter:image:alt" content="Aperçu du portfolio de Yann Le Flohic, développeur web freelance">
 
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
     <link rel="icon" type="image/png" sizes="48x48" href="/assets/icons/favicon-48.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/favicon-180.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/favicon.svg">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#16181E">
 
     <script type="application/ld+json">
     {
@@ -69,7 +77,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="/css/style.css?v=20261014">
+    <link rel="stylesheet" href="/css/style.css?v=20261019">
 
     <script>
         // Exécuté AVANT le premier rendu :

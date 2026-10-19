@@ -1,0 +1,21 @@
+{
+  "description": "Règles et configuration du vérificateur MVC pour le portfolio",
+  "rules": {
+    "js": {
+      "m_references_v": false,
+      "v_references_m": false,
+      "dom_in_m": false,
+      "dom_in_c": false,
+      "entry_point": "C.init"
+    },
+    "php": {
+      "allow_foreach": false,
+      "strict_types": true,
+      "json_response_helper": "Response::json"
+    }
+  },
+  "protected_core_files": [
+    "app/core/Response.php",
+    "app/core/Csrf.php"
+  ]
+}

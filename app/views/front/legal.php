@@ -91,6 +91,9 @@
                 <p>
                     <strong>Cookies :</strong> Ce site n'utilise actuellement aucun traceur ou cookie non essentiel à
                     son fonctionnement technique. Par conséquent, aucun bandeau de consentement préalable n'est requis.
+                    Le détail figure dans la <a href="/politique-de-confidentialite"
+                                                class="text-foreground hover:text-accent transition-colors">politique
+                        de confidentialité</a>.
                 </p>
             </section>
 

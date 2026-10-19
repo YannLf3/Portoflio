@@ -8,9 +8,15 @@
         <div class="flex items-center gap-4">
             <span>DÉVELOPPÉ & DESIGNÉ MAISON</span>
             <span class="text-border-strong">|</span>
-            <div class="flex items-center gap-4">
+            <div class="flex flex-wrap items-center gap-4">
                 <a href="/mentions-legales" class="hover:text-foreground transition-colors duration-200">
                     Mentions Légales
+                </a>
+                <a href="/politique-de-confidentialite" class="hover:text-foreground transition-colors duration-200">
+                    Confidentialité
+                </a>
+                <a href="/cgv" class="hover:text-foreground transition-colors duration-200">
+                    CGV
                 </a>
                 <a href="/login" class="hover:text-accent transition-colors duration-200">
                     ADMIN
@@ -81,6 +87,7 @@
 
 <script src="/js/main.js?v=20261014"></script>
 <script src="/js/nav-menu.js?v=20261014" defer></script>
+<script src="/js/mobile-cta.js?v=20261019" defer></script>
 <script src="/js/animations.js?v=20261014" defer></script>
 <script src="/js/terminal.js?v=20261014" defer></script>
 <script src="/js/photo-mode.js?v=20261014" defer></script>

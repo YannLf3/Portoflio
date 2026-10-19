@@ -41,18 +41,13 @@ function normalizePath(string $uri): string
 }
 
 /**
- * Réponse 404 propre (sans fuite d'informations système).
+ * Réponse 404 propre (sans fuite d'informations système) : la vue est rendue par HomeController.
  *
  * @return void
  */
 function notFound(): void
 {
-    http_response_code(404);
-    if (file_exists(__DIR__ . '/../app/views/404.php')) {
-        require_once __DIR__ . '/../app/views/404.php';
-        return;
-    }
-    echo '404 - Page introuvable';
+    (new HomeController())->notFound();
 }
 
 $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
@@ -64,6 +59,8 @@ $routes = [
     '/index.php' => static fn() => (new HomeController())->index(),
     '/mentions-legales' => static fn() => (new HomeController())->legal(),
     '/lab' => static fn() => (new HomeController())->lab(),
+    '/politique-de-confidentialite' => static fn() => (new HomeController())->privacy(),
+    '/cgv' => static fn() => (new HomeController())->terms(),
 
     // API JSON publique en lecture seule (données du terminal CLI)
     '/api/terminal' => static fn() => $_SERVER['REQUEST_METHOD'] === 'GET'

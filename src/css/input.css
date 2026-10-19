@@ -1015,6 +1015,12 @@ html:has(#lightbox[open]) {
         transition: border-color 0.3s ease, box-shadow 0.4s var(--ease-out-expo), translate 0.35s var(--ease-out-expo);
     }
 
+    @media (max-width: 47.99rem) {
+        .cli-launcher {
+            bottom: 5rem;
+        }
+    }
+
     .cli-launcher:hover,
     .cli-launcher:focus-visible {
         --_border: var(--cli-accent);

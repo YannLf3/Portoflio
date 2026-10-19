@@ -80,4 +80,11 @@
     <?php require_once __DIR__ . '/partials/contact.php'; ?>
 </main>
 
+<div id="mobile-cta" data-hidden="false"
+     class="fixed inset-x-4 bottom-4 z-40 md:hidden rounded-full bg-background-2 transition-all duration-300 data-[hidden=true]:translate-y-24 data-[hidden=true]:opacity-0 data-[hidden=true]:pointer-events-none">
+    <a href="#contact" class="btn-glow w-full">
+        <span>Me contacter</span>
+    </a>
+</div>
+
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

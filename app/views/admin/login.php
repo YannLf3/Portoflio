@@ -22,7 +22,7 @@
     </div>
 
     <?php if (!empty($error)): ?>
-        <div class="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono">
+        <div role="alert" class="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono">
             ⚠ <?= htmlspecialchars($error) ?>
         </div>
     <?php endif; ?>
