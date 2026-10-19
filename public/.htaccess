@@ -8,6 +8,12 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # 0. Redirection 301 : forcer le HTTPS (sauf en local). X-Forwarded-Proto évite une boucle si un proxy/CDN termine le SSL.
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:[0-9]+)?$ [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
     # 1. Redirection 301 : Forcer la version sans "www" pour le SEO
     # %1 = domaine capturé par CETTE condition : aucune autre RewriteCond ne doit s'intercaler avant la règle.
     RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]

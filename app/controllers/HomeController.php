@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/Controller.php';
 require_once __DIR__ . '/../models/Setting.php';
 require_once __DIR__ . '/../models/Project.php';
+require_once __DIR__ . '/../core/UrlGuard.php';
 
 /**
  * Pages publiques : accueil, Lab et mentions légales.
@@ -233,14 +234,15 @@ final class HomeController extends Controller
      */
     private function projectCardView(Project $project, int $index): array
     {
-        $link = !empty($project->getLink()) ? $project->getLink() : '#';
+        // Lien filtré à l'affichage aussi : protège même les lignes enregistrées avant l'ajout du filtre
+        $link = UrlGuard::safe($project->getLink()) ?: '#';
         $tags = $project->getTags();
 
         return [
             'number' => sprintf('%02d', $index + 1),
             'link' => $link,
             'isExternal' => str_starts_with($link, 'http'),
-            'image' => !empty($project->getImage()) ? $project->getImage() : self::FALLBACK_PROJECT_IMAGE,
+            'image' => UrlGuard::safe($project->getImage()) ?: self::FALLBACK_PROJECT_IMAGE,
             // Catégorie normalisée pour le filtrage JS (public/js/projects-filter.js)
             'filterCategory' => mb_strtolower(trim($project->getCategory())),
             'category' => $project->getCategory(),
@@ -286,7 +288,7 @@ final class HomeController extends Controller
     {
         // Source : URL directe, sinon identifiant Unsplash, sinon image par défaut
         $src = match (true) {
-            !empty($photo['url']) => $photo['url'],
+            UrlGuard::safe($photo['url'] ?? '') !== '' => UrlGuard::safe($photo['url']),
             !empty($photo['unsplash_id']) => "https://images.unsplash.com/photo-{$photo['unsplash_id']}?auto=format&fit=crop&w=1600&q=80",
             default => self::FALLBACK_GALLERY_IMAGE,
         };
@@ -358,8 +360,8 @@ final class HomeController extends Controller
             'contactSubtitle' => $settings->get('contact_subtitle'),
             'contacts' => array_map(
                 static fn(array $contact): array => [
-                    'href' => $contact['href'] ?? '#',
-                    'isExternal' => str_starts_with((string)($contact['href'] ?? '#'), 'http'),
+                    'href' => UrlGuard::safe($contact['href'] ?? '') ?: '#',
+                    'isExternal' => str_starts_with(UrlGuard::safe($contact['href'] ?? ''), 'http'),
                     'label' => $contact['label'] ?? 'CONTACT',
                     'value' => $contact['value'] ?? '',
                 ],
@@ -386,11 +388,41 @@ final class HomeController extends Controller
             'badge' => $snippet['badge'] ?? $snippet['note'] ?? 'Tested on Modern Browsers',
             'html' => $snippet['html'] ?? '',
             'css' => $snippet['css'] ?? '',
-            'hasCss' => !empty($snippet['css']),
             'js' => $snippet['js'] ?? '',
-            // Le JS n'est exécuté que s'il existe et n'est pas le texte de remplacement « // Pas de … »
-            'runJs' => !empty($js) && !str_contains($js, '// Pas de'),
+            // Document complet de l'aperçu, rendu dans une <iframe sandbox> (voir lab.php)
+            'srcdoc' => $this->snippetDocument(
+                (string)($snippet['html'] ?? ''),
+                (string)($snippet['css'] ?? ''),
+                // Le JS n'est exécuté que s'il existe et n'est pas le texte de remplacement « // Pas de … »
+                !empty($js) && !str_contains($js, '// Pas de') ? $js : ''
+            ),
         ];
+    }
+
+    /**
+     * Construit le document HTML autonome d'un aperçu de snippet.
+     *
+     * Il est affiché dans une iframe sandbox SANS allow-same-origin : son code s'exécute dans une origine
+     * isolée et ne peut ni lire les cookies ni toucher à la page parente, même s'il est malveillant.
+     * Seul le <script> généré ici porte le nonce CSP : un <script> glissé dans le champ HTML est bloqué.
+     *
+     * @param string $html Balisage du snippet.
+     * @param string $css  Styles du snippet.
+     * @param string $js   Script du snippet ('' = aucun).
+     * @return string Document HTML complet.
+     */
+    private function snippetDocument(string $html, string $css, string $js): string
+    {
+        $script = $js === '' ? '' : sprintf(
+            '<script nonce="%s">(function(){try{%s}catch(e){console.error("Erreur JS Snippet:",e);}})();</script>',
+            CSP_NONCE,
+            $js
+        );
+
+        return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><style>'
+            . 'html,body{margin:0;height:100%}body{display:flex;align-items:center;justify-content:center;'
+            . 'background:transparent;color:#fff;font-family:system-ui,sans-serif}</style><style>'
+            . $css . '</style></head><body>' . $html . $script . '</body></html>';
     }
 
     /**

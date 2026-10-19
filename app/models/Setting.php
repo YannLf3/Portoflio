@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/UrlGuard.php';
 
 /**
  * Contenus éditables du site, stockés en clé / valeur dans la table `settings`.
@@ -37,6 +38,15 @@ final class Setting
         'compare_title',
         'compare_caption',
         'compare_tools',
+    ];
+
+    /** Réglages texte qui contiennent une URL : filtrés par UrlGuard (pas de « javascript: »). */
+    private const URL_KEYS = ['hero_avatar', 'compare_before', 'compare_after'];
+
+    /** Sous-champs d'URL des listes : clé de la liste → sous-champs filtrés par UrlGuard. */
+    private const LIST_URL_FIELDS = [
+        'photos' => ['url'],
+        'contacts' => ['href'],
     ];
 
     /** Réglages en liste : clé → sous-champs autorisés pour chaque ligne. */
@@ -231,9 +241,10 @@ final class Setting
     public function set(string $key, mixed $value): static
     {
         if (in_array($key, self::SCALAR_KEYS, true) && is_scalar($value)) {
-            $this->values[$key] = (string)$value;
+            // Un réglage d'URL dangereux (ex : « javascript:… ») est remplacé par une chaîne vide
+            $this->values[$key] = in_array($key, self::URL_KEYS, true) ? UrlGuard::safe($value) : (string)$value;
         } elseif (isset(self::LIST_SCHEMAS[$key]) && is_array($value)) {
-            $this->values[$key] = self::sanitizeRows($value, self::LIST_SCHEMAS[$key]);
+            $this->values[$key] = self::sanitizeRows($value, self::LIST_SCHEMAS[$key], self::LIST_URL_FIELDS[$key] ?? []);
         }
         return $this;
     }
@@ -300,14 +311,18 @@ final class Setting
      *
      * @param array<int|string, mixed> $rows   Lignes saisies.
      * @param list<string>             $fields Sous-champs autorisés.
+     * @param list<string>             $urlFields Sous-champs contenant une URL (filtrés par UrlGuard).
      * @return list<array<string, string>>
      */
-    private static function sanitizeRows(array $rows, array $fields): array
+    private static function sanitizeRows(array $rows, array $fields, array $urlFields = []): array
     {
         return array_values(array_map(
             static fn(array $row): array => array_combine($fields, array_map(
-                // Sous-champ absent ou non scalaire (tableau injecté) → chaîne vide
-                static fn(string $field): string => is_scalar($row[$field] ?? '') ? (string)($row[$field] ?? '') : '',
+                // Sous-champ absent ou non scalaire (tableau injecté) → chaîne vide ; URL dangereuse → chaîne vide
+                static function (string $field) use ($row, $urlFields): string {
+                    $text = is_scalar($row[$field] ?? '') ? (string)($row[$field] ?? '') : '';
+                    return in_array($field, $urlFields, true) ? UrlGuard::safe($text) : $text;
+                },
                 $fields
             )),
             array_filter($rows, 'is_array')

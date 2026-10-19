@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/UrlGuard.php';
 
 /**
  * Projet du portfolio, stocké dans la table `projects` (une ligne par projet, ordre d'affichage = position).
@@ -297,8 +298,9 @@ final class Project
             ->setTitle((string)($row['title'] ?? ''))
             ->setMeta((string)($row['meta'] ?? ''))
             ->setDescription((string)($row['description'] ?? ''))
-            ->setImage((string)($row['image'] ?? ''))
-            ->setLink((string)($row['link'] ?? ''))
+            // Image et lien : schémas dangereux (« javascript: »…) supprimés
+            ->setImage(UrlGuard::safe($row['image'] ?? ''))
+            ->setLink(UrlGuard::safe($row['link'] ?? ''))
             ->setCategory((string)($row['category'] ?? ''))
             ->setTags((string)($row['tags'] ?? ''));
     }

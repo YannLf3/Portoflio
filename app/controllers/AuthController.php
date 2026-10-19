@@ -39,24 +39,29 @@ final class AuthController extends Controller
             return;
         }
 
-        // Anti-brute-force : trop d'échecs récents depuis cette IP, on refuse sans même tester les identifiants
+        // Anti-brute-force à deux niveaux : par IP ET par compte visé (un attaquant qui change d'IP
+        // à chaque essai reste bloqué). On refuse sans même tester les identifiants.
         $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-        if (LoginAttempt::isBlocked($ip)) {
+        $email = trim((string)($_POST['email'] ?? ''));
+        $emailKey = LoginAttempt::emailKey($email);
+        if (LoginAttempt::isBlocked($ip) || LoginAttempt::isBlocked($emailKey, LoginAttempt::MAX_FAILURES_PER_EMAIL)) {
             http_response_code(429);
             $this->renderLogin('Trop de tentatives. Réessayez dans ' . LoginAttempt::WINDOW_MINUTES . ' minutes.');
             return;
         }
 
-        $user = User::findByEmail(trim($_POST['email'] ?? ''));
+        $user = User::findByEmail($email);
 
         // Le mot de passe n'est pas passé par trim() : les espaces en début ou fin font partie du secret
         if ($user === null || !$user->verifyPassword((string)($_POST['password'] ?? ''))) {
             LoginAttempt::recordFailure($ip);
+            LoginAttempt::recordFailure($emailKey);
             $this->renderLogin('Identifiants incorrects.');
             return;
         }
 
         LoginAttempt::clear($ip);
+        LoginAttempt::clear($emailKey);
 
         // Protection anti-usurpation : régénère l'ID de session et détruit l'ancien
         session_regenerate_id(true);
@@ -77,6 +82,11 @@ final class AuthController extends Controller
      */
     public function logout(): never
     {
+        // Déconnexion forcée par un site tiers (CSRF) refusée : on renvoie simplement vers le dashboard
+        if (!Csrf::isValid($_POST[Csrf::FIELD] ?? null)) {
+            $this->redirect('/admin');
+        }
+
         $_SESSION = [];
 
         if (ini_get('session.use_cookies')) {

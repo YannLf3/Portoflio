@@ -79,7 +79,7 @@
 
     <link rel="stylesheet" href="/css/style.css?v=20261019">
 
-    <script>
+    <script nonce="<?= CSP_NONCE ?>">
         // Exécuté AVANT le premier rendu :
         // 1. .fx active les états initiaux des animations (sans JS, rien n'est masqué) ;
         // 2. le mode mémorisé (Dev / Photo) est appliqué tout de suite → aucun flash du mauvais univers.

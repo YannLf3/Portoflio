@@ -11,10 +11,8 @@ CREATE TABLE IF NOT EXISTS `users`
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE = InnoDB;
 
--- Compte administrateur de TEST (développement local uniquement : à ne jamais utiliser en production).
--- Mot de passe : "admin123" ; seule son empreinte BCRYPT est stockée ci-dessous.
-INSERT INTO `users` (`email`, `password`)
-VALUES ('admin@portfolio.fr', '$2y$12$GBh.QoXPFEswV2jMMjSpqetNaIcCN0OcpbJUUIH/68RJtaEIHdMyW');
+-- Aucun compte n'est créé ici : en local, le compte de test vient de database/seed-dev.sql (monté par Docker) ;
+-- en production, créer l'administrateur avec « php database/create-admin.php ».
 
 -- 2. Table des contenus éditables (clé / valeur)
 CREATE TABLE IF NOT EXISTS `settings`

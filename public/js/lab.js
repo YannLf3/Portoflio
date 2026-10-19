@@ -65,14 +65,6 @@
         return title || this.fallbacks.title;
     };
 
-    /**
-     * Indique si le contenu d'un article contient du HTML (sinon il est affiché en texte brut).
-     * @param {string} content
-     * @returns {boolean}
-     */
-    M.isHtml = function (content) {
-        return content.includes('<');
-    };
 
     /* =======================================================================
        V — VUE
@@ -202,20 +194,15 @@
 
     /**
      * Remplit le lecteur d'article.
+     * Le contenu est toujours inséré en texte brut (textContent) : jamais interprété comme du HTML (anti-XSS).
      * @param {{title:string, category:string, content:string}} article
-     * @param {boolean} asHtml - true : contenu interprété en HTML ; false : texte brut.
      * @returns {void}
      */
-    V.renderArticle = function (article, asHtml) {
+    V.renderArticle = function (article) {
         document.getElementById('article-modal-title').textContent = article.title;
         document.getElementById('article-modal-category').textContent = article.category;
 
-        const body = document.getElementById('article-modal-body');
-        if (asHtml) {
-            body.innerHTML = article.content;
-        } else {
-            body.textContent = article.content;
-        }
+        document.getElementById('article-modal-body').textContent = article.content;
     };
 
     /**
@@ -294,7 +281,7 @@
         const button = V.articleButtonFrom(ev.target);
         if (!button) return;
         const article = V.readArticle(button);
-        V.renderArticle(article, M.isHtml(article.content));
+        V.renderArticle(article);
         V.openModal(V.articleModal);
     };
 

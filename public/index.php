@@ -1,15 +1,33 @@
 <?php
 declare(strict_types=1);
 
-// 1. En-têtes de sécurité HTTP (Protection contre Clickjacking, MIME-sniffing & Referrer leak)
+// 1. Nonce CSP : valeur aléatoire propre à CHAQUE requête, recopiée dans les <script> inline autorisés
+define('CSP_NONCE', base64_encode(random_bytes(16)));
+
+// 2. En-têtes de sécurité HTTP (Clickjacking, MIME-sniffing, fuite de Referer, XSS, API navigateur)
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+header('Cross-Origin-Opener-Policy: same-origin');
+// CSP : seuls nos scripts (fichiers /js + <script> portant le nonce) s'exécutent.
+// style-src garde 'unsafe-inline' (attributs style="" générés par les vues) ; polices = Google Fonts ;
+// images = site + Unsplash (galerie) ; frame-ancestors remplace X-Frame-Options pour les navigateurs récents.
+header(
+    "Content-Security-Policy: default-src 'self'; "
+    . "script-src 'self' 'nonce-" . CSP_NONCE . "'; "
+    . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    . "font-src 'self' https://fonts.gstatic.com; "
+    . "img-src 'self' data: https://images.unsplash.com; "
+    . "media-src 'self'; connect-src 'self'; object-src 'none'; "
+    . "base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+);
 
-// 2. Configuration sécurisée des cookies de session PHP
-// En local (Docker, http://localhost:8000) : cookie sans domaine ni flag Secure, sinon le navigateur le rejette
-// et la session (connexion admin) ne persiste pas. En production : domaine fixé + HTTPS obligatoire.
-$isDev = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', 'localhost:8000'], true) || getenv('ENVIRONMENT') === 'dev';
+// 3. Configuration sécurisée des cookies de session PHP
+// En local (Docker) : ENVIRONMENT=dev (docker-compose.yml) → cookie sans domaine ni flag Secure, sinon le navigateur
+// le rejette. Le mode ne dépend PAS de l'en-tête Host (falsifiable par le client) : uniquement de la configuration serveur.
+// En production : domaine fixé + HTTPS obligatoire.
+$isDev = getenv('ENVIRONMENT') === 'dev';
 session_set_cookie_params([
     'lifetime' => 0,                                 // Le cookie s'efface à la fermeture du navigateur
     'path' => '/',
@@ -19,7 +37,34 @@ session_set_cookie_params([
     'samesite' => 'Lax',                             // Protège contre les attaques CSRF
 ]);
 
+// Refuse tout identifiant de session que le serveur n'a pas lui-même créé (anti « session fixation »)
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+
 session_start();
+
+/** Durée d'inactivité (secondes) au-delà de laquelle la session administrateur est fermée. */
+const SESSION_IDLE_TIMEOUT = 1800;
+
+/**
+ * Ferme la session si elle est restée inactive trop longtemps, sinon renouvelle son horodatage d'activité.
+ *
+ * @return void
+ */
+function enforceSessionTimeout(): void
+{
+    $lastActivity = $_SESSION['last_activity'] ?? null;
+
+    if (is_int($lastActivity) && time() - $lastActivity > SESSION_IDLE_TIMEOUT) {
+        // Session expirée : on repart d'une session vierge avec un nouvel identifiant
+        $_SESSION = [];
+        session_regenerate_id(true);
+    }
+
+    $_SESSION['last_activity'] = time();
+}
+
+enforceSessionTimeout();
 
 require_once __DIR__ . '/../app/controllers/HomeController.php';
 require_once __DIR__ . '/../app/controllers/AuthController.php';
@@ -69,7 +114,14 @@ $routes = [
 
     // Authentification
     '/login' => static fn() => $isPost ? (new AuthController())->login() : (new AuthController())->showLogin(),
-    '/logout' => static fn() => (new AuthController())->logout(),
+    // Déconnexion : POST + jeton CSRF uniquement (un simple lien ou une image ne peut plus déconnecter l'admin)
+    '/logout' => static function () use ($isPost): void {
+        if (!$isPost) {
+            header('Location: /admin');
+            exit;
+        }
+        (new AuthController())->logout();
+    },
 
     // Back-office : un GET sur /admin/save renvoie simplement vers le dashboard
     '/admin' => static fn() => (new AdminController())->index(),

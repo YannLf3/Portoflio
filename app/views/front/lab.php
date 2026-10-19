@@ -43,26 +43,12 @@
                             </span>
                         </div>
 
-                        <div class="h-48 rounded-lg bg-zinc-950/80 border border-zinc-800 flex items-center justify-center relative overflow-hidden p-4" id="snippet-container-<?= $index ?>">
-                            <?php if ($snippet['hasCss']): ?>
-                                <style>
-                                    <?= $snippet['css'] ?>
-                                </style>
-                            <?php endif; ?>
-
-                            <?= $snippet['html'] ?>
-
-                            <?php if ($snippet['runJs']): ?>
-                                <script>
-                                    (function() {
-                                        try {
-                                            <?= $snippet['js'] ?>
-                                        } catch(e) {
-                                            console.error('Erreur JS Snippet:', e);
-                                        }
-                                    })();
-                                </script>
-                            <?php endif; ?>
+                        <div class="h-48 rounded-lg bg-zinc-950/80 border border-zinc-800 relative overflow-hidden" id="snippet-container-<?= $index ?>">
+                            <iframe sandbox="allow-scripts"
+                                    srcdoc="<?= htmlspecialchars($snippet['srcdoc'], ENT_QUOTES) ?>"
+                                    title="Aperçu : <?= htmlspecialchars($snippet['title'], ENT_QUOTES) ?>"
+                                    loading="lazy"
+                                    class="w-full h-full border-0"></iframe>
                         </div>
 
                         <div class="flex justify-between items-center text-xs font-mono text-muted-foreground pt-2 border-t border-zinc-800/60">
