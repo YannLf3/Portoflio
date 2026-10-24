@@ -10,7 +10,7 @@
             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-tight">
                 Politique de <span class="italic font-light text-accent">confidentialité</span>
             </h1>
-            <p class="text-xs font-mono text-muted-foreground">Dernière mise à jour : 19 octobre 2026</p>
+            <p class="text-xs font-mono text-muted-foreground">Dernière mise à jour : 24 octobre 2026</p>
         </div>
 
         <div class="flex flex-col gap-12 text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -32,7 +32,9 @@
                         <strong>Contact par formulaire, email ou téléphone :</strong> les informations que vous me transmettez
                         (identité, coordonnées, contenu du message) servent uniquement à répondre à votre demande et à
                         préparer un éventuel devis. Un message envoyé par le formulaire du site m'est transmis par email
-                        et n'est pas enregistré dans la base de données du site. Base légale : mesures précontractuelles et intérêt légitime à
+                        et une copie (nom, adresse email, message) est enregistrée dans la base de données du site, afin
+                        qu'aucun message ne soit perdu en cas de panne d'envoi. Cette copie est supprimée
+                        automatiquement après 12 mois. Base légale : mesures précontractuelles et intérêt légitime à
                         répondre aux sollicitations.
                     </li>
                     <li>
@@ -44,6 +46,13 @@
                         <strong>Protection de l'espace d'administration :</strong> en cas d'échec de connexion à
                         l'espace réservé, l'adresse IP est conservée 15 minutes pour limiter les tentatives
                         d'intrusion, puis supprimée automatiquement. Base légale : intérêt légitime (sécurité).
+                    </li>
+                    <li>
+                        <strong>Limitation des envois (anti-spam) :</strong> pour empêcher les envois en masse par le
+                        formulaire de contact et par l'outil de mesure d'audience, le site compte les requêtes de chaque
+                        visiteur. Seule une empreinte chiffrée de l'adresse IP est conservée, jamais l'adresse elle-même,
+                        et elle est supprimée automatiquement après 24 heures. Base légale : intérêt légitime
+                        (sécurité).
                     </li>
                     <li id="mesure-audience">
                         <strong>Mesure d'audience (uniquement si vous l'acceptez) :</strong> page consultée, site
@@ -66,6 +75,10 @@
                 <h2 class="text-lg font-medium text-foreground">3. Durée de conservation</h2>
                 <ul class="flex flex-col gap-3 list-disc pl-5">
                     <li>Échanges de contact sans suite : 3 ans maximum après le dernier échange.</li>
+                    <li>Copie en base de données d'un message envoyé par le formulaire : 12 mois, puis suppression
+                        automatique.
+                    </li>
+                    <li>Empreinte anti-spam : 24 heures.</li>
                     <li>Documents liés à une prestation (devis, factures) : 10 ans, conformément aux obligations
                         comptables.
                     </li>
