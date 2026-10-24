@@ -1,54 +1,33 @@
 <footer class="mt-32 w-full border-t border-border-strong/60 py-8">
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-[11px] font-mono tracking-widest text-muted-foreground uppercase">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-mono tracking-widest text-muted-foreground uppercase">
 
         <div>
-            © 2026 YANN LE FLOHIC — CHÂTEAUROUX, FR
+            © 2026 YANN LE FLOHIC, CHÂTEAUROUX, FR
         </div>
 
         <div class="flex items-center gap-4">
             <span>DÉVELOPPÉ & DESIGNÉ MAISON</span>
             <span class="text-border-strong">|</span>
             <div class="flex flex-wrap items-center gap-4">
-                <a href="/mentions-legales" class="hover:text-foreground transition-colors duration-200">
+                <a href="/mentions-legales" class="inline-block py-1.5 hover:text-foreground transition-colors duration-200">
                     Mentions Légales
                 </a>
-                <a href="/politique-de-confidentialite" class="hover:text-foreground transition-colors duration-200">
+                <a href="/politique-de-confidentialite" class="inline-block py-1.5 hover:text-foreground transition-colors duration-200">
                     Confidentialité
                 </a>
-                <a href="/cgv" class="hover:text-foreground transition-colors duration-200">
+                <a href="/cgv" class="inline-block py-1.5 hover:text-foreground transition-colors duration-200">
                     CGV
                 </a>
-                <a href="/login" class="hover:text-accent transition-colors duration-200">
-                    ADMIN
-                </a>
+                <button type="button" data-consent-open class="inline-block py-1.5 uppercase hover:text-foreground transition-colors duration-200">
+                    Mesure d'audience
+                </button>
             </div>
         </div>
 
-    </div>
-
-    <div class="fixed bottom-15 left-4 z-40 hidden lg:block pointer-events-none">
-        <div class="bg-zinc-900/90 backdrop-blur-md border border-zinc-800 px-3 py-1.5 rounded-full font-mono text-[11px] shadow-lg">
-
-            <div class="flex items-center gap-2 text-zinc-400 [html[data-mode='photo']_&]:hidden">
-                <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-                <span>status: 200 OK</span>
-                <span class="text-zinc-600">|</span>
-                <span class="text-zinc-500">branch: main</span>
-            </div>
-
-            <div class="hidden [html[data-mode='photo']_&]:flex items-center gap-2 text-amber-400">
-                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                <span>1/1000s</span>
-                <span class="text-amber-400/40">•</span>
-                <span>f/1.8</span>
-                <span class="text-amber-400/40">•</span>
-                <span>ISO 100</span>
-            </div>
-        </div>
     </div>
 </footer>
 
-<button type="button" id="cli-launcher" class="cli-launcher" data-magnetic
+<button type="button" id="cli-launcher" class="cli-launcher"
         aria-haspopup="dialog" aria-controls="cli" aria-expanded="false" aria-label="Ouvrir le terminal interactif">
     <span class="cli-launcher__prompt" aria-hidden="true">&gt;_</span>
     <span>terminal</span>
@@ -57,13 +36,10 @@
 
 <dialog id="cli" class="cli" closedby="any" aria-labelledby="cli-title">
     <div class="cli__bar">
-        <div class="flex items-center gap-2" aria-hidden="true">
-            <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
-            <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
-            <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
-        </div>
         <h2 id="cli-title" class="cli__title">visiteur@yannleflohic.fr: ~ (zsh)</h2>
-        <button type="button" class="cli__close" data-cli-action="close" aria-label="Fermer le terminal">✕</button>
+        <button type="button" class="cli__close" data-cli-action="close" aria-label="Fermer le terminal">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
     </div>
 
     <div id="cli-output" class="cli__output" role="log" aria-live="polite"></div>
@@ -80,14 +56,36 @@
 <template id="tpl-cli-link"><a class="cli__link" href="{{href}}"{{target}}>{{label}}</a></template>
 <template id="tpl-cli-chip"><button type="button" class="cli__chip" data-cli-run="{{command}}">{{label}}</button></template>
 
+<section id="consent-banner" hidden tabindex="-1" aria-labelledby="consent-title"
+         class="fixed inset-x-0 bottom-0 z-60 border-t border-border-strong bg-background-2 px-4 py-5 sm:px-6 shadow-2xl">
+    <div class="mx-auto flex max-w-360 flex-col gap-5 lg:flex-row lg:items-center lg:gap-10">
+        <div class="flex flex-col gap-2 grow">
+            <h2 id="consent-title" class="text-base font-medium text-foreground">Mesure d'audience</h2>
+            <p class="text-sm text-muted-foreground leading-relaxed max-w-3xl">
+                Ce site mesure sa fréquentation de façon anonyme, avec un outil hébergé chez moi : pages vues,
+                site d'origine, type d'appareil. Aucun cookie de suivi, aucune adresse IP conservée.
+                Refuser ne change rien à votre navigation.
+                <a href="/politique-de-confidentialite#mesure-audience" class="text-accent underline underline-offset-4">En savoir plus</a>
+            </p>
+            <p id="consent-current" role="status" class="text-xs font-mono text-muted-foreground"></p>
+        </div>
+        <div class="flex flex-wrap gap-3 shrink-0">
+            <button type="button" data-consent="denied" class="btn-glow btn-glow--ghost"><span>Refuser</span></button>
+            <button type="button" data-consent="granted" class="btn-glow btn-glow--ghost"><span>Accepter</span></button>
+        </div>
+    </div>
+</section>
+
 <div id="custom-cursor" class="cursor" aria-hidden="true">
     <span class="cursor__dot"></span>
     <span class="cursor__label"></span>
 </div>
 
-<script src="/js/main.js?v=20261014"></script>
-<script src="/js/nav-menu.js?v=20261014" defer></script>
-<script src="/js/mobile-cta.js?v=20261019" defer></script>
-<script src="/js/animations.js?v=20261014" defer></script>
-<script src="/js/terminal.js?v=20261014" defer></script>
-<script src="/js/photo-mode.js?v=20261014" defer></script>
+<script src="/js/main.js?v=20261025"></script>
+<script src="/js/nav-menu.js?v=20261025" defer></script>
+<script src="/js/mobile-cta.js?v=20261025" defer></script>
+<script src="/js/animations.js?v=20261025" defer></script>
+<script src="/js/terminal.js?v=20261025" defer></script>
+<script src="/js/motion-controls.js?v=20261025" defer></script>
+<script src="/js/consent.js?v=20261027" defer></script>
+<script src="/js/photo-mode.js?v=20261025" defer></script>

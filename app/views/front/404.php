@@ -1,6 +1,6 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-<main class="w-full min-h-screen px-6 sm:px-12 pt-32 pb-24 flex justify-center">
+<main id="main" tabindex="-1" class="w-full min-h-screen px-6 sm:px-12 pt-32 pb-24 flex justify-center">
     <div class="w-full max-w-3xl flex flex-col items-start gap-8">
 
         <span class="text-xs font-mono tracking-widest text-accent uppercase">
@@ -20,10 +20,10 @@
             <a href="/" class="btn-glow" data-magnetic>
                 <span>Retour à l'accueil</span>
             </a>
-            <a href="/#projects" class="btn-glow" data-magnetic>
+            <a href="/#projects" class="btn-glow btn-glow--ghost">
                 <span>Voir mes projets</span>
             </a>
-            <a href="/#contact" class="btn-glow" data-magnetic>
+            <a href="/#contact" class="btn-glow btn-glow--ghost">
                 <span>Me contacter</span>
             </a>
         </div>

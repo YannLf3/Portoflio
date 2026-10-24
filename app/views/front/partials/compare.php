@@ -18,7 +18,7 @@
             <?php if ($compareTools !== []): ?>
                 <div class="flex flex-wrap gap-2">
                     <?php array_walk($compareTools, static function (string $tool): void { ?>
-                        <span class="px-3 py-1 rounded-full border border-border-strong text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                        <span class="px-3 py-1 rounded-full border border-border-strong text-xs font-mono uppercase tracking-wider text-muted-foreground">
                             <?= htmlspecialchars($tool) ?>
                         </span>
                     <?php }); ?>
@@ -53,7 +53,7 @@
     </div>
 
     <?php if ($isSimulated): ?>
-        <p class="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+        <p class="text-xs font-mono uppercase tracking-wider text-muted-foreground">
             Aperçu : le rendu brut est simulé à partir de l'image finale.
         </p>
     <?php endif; ?>

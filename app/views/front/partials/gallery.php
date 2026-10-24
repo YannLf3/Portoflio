@@ -1,11 +1,11 @@
-<section id="gallery" class="mt-24 flex flex-col gap-12 w-full">
+<section id="gallery" aria-labelledby="gallery-title" class="mt-24 flex flex-col gap-12 w-full">
 
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div class="flex flex-col items-start gap-3">
             <span class="text-xs font-mono tracking-widest text-accent uppercase">
                 04 — L'objectif
             </span>
-            <h2 class="reveal-title text-3xl sm:text-4xl lg:text-5xl font-display italic font-light tracking-tight text-foreground">
+            <h2 id="gallery-title" class="reveal-title text-3xl sm:text-4xl lg:text-5xl font-display italic font-light tracking-tight text-foreground">
                 <span class="reveal-title__mask">
                     <span class="reveal-title__inner">Regarder autrement</span>
                 </span>

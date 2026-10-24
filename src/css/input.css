@@ -1,10 +1,5 @@
-/* Import des polices Google Fonts du projet (Rebranding 2026)
-   - Space Grotesk : titres (h1 → h6) du mode Dev
-   - Fraunces      : titres du mode Photo (serif éditoriale, axe optique opsz 9..144 + italique RÉEL)
-   - DM Sans       : corps de texte (axe optique opsz 9..40 + italique réel)
-   - JetBrains Mono: labels techniques, tags, terminal (conservée)
-   Une seule requête regroupe les 4 familles pour éviter une cascade de @import bloquants. */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=JetBrains+Mono:wght@400..600&family=Space+Grotesk:wght@300..700&display=swap');
+/* Polices Google Fonts (Archivo, Fraunces, DM Sans, JetBrains Mono) : chargées par <link> dans
+   app/views/layouts/header.php (preconnect + une requête), un @import CSS bloquerait le rendu. */
 
 @import "tailwindcss";
 
@@ -77,6 +72,11 @@
 }
 
 @layer base {
+    /* Ancres (#about, #contact…) : décalage = hauteur du header sticky */
+    html {
+        scroll-padding-top: 5rem;
+    }
+
     :root {
         /* ==========================================================================
          TOKENS PRIMITIVES
@@ -188,7 +188,7 @@
         /* ==========================================================================
          TOKENS TYPOGRAPHIE - FAMILLES DE POLICES
          ========================================================================== */
-        --font-display: 'Space Grotesk', system-ui, sans-serif;
+        --font-display: 'Archivo', system-ui, sans-serif;
         --font-editorial: 'Fraunces', Georgia, 'Times New Roman', serif;
         --font-body: 'DM Sans', system-ui, sans-serif;
         --font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -196,10 +196,10 @@
         /* ==========================================================================
          TOKENS TYPOGRAPHIE - TAILLES DE POLICE
          ========================================================================== */
-        --text-2xs: 0.625rem;
-        /* 10px - micro-tags, badges, labels techniques */
-        --text-xs-plus: 0.6875rem;
-        /* 11px - sous-labels, boutons compacts */
+        --text-2xs: 0.75rem;
+        /* 12px (plancher de lisibilité) - micro-tags, badges, labels techniques */
+        --text-xs-plus: 0.75rem;
+        /* 12px - sous-labels, boutons compacts */
         --text-xs: 0.75rem;
         /* 12px - tags uppercase mono, navigation */
         --text-sm: 0.875rem;
@@ -318,6 +318,12 @@
     h1, h2, h3, h4, h5, h6 {
         font-family: var(--font-display);
     }
+
+    /* Mode Dev : titres h1/h2 en chasse resserrée (axe wdth d'Archivo), façon marquage technique.
+       Le mode Photo passe en Fraunces, sans axe de largeur : la règle n'y a aucun effet. */
+    [data-mode='dev'] :is(h1, h2) {
+        font-stretch: 78%;
+    }
 }
 
 /* ===========================================================================
@@ -407,8 +413,16 @@ html:not([data-mode="photo"]) .mode-dev-content,
     animation: marquee 25s linear infinite;
 }
 
-.animate-marquee:hover {
+.animate-marquee:hover,
+.animate-marquee.is-paused {
     animation-play-state: paused;
+}
+
+/* Reduced-motion : le bandeau défile jamais, il reste lisible à l'arrêt */
+@media (prefers-reduced-motion: reduce) {
+    .animate-marquee {
+        animation: none;
+    }
 }
 
 .bg-linear-to-r {
@@ -452,10 +466,8 @@ html:not([data-mode="photo"]) .mode-dev-content,
 
     /* FORÇAGE POINTEUR DANS LES MODALES DU LAB : réaffiche la flèche/curseur natif partout
        (spécificité d'ID > html.has-custom-cursor *) */
-    #code-modal,
-    #article-modal,
-    #code-modal *,
-    #article-modal * {
+    #code-dialog,
+    #code-dialog * {
         cursor: auto !important;
     }
 
@@ -773,11 +785,8 @@ html:has(#lightbox[open]) {
     .btn-glow:focus-visible {
         --_bg: var(--accent);
         --_fg: var(--accent-contrast);
-        /* 4 couches : liseré net + halo serré + halo diffus + lueur portée vers le bas */
-        --_shadow: 0 0 0 1px var(--accent),
-        0 0 14px color-mix(in oklab, var(--accent) 70%, transparent),
-        0 0 42px color-mix(in oklab, var(--accent) 45%, transparent),
-        0 12px 80px -8px color-mix(in oklab, var(--accent) 55%, transparent);
+        /* Liseré net uniquement : pas de halo */
+        --_shadow: 0 0 0 1px var(--accent);
     }
 
     .btn-glow:focus-visible {
@@ -793,6 +802,18 @@ html:has(#lightbox[open]) {
     .btn-glow[aria-pressed='true'] {
         --_bg: var(--accent);
         --_fg: var(--accent-contrast);
+    }
+
+    /* Variante secondaire (ghost) : bordure neutre, accent seulement au survol / à l'état actif */
+    .btn-glow--ghost {
+        --_fg: var(--muted-foreground);
+        --_border: var(--border-strong);
+    }
+
+    .btn-glow--ghost:hover,
+    .btn-glow--ghost:focus-visible,
+    .btn-glow--ghost[aria-pressed='true'] {
+        --_border: var(--accent);
     }
 
     /* Variante compacte (filtres, barres d'outils) */
@@ -812,7 +833,7 @@ html:has(#lightbox[open]) {
     }
 
     /* -----------------------------------------------------------------------
-       4. RÉVÉLATION TYPOGRAPHIQUE DES TITRES (Space Grotesk)
+       4. RÉVÉLATION TYPOGRAPHIQUE DES TITRES (Archivo)
        <h2 class="reveal-title">
          <span class="reveal-title__mask">   ← overflow:hidden (conteneur parent)
            <span class="reveal-title__inner">Titre</span>  ← glisse vers le haut
@@ -854,7 +875,6 @@ html:has(#lightbox[open]) {
         height: var(--_line-height);
         border-radius: 2px;
         background-color: var(--_line-color);
-        box-shadow: 0 0 12px color-mix(in oklab, var(--_line-color) 50%, transparent);
         transform: scaleX(var(--_line-scale));
         transform-origin: left center;
         transition: transform 0.8s var(--ease-in-out-quart) var(--_line-delay);
@@ -1294,7 +1314,6 @@ html:has(#lightbox[open]) {
         width: calc(50% - 4px);
         border-radius: 999px;
         background-color: var(--_thumb);
-        box-shadow: 0 0 18px color-mix(in oklab, var(--_thumb) 35%, transparent);
         transform: translateX(var(--_thumb-x));
         transition: transform 0.55s var(--ease-out-expo), background-color 0.5s ease, box-shadow 0.5s ease;
     }
@@ -2063,4 +2082,13 @@ html:has(#lightbox[open]) {
     .compare__knob {
         transition-duration: 0.01ms !important;
     }
+}
+
+
+/* ===========================================================================
+   LOADER : masqué dès le premier rendu s'il a déjà été joué dans l'onglet
+   (classe posée par le script inline de header.php, avant le premier affichage)
+   ========================================================================== */
+html.loader-done #app-loader {
+    display: none;
 }

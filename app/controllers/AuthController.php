@@ -5,6 +5,7 @@ require_once __DIR__ . '/Controller.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/LoginAttempt.php';
 require_once __DIR__ . '/../core/Csrf.php';
+require_once __DIR__ . '/../core/ClientIp.php';
 
 /**
  * Connexion et déconnexion de l'administrateur.
@@ -41,7 +42,7 @@ final class AuthController extends Controller
 
         // Anti-brute-force à deux niveaux : par IP ET par compte visé (un attaquant qui change d'IP
         // à chaque essai reste bloqué). On refuse sans même tester les identifiants.
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $ip = ClientIp::get();
         $email = trim((string)($_POST['email'] ?? ''));
         $emailKey = LoginAttempt::emailKey($email);
         if (LoginAttempt::isBlocked($ip) || LoginAttempt::isBlocked($emailKey, LoginAttempt::MAX_FAILURES_PER_EMAIL)) {

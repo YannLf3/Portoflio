@@ -5,6 +5,8 @@ declare(strict_types=1);
  * Socle commun des contrôleurs : rendu des vues et préparation des données d'affichage.
  * Les vues ne reçoivent que des variables prêtes à afficher (aucun calcul dans les templates).
  */
+require_once __DIR__ . '/../models/Project.php';
+
 abstract class Controller
 {
     /** Session administrateur : clé portée uniquement côté serveur ($_SESSION), jamais dans un cookie. */
@@ -85,5 +87,35 @@ abstract class Controller
     protected static function rows(mixed $list): array
     {
         return is_array($list) ? array_filter($list, 'is_array') : [];
+    }
+
+    /**
+     * Transforme un texte en identifiant d'URL : minuscules, accents retirés, tirets entre les mots.
+     * Exemple : « Café de l'Été » devient « cafe-de-l-ete ».
+     *
+     * @param string $text Texte à convertir.
+     * @return string Slug (chaîne vide si le texte ne contient aucun caractère exploitable).
+     */
+    protected static function slugify(string $text): string
+    {
+        $ascii = strtr(mb_strtolower($text), [
+            'à' => 'a', 'â' => 'a', 'ä' => 'a', 'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e',
+            'î' => 'i', 'ï' => 'i', 'ô' => 'o', 'ö' => 'o', 'ù' => 'u', 'û' => 'u', 'ü' => 'u',
+            'ç' => 'c', 'œ' => 'oe', 'æ' => 'ae', 'ÿ' => 'y',
+        ]);
+
+        // Toute suite de caractères hors a-z / 0-9 devient un seul tiret ; tirets de bord retirés
+        return trim((string)preg_replace('/[^a-z0-9]+/', '-', $ascii), '-');
+    }
+
+    /**
+     * Adresse interne de la fiche d'un projet : /projets/{id}-{slug du titre}.
+     *
+     * @param Project $project Projet enregistré (identifiant non nul).
+     * @return string Chemin absolu.
+     */
+    protected static function projectUrl(Project $project): string
+    {
+        return '/projets/' . (int)$project->getId() . '-' . (self::slugify($project->getTitle()) ?: 'projet');
     }
 }

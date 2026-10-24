@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title) ?></title>
     <link rel="stylesheet" href="/css/style.css">
-    <script src="/js/admin.js?v=20261014" defer></script>
+    <script src="/js/admin.js?v=20261026" defer></script>
 </head>
 <body class="font-body bg-background text-foreground min-h-screen flex flex-col">
 
@@ -71,6 +71,11 @@
                 data-target="lab">
             Lab / Veille
         </button>
+        <button type="button"
+                class="tab-btn px-4 py-2 rounded-full border border-border-strong text-muted-foreground hover:border-muted-foreground transition-all"
+                data-target="stats">
+            Statistiques
+        </button>
     </div>
 </nav>
 
@@ -89,6 +94,125 @@
             <?php endif; ?>
         </div>
     <?php endif; ?>
+
+    <section id="stats" class="tab-content hidden flex-col gap-8">
+        <?php if ($stats === null): ?>
+            <div role="alert" class="rounded-lg border border-red-400/40 px-4 py-3 text-sm text-red-300">
+                La table <code>analytics_events</code> est introuvable. Jouez la migration
+                <code>database/migrations/2026-10-24_analytics_events.sql</code> sur la base.
+            </div>
+        <?php else: ?>
+            <?php
+            // Libellés lisibles des actions mesurées et des appareils
+            $eventLabels = [
+                'contact_click' => 'Clics sur « Me contacter »',
+                'contact_sent' => 'Messages envoyés par le formulaire',
+                'project_open' => 'Ouvertures de fiche projet',
+                'project_link' => 'Clics sur « Voir le projet »',
+                'repo_link' => 'Clics sur « Code source »',
+                'mode_switch' => 'Changements de mode Dev / Photo',
+            ];
+            $deviceLabels = ['mobile' => 'Mobile', 'tablet' => 'Tablette', 'desktop' => 'Ordinateur'];
+            $maxViews = max(1, ...array_column($stats['days'], 'views'));
+            $barWidth = 600 / count($stats['days']);
+            $directPercent = $stats['views'] > 0 ? round($stats['direct'] / $stats['views'] * 100) : 0;
+            ?>
+            <div class="flex flex-wrap items-end justify-between gap-4 border-b border-border-strong pb-4">
+                <div>
+                    <h2 class="font-display text-sm text-accent">Statistiques d'audience</h2>
+                    <p class="text-xs text-muted-foreground mt-1">
+                        Visiteurs ayant accepté la mesure uniquement. Vos propres visites (session admin) ne sont pas comptées.
+                    </p>
+                </div>
+                <nav aria-label="Période" class="flex gap-2 font-mono text-xs">
+                    <?php $ranges = AnalyticsEvent::RANGES;
+                    array_walk($ranges, static function (int $days) use ($range): void { ?>
+                        <a href="/admin?range=<?= $days ?>#stats"
+                           <?= $days === $range ? 'aria-current="page"' : '' ?>
+                           class="px-3 py-2 rounded-full border <?= $days === $range ? 'border-accent text-accent bg-accent/10' : 'border-border-strong text-muted-foreground hover:border-muted-foreground' ?>">
+                            <?= $days ?> jours
+                        </a>
+                    <?php }); ?>
+                </nav>
+            </div>
+
+            <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-1">
+                    <dt class="text-xs font-mono uppercase text-muted-foreground">Pages vues</dt>
+                    <dd class="font-display text-3xl text-foreground"><?= number_format($stats['views'], 0, ',', ' ') ?></dd>
+                </div>
+                <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-1">
+                    <dt class="text-xs font-mono uppercase text-muted-foreground">Visiteurs (somme des visiteurs uniques par jour)</dt>
+                    <dd class="font-display text-3xl text-foreground"><?= number_format(array_sum(array_column($stats['days'], 'visitors')), 0, ',', ' ') ?></dd>
+                </div>
+                <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-1">
+                    <dt class="text-xs font-mono uppercase text-muted-foreground">Accès directs</dt>
+                    <dd class="font-display text-3xl text-foreground"><?= $directPercent ?> %</dd>
+                </div>
+            </dl>
+
+            <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-4">
+                <h3 class="text-xs font-mono uppercase text-muted-foreground">Pages vues par jour</h3>
+                <svg viewBox="0 0 600 150" class="w-full h-40" role="img"
+                     aria-label="Pages vues par jour sur <?= $range ?> jours : <?= $stats['views'] ?> au total">
+                    <?php array_walk($stats['days'], static function (array $day, int $index) use ($maxViews, $barWidth): void {
+                        $height = round($day['views'] / $maxViews * 130); ?>
+                        <rect x="<?= round($index * $barWidth + 1, 2) ?>" y="<?= 140 - $height ?>"
+                              width="<?= max(1, round($barWidth - 2, 2)) ?>" height="<?= max(1, $height) ?>"
+                              rx="2" fill="<?= $day['views'] > 0 ? 'var(--accent)' : 'var(--border-strong)' ?>">
+                            <title><?= htmlspecialchars($day['day']) ?> : <?= $day['views'] ?> vue(s), <?= $day['visitors'] ?> visiteur(s)</title>
+                        </rect>
+                    <?php }); ?>
+                </svg>
+                <details class="text-xs text-muted-foreground">
+                    <summary class="cursor-pointer py-1">Voir les données en tableau</summary>
+                    <table class="mt-3 w-full text-left font-mono">
+                        <thead><tr><th class="py-1">Jour</th><th>Vues</th><th>Visiteurs</th></tr></thead>
+                        <tbody>
+                        <?php array_walk(array_reverse($stats['days']), static function (array $day): void { ?>
+                            <tr class="border-t border-border-strong">
+                                <td class="py-1"><?= htmlspecialchars($day['day']) ?></td>
+                                <td><?= $day['views'] ?></td>
+                                <td><?= $day['visitors'] ?></td>
+                            </tr>
+                        <?php }); ?>
+                        </tbody>
+                    </table>
+                </details>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <?php
+                // Tableaux de classement : titre, lignes, intitulé de colonne, formatage du libellé
+                $tables = [
+                    ['Pages les plus vues', $stats['pages'], 'Page', static fn(string $label): string => $label],
+                    ['Sites d\'origine', $stats['referrers'], 'Domaine', static fn(string $label): string => $label],
+                    ['Appareils', $stats['devices'], 'Appareil', static fn(string $label): string => $deviceLabels[$label] ?? $label],
+                    ['Actions mesurées', $stats['events'], 'Action', static fn(string $label): string => $eventLabels[$label] ?? $label],
+                ];
+                array_walk($tables, static function (array $table): void { ?>
+                    <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-3">
+                        <h3 class="text-xs font-mono uppercase text-muted-foreground"><?= htmlspecialchars($table[0]) ?></h3>
+                        <?php if ($table[1] === []): ?>
+                            <p class="text-sm text-muted-foreground">Pas encore de données sur la période.</p>
+                        <?php else: ?>
+                            <table class="w-full text-sm text-left">
+                                <thead class="sr-only"><tr><th><?= htmlspecialchars($table[2]) ?></th><th>Total</th></tr></thead>
+                                <tbody>
+                                <?php array_walk($table[1], static function (array $row) use ($table): void { ?>
+                                    <tr class="border-t border-border-strong first:border-0">
+                                        <td class="py-2 pr-4 break-all"><?= htmlspecialchars(($table[3])((string)$row['label'])) ?></td>
+                                        <td class="py-2 text-right font-mono text-foreground"><?= (int)$row['total'] ?></td>
+                                    </tr>
+                                <?php }); ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
+                    </div>
+                <?php }); ?>
+            </div>
+        <?php endif; ?>
+    </section>
 
     <form id="admin-form" action="/admin/save" method="POST" enctype="multipart/form-data" class="flex flex-col gap-12">
         <?= Csrf::field() ?>
@@ -380,6 +504,56 @@
                                 <input type="text" name="projects[<?= $index ?>][tags]"
                                        value="<?= htmlspecialchars($project['tags']) ?>"
                                        class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                            </div>
+
+                            <div class="border-t border-border-strong pt-6 flex flex-col gap-6">
+                                <h4 class="font-mono text-xs text-accent uppercase">Page détail du projet (tous les champs sont optionnels)</h4>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="flex flex-col gap-2">
+                                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Année</label>
+                                    <input type="text" name="projects[<?= $index ?>][year]"
+                                           value="<?= htmlspecialchars((string)$project['year']) ?>"
+                                           class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Rôle (ex : Développeur full-stack)</label>
+                                    <input type="text" name="projects[<?= $index ?>][role]"
+                                           value="<?= htmlspecialchars((string)$project['role']) ?>"
+                                           class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Lien du dépôt GitHub (URL)</label>
+                                    <input type="text" name="projects[<?= $index ?>][repo_link]"
+                                           value="<?= htmlspecialchars((string)$project['repo_link']) ?>"
+                                           class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                                </div>
+                                </div>
+
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-mono uppercase text-muted-foreground">Contexte et objectifs</label>
+                                <textarea name="projects[<?= $index ?>][context]" rows="3"
+                                          class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars((string)$project['context']) ?></textarea>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-mono uppercase text-muted-foreground">Solution apportée</label>
+                                <textarea name="projects[<?= $index ?>][solution]" rows="3"
+                                          class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars((string)$project['solution']) ?></textarea>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-mono uppercase text-muted-foreground">Résultat obtenu</label>
+                                <textarea name="projects[<?= $index ?>][result]" rows="3"
+                                          class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"><?= htmlspecialchars((string)$project['result']) ?></textarea>
+                            </div>
+
+                                <div class="flex flex-col gap-2" data-gallery>
+                                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Galerie d'images (une URL par ligne, ou envoi de fichiers ci-dessous)</label>
+                                    <textarea name="projects[<?= $index ?>][gallery]" rows="3" data-gallery-input
+                                              class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y font-mono"><?= htmlspecialchars((string)$project['gallery']) ?></textarea>
+                                    <input type="file" name="projects_gallery_files[<?= $index ?>][]" accept="image/*" multiple data-gallery-files
+                                           aria-label="Ajouter des images à la galerie"
+                                           class="w-full text-xs text-muted-foreground file:mr-2 file:py-1 file:px-3 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
+                                </div>
                             </div>
                         </div>
                 <?php }); ?>
@@ -825,7 +999,85 @@
             <label class="text-[10px] font-mono uppercase text-muted-foreground">Tags (séparés par des virgules)</label>
             <input type="text" name="projects[{{index}}][tags]" class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
         </div>
+
+                            <div class="border-t border-border-strong pt-6 flex flex-col gap-6">
+                                <h4 class="font-mono text-xs text-accent uppercase">Page détail du projet (tous les champs sont optionnels)</h4>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="flex flex-col gap-2">
+                                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Année</label>
+                                    <input type="text" name="projects[{{index}}][year]"
+                                           class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Rôle (ex : Développeur full-stack)</label>
+                                    <input type="text" name="projects[{{index}}][role]"
+                                           class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Lien du dépôt GitHub (URL)</label>
+                                    <input type="text" name="projects[{{index}}][repo_link]"
+                                           class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none">
+                                </div>
+                                </div>
+
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-mono uppercase text-muted-foreground">Contexte et objectifs</label>
+                                <textarea name="projects[{{index}}][context]" rows="3"
+                                          class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"></textarea>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-mono uppercase text-muted-foreground">Solution apportée</label>
+                                <textarea name="projects[{{index}}][solution]" rows="3"
+                                          class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"></textarea>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-mono uppercase text-muted-foreground">Résultat obtenu</label>
+                                <textarea name="projects[{{index}}][result]" rows="3"
+                                          class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y"></textarea>
+                            </div>
+
+                                <div class="flex flex-col gap-2" data-gallery>
+                                    <label class="text-[10px] font-mono uppercase text-muted-foreground">Galerie d'images (une URL par ligne, ou envoi de fichiers ci-dessous)</label>
+                                    <textarea name="projects[{{index}}][gallery]" rows="3" data-gallery-input
+                                              class="w-full bg-background-2/50 border border-border-strong rounded-lg px-4 py-3 text-sm focus:border-accent outline-none resize-y font-mono"></textarea>
+                                    <input type="file" name="projects_gallery_files[{{index}}][]" accept="image/*" multiple data-gallery-files
+                                           aria-label="Ajouter des images à la galerie"
+                                           class="w-full text-xs text-muted-foreground file:mr-2 file:py-1 file:px-3 file:rounded border file:border-0 file:bg-zinc-800 file:text-zinc-300 cursor-pointer">
+                                </div>
+                            </div>
     </div>
+</template>
+<template id="tpl-admin-gallery-ui">
+    <ul data-gallery-list class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 list-none p-0 m-0"></ul>
+    <p data-gallery-empty class="text-xs text-muted-foreground">Aucune image dans la galerie.</p>
+    <div class="flex flex-col sm:flex-row gap-2">
+        <input type="text" data-gallery-url placeholder="/assets/images/... ou https://..."
+               aria-label="Adresse d'une image à ajouter à la galerie"
+               class="flex-1 bg-background-2/50 border border-border-strong rounded-lg px-4 py-2 text-xs focus:border-accent outline-none">
+        <button type="button" data-gallery-action="add-url"
+                class="text-[10px] font-mono border border-border-strong px-3 py-2 rounded hover:border-accent hover:text-accent transition-colors">
+            AJOUTER L'URL
+        </button>
+    </div>
+    <p data-gallery-status role="status" aria-live="polite" class="text-[10px] font-mono text-muted-foreground min-h-4"></p>
+</template>
+<template id="tpl-admin-gallery-item">
+    <li data-gallery-item class="border border-border-strong bg-background-2/30 rounded-lg p-2 flex flex-col gap-2">
+        <div class="relative">
+            <img data-gallery-img src="" alt="" width="160" height="120" class="w-full aspect-4/3 object-cover rounded">
+            <span data-gallery-badge class="hidden absolute top-1 left-1 text-[10px] font-mono bg-accent text-accent-contrast px-1.5 py-0.5 rounded">NOUVEAU</span>
+            <span data-gallery-position class="absolute bottom-1 left-1 text-[10px] font-mono bg-background/80 text-foreground px-1.5 py-0.5 rounded"></span>
+        </div>
+        <div class="flex flex-wrap gap-1">
+            <button type="button" data-gallery-action="before"
+                    class="text-[10px] font-mono border border-border-strong px-2 py-1 rounded hover:border-accent hover:text-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed">AVANT</button>
+            <button type="button" data-gallery-action="after"
+                    class="text-[10px] font-mono border border-border-strong px-2 py-1 rounded hover:border-accent hover:text-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed">APRÈS</button>
+            <button type="button" data-gallery-action="remove"
+                    class="text-[10px] font-mono border border-border-strong px-2 py-1 rounded hover:text-red-400 hover:border-red-400 transition-colors">RETIRER</button>
+        </div>
+    </li>
 </template>
 <template id="tpl-admin-photo">
     <div class="photo-item border border-border-strong bg-background-2/20 p-5 rounded-xl flex flex-col gap-4 relative">

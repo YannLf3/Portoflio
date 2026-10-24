@@ -111,6 +111,16 @@
         card.style.display = visible ? 'flex' : 'none';
     };
 
+    /**
+     * Affiche ou masque le message « aucun projet » (zone aria-live : annoncé aux lecteurs d'écran).
+     * @param {boolean} visible
+     * @returns {void}
+     */
+    V.setEmptyVisible = function (visible) {
+        const empty = document.getElementById('projects-empty');
+        if (empty) empty.hidden = !visible;
+    };
+
     /* =======================================================================
        C — CONTRÔLEUR
        ======================================================================= */
@@ -134,7 +144,12 @@
         if (!button) return;
         const filter = V.filterOf(button);
         V.setPressed(button);
-        V.getCards().forEach((card) => V.setCardVisible(card, M.matches(filter, V.categoryOf(card))));
+        const matching = V.getCards().map((card) => {
+            const visible = M.matches(filter, V.categoryOf(card));
+            V.setCardVisible(card, visible);
+            return visible;
+        });
+        V.setEmptyVisible(!matching.some(Boolean));
     };
 
     C.init();

@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title><?= htmlspecialchars($title ?? 'Yann Le Flohic — Développeur Web Full-Stack Châteauroux & Limoges') ?></title>
-    <meta name="description" content="<?= htmlspecialchars($pageDesc ?? 'Portfolio de Yann Le Flohic, étudiant en BUT MMI et développeur web freelance (YannLf3). Découvre mes projets full-stack, mes créations et mon lab.') ?>">
+    <title><?= htmlspecialchars($title ?? 'Yann Le Flohic | Développeur Web Full-Stack Châteauroux & Limoges') ?></title>
+    <meta name="description" content="<?= htmlspecialchars($pageDesc ?? 'Portfolio de Yann Le Flohic, étudiant en BUT MMI et développeur web freelance (YannLf3). Découvrez mes projets full-stack, mes créations et mon lab.') ?>">
     <?php if (!empty($noindex)): ?>
         <meta name="robots" content="noindex, follow">
     <?php else: ?>
@@ -16,8 +16,8 @@
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?= htmlspecialchars($canonical ?? 'https://yannleflohic.fr/') ?>">
-    <meta property="og:title" content="<?= htmlspecialchars($title ?? 'Yann Le Flohic — Développeur Web Full-Stack') ?>">
-    <meta property="og:description" content="<?= htmlspecialchars($pageDesc ?? 'Portfolio de Yann Le Flohic. Découvre mes projets full-stack et mon lab.') ?>">
+    <meta property="og:title" content="<?= htmlspecialchars($title ?? 'Yann Le Flohic | Développeur Web Full-Stack') ?>">
+    <meta property="og:description" content="<?= htmlspecialchars($pageDesc ?? 'Portfolio de Yann Le Flohic. Découvrez mes projets full-stack et mon lab.') ?>">
     <meta property="og:image" content="https://yannleflohic.fr/assets/images/og-image.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -25,11 +25,11 @@
     <meta property="og:locale" content="fr_FR">
     <meta property="og:site_name" content="Yann Le Flohic">
 
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="<?= htmlspecialchars($title ?? 'Yann Le Flohic — Développeur Web Full-Stack') ?>">
-    <meta property="twitter:description" content="<?= htmlspecialchars($pageDesc ?? 'Portfolio de Yann Le Flohic. Découvre mes projets full-stack et mon lab.') ?>">
-    <meta property="twitter:image" content="https://yannleflohic.fr/assets/images/og-image.jpg">
-    <meta property="twitter:image:alt" content="Aperçu du portfolio de Yann Le Flohic, développeur web freelance">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?= htmlspecialchars($title ?? 'Yann Le Flohic | Développeur Web Full-Stack') ?>">
+    <meta name="twitter:description" content="<?= htmlspecialchars($pageDesc ?? 'Portfolio de Yann Le Flohic. Découvrez mes projets full-stack et mon lab.') ?>">
+    <meta name="twitter:image" content="https://yannleflohic.fr/assets/images/og-image.jpg">
+    <meta name="twitter:image:alt" content="Aperçu du portfolio de Yann Le Flohic, développeur web freelance">
 
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
@@ -77,7 +77,14 @@
     }
     </script>
 
-    <link rel="stylesheet" href="/css/style.css?v=20261019">
+    <?php if (!empty($jsonLd)): ?>
+        <script type="application/ld+json"><?= json_encode($jsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
+    <?php endif; ?>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,300..800&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=JetBrains+Mono:wght@400..600&display=swap">
+    <link rel="stylesheet" href="/css/style.css?v=20261026">
 
     <script nonce="<?= CSP_NONCE ?>">
         // Exécuté AVANT le premier rendu :
@@ -87,37 +94,46 @@
             var root = document.documentElement;
             root.classList.add('fx');
             try {
+                // Loader déjà joué dans l'onglet, ou mouvement réduit demandé : il n'est jamais affiché
+                if (sessionStorage.getItem('portfolio_loaded') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    root.classList.add('loader-done');
+                }
                 var mode = localStorage.getItem('portfolio-mode');
                 if (mode === 'dev' || mode === 'photo') root.dataset.mode = mode;
             } catch (e) { /* stockage indisponible (navigation privée stricte) : mode Dev par défaut */ }
         })();
     </script>
 </head>
-<body class="font-body bg-background-2 mx-4 sm:mx-6 lg:mx-10">
+<body class="font-body bg-background-2 w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] lg:w-[calc(100%-5rem)] max-w-360 mx-auto">
 
+<a href="#main"
+   class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[1000000] focus:px-4 focus:py-2 focus:rounded-full focus:bg-accent focus:text-accent-contrast focus:font-mono focus:text-xs focus:uppercase">
+    Aller au contenu
+</a>
+
+<noscript><style>#app-loader{display:none !important}</style></noscript>
 <div id="app-loader"
      style="background-color: #16181E; z-index: 999999; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh;"
      class="flex flex-col justify-between p-6 font-mono text-xs md:text-sm text-zinc-400 select-none transition-all duration-700 ease-in-out">
 
     <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
-        <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
-            <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
-            <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
-        </div>
-        <span class="text-zinc-500 text-[11px]">yann@portfolio:~ (zsh)</span>
+        <span class="text-zinc-500 text-xs">yann@portfolio:~ (zsh)</span>
+        <button type="button" id="loader-skip"
+                class="px-3 py-1.5 rounded-full border border-zinc-700 text-zinc-300 hover:border-accent hover:text-accent text-xs uppercase tracking-wider">
+            Passer
+        </button>
     </div>
 
     <div class="my-auto max-w-xl mx-auto w-full space-y-2" id="terminal-logs">
     </div>
 
-    <div class="flex items-center justify-between border-t border-zinc-800 pt-4 text-zinc-500 text-[11px]">
+    <div class="flex items-center justify-between border-t border-zinc-800 pt-4 text-zinc-500 text-xs">
         <span>SYSTEM_STATUS: OK</span>
         <span id="loader-progress">0%</span>
     </div>
 </div>
 
-<div class="fixed inset-0 pointer-events-none z-0 bg-grid-pattern opacity-60"></div>
+<div class="fixed inset-0 pointer-events-none z-0 bg-grid-pattern opacity-60" aria-hidden="true"></div>
 
 <canvas id="fx-particles" class="fx-particles fx-particles--idle" aria-hidden="true"></canvas>
 
@@ -126,7 +142,7 @@
 
 <header class="sticky top-0 flex flex-row justify-between items-center gap-1.5 z-50 bg-background-2/80 backdrop-blur-md border-b border-border py-3 transition-colors duration-300">
 
-    <a href="/" data-magnetic data-glitch="Yann Le Flohic" aria-label="Yann Le Flohic — retour à l'accueil"
+    <a href="/" data-glitch="Yann Le Flohic" aria-label="Yann Le Flohic, retour à l'accueil"
        class="glitch font-display font-semibold uppercase text-xs sm:text-sm tracking-[0.14em] sm:tracking-[0.2em] text-foreground whitespace-nowrap">
         <span class="glitch__text">Yann Le Flohic</span>
     </a>
@@ -141,34 +157,38 @@
     <nav id="main-nav" data-open="false"
          class="nav-menu absolute top-full inset-x-0 mt-2 hidden data-[open=true]:flex flex-col gap-1 p-2 rounded-2xl border border-border-strong bg-background-2 shadow-lg text-sm font-mono md:static md:mt-0 md:flex md:flex-row md:items-center md:gap-1 md:px-4 md:py-1.5 md:rounded-full md:bg-background-card/40 md:backdrop-blur-md md:shadow-none md:text-xs"
          aria-label="Navigation principale">
-        <a href="/#about" data-magnetic
+        <a href="/#about"
            class="px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
             01. Parcours
         </a>
-        <a href="/#skills" data-magnetic
+        <a href="/#skills"
            class="px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
             02. Compétences
         </a>
-        <a href="/#projects" data-magnetic
+        <a href="/#projects"
            class="px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
             03. Projets
         </a>
-        <a href="/#contact" data-magnetic
+        <a href="/#gallery"
            class="px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
-            04. Contact
+            04. Galerie
+        </a>
+        <a href="/#contact"
+           class="px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card/60 transition-all">
+            05. Contact
         </a>
 
         <span class="h-px mx-2 my-1 bg-border-strong md:w-px md:h-3 md:mx-1 md:my-0" aria-hidden="true"></span>
 
-        <a href="/lab" data-magnetic
-           class="flex items-center gap-1.5 px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-accent [html[data-mode='photo']_&]:text-amber-400 hover:bg-background-card/60 transition-all">
-            <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [html[data-mode='photo']_&]:bg-amber-400"></span>
+        <a href="/lab"<?= str_starts_with(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/lab') ? ' aria-current="page"' : '' ?>
+           class="flex items-center gap-1.5 px-4 py-3 rounded-xl md:px-3 md:py-1 md:rounded-full text-accent hover:bg-background-card/60 transition-all">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent" aria-hidden="true"></span>
             <span>Lab</span>
         </a>
     </nav>
 
     <button type="button" id="mode-switch" class="mode-switch" role="switch" aria-checked="false"
-            aria-label="Mode photographe" data-magnetic>
+            aria-label="Mode photographe" data-track="mode_switch">
         <span class="mode-switch__thumb" aria-hidden="true"></span>
         <span class="mode-switch__option mode-switch__option--dev" aria-hidden="true">
             <span class="sm:hidden">Dev</span><span class="hidden sm:inline">Développeur</span>
@@ -178,5 +198,5 @@
         </span>
     </button>
 
-    <script src="/js/theme-toggle.js?v=20261014"></script>
+    <script src="/js/theme-toggle.js?v=20261025"></script>
 </header>

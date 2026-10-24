@@ -34,6 +34,13 @@ CREATE TABLE IF NOT EXISTS `projects`
     `link`        TEXT         NOT NULL,
     `category`    TEXT         NOT NULL,
     `tags`        TEXT         NOT NULL,
+    `year`        VARCHAR(20)  NULL,
+    `role`        VARCHAR(255) NULL,
+    `context`     TEXT         NULL,
+    `solution`    TEXT         NULL,
+    `result`      TEXT         NULL,
+    `repo_link`   TEXT         NULL,
+    `gallery`     TEXT         NULL,
     `created_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY `idx_projects_position` (`position`)
@@ -93,6 +100,53 @@ CREATE TABLE IF NOT EXISTS `login_attempts`
     `ip`           VARCHAR(45) NOT NULL,
     `attempted_at` DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY `idx_login_attempts_ip_date` (`ip`, `attempted_at`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+-- 5. Mesure d'audience (voir app/models/AnalyticsEvent.php) : aucune IP stockée, purge à 13 mois
+CREATE TABLE IF NOT EXISTS `analytics_events`
+(
+    `id`         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `day`        DATE         NOT NULL,
+    `type`       VARCHAR(10)  NOT NULL,
+    `name`       VARCHAR(40)  NOT NULL DEFAULT '',
+    `path`       VARCHAR(255) NOT NULL,
+    `referrer`   VARCHAR(120) NOT NULL DEFAULT '',
+    `device`     VARCHAR(10)  NOT NULL,
+    `visitor`    CHAR(16)     NOT NULL,
+    KEY `idx_analytics_day_type` (`day`, `type`),
+    KEY `idx_analytics_path` (`path`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+
+-- 6. Compteur de requêtes par client et par usage (voir app/models/RateLimit.php) :
+-- `client` est une empreinte HMAC de l'IP (jamais l'IP en clair), purge automatique après 24 h
+CREATE TABLE IF NOT EXISTS `rate_limits`
+(
+    `id`     BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `bucket` VARCHAR(20) NOT NULL,
+    `client` CHAR(40)    NOT NULL,
+    `hit_at` DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_rate_limits_lookup` (`bucket`, `client`, `hit_at`),
+    KEY `idx_rate_limits_hit_at` (`hit_at`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+-- 7. Messages du formulaire de contact, enregistrés AVANT l'envoi du mail (voir app/models/ContactMessage.php)
+CREATE TABLE IF NOT EXISTS `contact_messages`
+(
+    `id`         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `created_at` DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `name`       VARCHAR(100)  NOT NULL,
+    `email`      VARCHAR(150)  NOT NULL,
+    `message`    TEXT          NOT NULL,
+    `mail_sent`  TINYINT(1)    NOT NULL DEFAULT 0,
+    KEY `idx_contact_messages_created` (`created_at`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;

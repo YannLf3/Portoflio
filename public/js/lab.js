@@ -1,13 +1,13 @@
 /**
  * @file lab.js
- * @description Modales de la page Lab (app/views/front/lab.php).
+ * @description Console de code de la page Lab (app/views/front/lab.php).
  *
- * - Console de code : affiche le HTML / CSS / JS d'un snippet, un onglet par langage.
- * - Lecteur d'article : contenu HTML (s'il contient des balises) ou texte brut.
- * - Fermeture : bouton, clic sur le fond de la modale ou touche Échap.
+ * - Console : <dialog> natif (focus piégé, Échap, retour du focus gérés par le navigateur).
+ * - Affiche le HTML / CSS / JS d'un snippet, un onglet par langage (rôles ARIA tablist / tab).
+ * - Fermeture : bouton, clic sur le fond ou touche Échap.
  *
  * Architecture M/V/C stricte :
- *  - M (Modèle)     : snippet affiché, textes de remplacement, nature du contenu d'un article.
+ *  - M (Modèle)     : snippet affiché, textes de remplacement, ordre des onglets.
  *  - V (Vue)        : lecture des data-* des boutons, affichage des modales, déclaration des écouteurs.
  *  - C (Contrôleur) : handlers qui interrogent M puis mettent à jour V.
  *
@@ -25,6 +25,9 @@
 
     /** Code du snippet affiché dans la console, par langage. */
     M.snippet = {html: '', css: '', js: ''};
+
+    /** Langages proposés, dans l'ordre des onglets. */
+    M.langs = ['html', 'css', 'js'];
 
     /** Textes affichés quand un snippet n'a pas de code (ou pas de titre). */
     M.fallbacks = {
@@ -65,30 +68,39 @@
         return title || this.fallbacks.title;
     };
 
+    /**
+     * Langage voisin dans l'ordre des onglets (navigation aux flèches, boucle aux extrémités).
+     * @param {string} lang - Langage courant.
+     * @param {number} step - +1 (suivant) ou -1 (précédent).
+     * @returns {string}
+     */
+    M.neighbor = function (lang, step) {
+        const index = this.langs.indexOf(lang);
+        return this.langs[(index + step + this.langs.length) % this.langs.length];
+    };
+
 
     /* =======================================================================
        V — VUE
        ======================================================================= */
     const V = {};
 
-    V.codeModal = null;
-
-    V.articleModal = null;
+    V.dialog = null;
 
     /**
-     * Point d'entrée de la Vue : récupère les modales et déclare les écouteurs (délégation sur le document).
-     * @param {{onOpenCode:Function, onSwitchTab:Function, onOpenArticle:Function, onClose:Function, onKeyDown:Function}} handlers
-     * @returns {void}
+     * Point d'entrée de la Vue : récupère la console et déclare les écouteurs (délégation sur le document).
+     * @param {{onOpenCode:Function, onSwitchTab:Function, onTabKey:Function, onClose:Function}} handlers
+     * @returns {boolean} false si la console est absente de la page.
      */
     V.init = function (handlers) {
-        this.codeModal = document.getElementById('code-modal');
-        this.articleModal = document.getElementById('article-modal');
+        this.dialog = document.getElementById('code-dialog');
+        if (!this.dialog) return false;
 
         document.addEventListener('click', handlers.onOpenCode);
-        document.addEventListener('click', handlers.onSwitchTab);
-        document.addEventListener('click', handlers.onOpenArticle);
-        document.addEventListener('click', handlers.onClose);
-        document.addEventListener('keydown', handlers.onKeyDown);
+        this.dialog.addEventListener('click', handlers.onSwitchTab);
+        this.dialog.addEventListener('click', handlers.onClose);
+        this.dialog.addEventListener('keydown', handlers.onTabKey);
+        return true;
     };
 
     /**
@@ -101,7 +113,7 @@
     };
 
     /**
-     * Onglet de langage de la console visé par un clic.
+     * Onglet de langage visé par un clic ou une touche.
      * @param {EventTarget} target
      * @returns {HTMLElement|null}
      */
@@ -110,22 +122,13 @@
     };
 
     /**
-     * Bouton « Lire l'article » visé par un clic.
-     * @param {EventTarget} target
-     * @returns {HTMLElement|null}
-     */
-    V.articleButtonFrom = function (target) {
-        return target instanceof Element ? target.closest('.open-article-modal') : null;
-    };
-
-    /**
-     * Indique si un clic doit fermer les modales : bouton de fermeture, ou fond d'une modale.
+     * Indique si un clic doit fermer la console : bouton de fermeture, ou fond (le <dialog> lui-même).
      * @param {EventTarget} target
      * @returns {boolean}
      */
     V.isCloseTarget = function (target) {
         const onCloseButton = target instanceof Element && Boolean(target.closest('.close-modal'));
-        return onCloseButton || target === this.codeModal || target === this.articleModal;
+        return onCloseButton || target === this.dialog;
     };
 
     /**
@@ -139,19 +142,6 @@
             html: button.dataset.html,
             css: button.dataset.css,
             js: button.dataset.js
-        };
-    };
-
-    /**
-     * Article, lu dans les data-* de son bouton.
-     * @param {HTMLElement} button
-     * @returns {{title:string, category:string, content:string}}
-     */
-    V.readArticle = function (button) {
-        return {
-            title: button.dataset.title,
-            category: button.dataset.category,
-            content: button.dataset.content
         };
     };
 
@@ -183,47 +173,39 @@
     };
 
     /**
-     * Met en évidence l'onglet actif de la console.
-     * @param {HTMLElement} tab
-     * @returns {void}
+     * Active un onglet : aria-selected, tabindex itinérant, style, et panneau relié à l'onglet.
+     * @param {string} lang - Langage de l'onglet à activer.
+     * @returns {HTMLElement|null} L'onglet activé.
      */
-    V.activateCodeTab = function (tab) {
-        document.querySelectorAll('.code-tab').forEach((other) => other.classList.remove('bg-zinc-800', 'text-accent', 'active'));
-        tab.classList.add('bg-zinc-800', 'text-accent', 'active');
-    };
-
-    /**
-     * Remplit le lecteur d'article.
-     * Le contenu est toujours inséré en texte brut (textContent) : jamais interprété comme du HTML (anti-XSS).
-     * @param {{title:string, category:string, content:string}} article
-     * @returns {void}
-     */
-    V.renderArticle = function (article) {
-        document.getElementById('article-modal-title').textContent = article.title;
-        document.getElementById('article-modal-category').textContent = article.category;
-
-        document.getElementById('article-modal-body').textContent = article.content;
-    };
-
-    /**
-     * Ouvre une modale.
-     * @param {HTMLElement} modal
-     * @returns {void}
-     */
-    V.openModal = function (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    };
-
-    /**
-     * Ferme les deux modales.
-     * @returns {void}
-     */
-    V.closeModals = function () {
-        [this.codeModal, this.articleModal].forEach((modal) => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+    V.activateCodeTab = function (lang) {
+        const tabs = [...document.querySelectorAll('.code-tab')];
+        tabs.forEach((tab) => {
+            const isActive = this.langOf(tab) === lang;
+            tab.setAttribute('aria-selected', String(isActive));
+            tab.tabIndex = isActive ? 0 : -1;
+            tab.classList.toggle('bg-background-card', isActive);
+            tab.classList.toggle('text-accent', isActive);
+            tab.classList.toggle('text-muted-foreground', !isActive);
         });
+        const active = tabs.find((tab) => this.langOf(tab) === lang) ?? null;
+        if (active) document.getElementById('code-panel').setAttribute('aria-labelledby', active.id);
+        return active;
+    };
+
+    /**
+     * Ouvre la console en modal (le navigateur piège le focus et le rend à la fermeture).
+     * @returns {void}
+     */
+    V.open = function () {
+        if (!this.dialog.open) this.dialog.showModal();
+    };
+
+    /**
+     * Ferme la console.
+     * @returns {void}
+     */
+    V.close = function () {
+        if (this.dialog.open) this.dialog.close();
     };
 
     /* =======================================================================
@@ -239,9 +221,8 @@
         V.init({
             onOpenCode: C.handler_openCode,
             onSwitchTab: C.handler_switchTab,
-            onOpenArticle: C.handler_openArticle,
-            onClose: C.handler_close,
-            onKeyDown: C.handler_keyDown
+            onTabKey: C.handler_tabKey,
+            onClose: C.handler_close
         });
     };
 
@@ -256,8 +237,9 @@
         const snippet = V.readSnippet(button);
         M.setSnippet(snippet);
         V.setCodeTitle(M.titleOrDefault(snippet.title));
+        V.activateCodeTab('html');
         V.setCode(M.codeFor('html'));
-        V.openModal(V.codeModal);
+        V.open();
     };
 
     /**
@@ -268,39 +250,33 @@
     C.handler_switchTab = function (ev) {
         const tab = V.codeTabFrom(ev.target);
         if (!tab) return;
-        V.activateCodeTab(tab);
-        V.setCode(M.codeFor(V.langOf(tab)));
+        const lang = V.langOf(tab);
+        V.activateCodeTab(lang);
+        V.setCode(M.codeFor(lang));
     };
 
     /**
-     * Clic sur « Lire l'article » : lecteur ouvert sur l'article.
-     * @param {MouseEvent} ev
+     * Flèches gauche / droite sur un onglet : onglet voisin activé et focalisé.
+     * @param {KeyboardEvent} ev
      * @returns {void}
      */
-    C.handler_openArticle = function (ev) {
-        const button = V.articleButtonFrom(ev.target);
-        if (!button) return;
-        const article = V.readArticle(button);
-        V.renderArticle(article);
-        V.openModal(V.articleModal);
+    C.handler_tabKey = function (ev) {
+        const tab = V.codeTabFrom(ev.target);
+        const steps = {ArrowRight: 1, ArrowLeft: -1};
+        if (!tab || !(ev.key in steps)) return;
+        ev.preventDefault();
+        const lang = M.neighbor(V.langOf(tab), steps[ev.key]);
+        V.activateCodeTab(lang)?.focus();
+        V.setCode(M.codeFor(lang));
     };
 
     /**
-     * Clic sur un bouton de fermeture ou sur le fond d'une modale.
+     * Clic sur un bouton de fermeture ou sur le fond de la console.
      * @param {MouseEvent} ev
      * @returns {void}
      */
     C.handler_close = function (ev) {
-        if (V.isCloseTarget(ev.target)) V.closeModals();
-    };
-
-    /**
-     * Échap ferme les modales.
-     * @param {KeyboardEvent} ev
-     * @returns {void}
-     */
-    C.handler_keyDown = function (ev) {
-        if (ev.key === 'Escape') V.closeModals();
+        if (V.isCloseTarget(ev.target)) V.close();
     };
 
     C.init();

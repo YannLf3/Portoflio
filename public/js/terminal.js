@@ -3,8 +3,9 @@
  * @description Terminal de commande interactif (Easter Egg) du portfolio.
  *
  * Ouverture : bouton flottant #cli-launcher ou raccourci ⌘K (macOS) / Ctrl+K.
- * Commandes : help, whoami, skills, projects, contact, ls, goto, theme, history,
- * clear, date, echo, exit, sudo hire-yann (+ quelques commandes cachées).
+ * Commandes : help, man, whoami, neofetch, skills, stack, projects, project, open, random, lab, contact,
+ * ls, tree, goto, theme, cookies, history, clear, date, echo, fortune, exit, sudo hire-yann
+ * (+ quelques commandes cachées).
  * Données : GET /api/terminal (ApiController), chargées à la première ouverture puis mises en cache.
  *
  * Architecture M/V/C stricte :
@@ -143,6 +144,45 @@
 
         return this.state.pending;
     };
+
+    /* ------------------------- Recherche de projet ---------------------- */
+
+    /**
+     * Retrouve un projet à partir d'un argument : numéro affiché par `projects` (1 = premier) ou morceau du titre.
+     * @param {Array<{title:string}>} projects - Projets de l'API.
+     * @param {string[]} args - Arguments saisis après la commande.
+     * @returns {Object|null} Le projet, ou null s'il n'y a pas de correspondance.
+     */
+    M.findProject = function (projects, args) {
+        const query = args.join(' ').trim().toLowerCase();
+        if (!query) return null;
+        if (/^\d+$/.test(query)) return projects[Number(query) - 1] ?? null;
+        return projects.find((project) => project.title.toLowerCase().includes(query)) ?? null;
+    };
+
+    /**
+     * Lignes d'erreur « projet introuvable » avec rappel d'usage.
+     * @param {string} name - Nom de la commande utilisée.
+     * @returns {{lines:Array<Object>}}
+     */
+    M.projectNotFound = function (name) {
+        return {
+            lines: [
+                M.line('error', `${name} : projet introuvable.`),
+                M.line('muted', 'Usage : ', M.cmd('projects'), ` pour la liste, puis ${name} <numéro ou titre>.`)
+            ]
+        };
+    };
+
+    /** Citations de la commande `fortune` (proverbes de développeur, sans attribution). */
+    M.fortunes = [
+        'Un bug est une fonctionnalité qui n\'a pas encore trouvé son public.',
+        'Fonctionne sur ma machine, donc livraison.',
+        'Il y a deux difficultés en informatique : nommer les choses, invalider le cache, et les erreurs de décalage de un.',
+        'Le meilleur code est celui qu\'on n\'a pas eu besoin d\'écrire.',
+        'Mesurer deux fois, déployer une fois. Sauf le vendredi.',
+        'Un commentaire à jour vaut mieux que dix commentaires menteurs.'
+    ];
 
     /* ------------------------- Commandes ------------------------------- */
 
@@ -345,6 +385,158 @@
             }
         },
 
+        man: {
+            desc: 'Aide détaillée d\'une commande (man project)',
+            run([target = '']) {
+                const name = target.toLowerCase();
+                const command = Object.hasOwn(M.commands, name) ? M.commands[name] : null;
+                if (!command || !command.desc) {
+                    return {lines: [M.line('error', `man : pas de page de manuel pour « ${name || '?'} »`), M.line('muted', 'Commandes : ', M.cmd('help'))]};
+                }
+                return {
+                    lines: [
+                        M.line('accent', name.toUpperCase()),
+                        M.line('text', `  ${command.desc}`),
+                        M.line('muted', `  Usage : ${command.usage ?? name}`)
+                    ]
+                };
+            }
+        },
+
+        neofetch: {
+            desc: 'Fiche système du portfolio',
+            needsData: true,
+            run(args, {data, currentMode}) {
+                const rows = [
+                    ['visiteur@yannleflohic.fr', ''],
+                    ['-------------------------', ''],
+                    ['Profil', data.name],
+                    ['Lieu', data.location],
+                    ['Études', data.school],
+                    ['Stack', data.skills.slice(0, 5).join(', ')],
+                    ['Projets', String(data.projects.length)],
+                    ['Mode', currentMode === 'photo' ? 'Photographe' : 'Développeur'],
+                    ['Statut', data.status]
+                ];
+                return {
+                    lines: [
+                        M.line('ascii', M.bannerArt),
+                        ...rows.map(([label, value]) => M.line('text', label.padEnd(12), value))
+                    ]
+                };
+            }
+        },
+
+        stack: {
+            desc: 'Projets utilisant une techno (stack php)',
+            usage: 'stack <techno>',
+            needsData: true,
+            run(args, {data}) {
+                const query = args.join(' ').trim().toLowerCase();
+                if (!query) {
+                    return {lines: [M.line('muted', 'Usage : stack <techno>, par exemple ', M.cmd('stack php'), ' ou ', M.cmd('stack figma'))]};
+                }
+                const matches = data.projects.filter((project) => project.tags.join(' ').toLowerCase().includes(query));
+                if (!matches.length) return {lines: [M.line('muted', `Aucun projet ne mentionne « ${query} ».`)]};
+                return {
+                    lines: [
+                        M.line('accent', `▸ ${matches.length} projet(s) avec « ${query} »`),
+                        ...matches.map((project) => M.line('text', '  ', M.cmd(`open ${data.projects.indexOf(project) + 1}`, project.title)))
+                    ]
+                };
+            }
+        },
+
+        project: {
+            desc: 'Détail d\'un projet (project 1)',
+            usage: 'project <numéro ou titre>',
+            needsData: true,
+            run(args, {data}) {
+                const project = M.findProject(data.projects, args);
+                if (!project) return M.projectNotFound('project');
+
+                const lines = [
+                    M.line('accent', project.title),
+                    M.line('muted', [project.meta, project.year, project.role].filter(Boolean).join(' · ') || ' '),
+                    M.line('text', project.description || ' '),
+                    project.tags.length ? M.line('muted', `Stack : ${project.tags.join(', ')}`) : M.blank()
+                ];
+                const links = [];
+                if (project.link) links.push(M.link(project.link, 'Voir le projet'));
+                if (project.repo) links.push(M.link(project.repo, 'Code source'));
+                if (links.length) lines.push(M.line('text', ...links.flatMap((link, index) => (index ? ['  ·  ', link] : [link]))));
+                lines.push(M.line('muted', 'Page détail : ', M.cmd(`open ${data.projects.indexOf(project) + 1}`)));
+                return {lines};
+            }
+        },
+
+        open: {
+            desc: 'Ouvrir la page détail d\'un projet (open 2)',
+            usage: 'open <numéro ou titre>',
+            needsData: true,
+            run(args, {data}) {
+                const project = M.findProject(data.projects, args);
+                if (!project) return M.projectNotFound('open');
+                return {lines: [M.line('muted', `→ Ouverture de « ${project.title} »…`)], effect: {type: 'navigate', target: project.url}};
+            }
+        },
+
+        random: {
+            desc: 'Ouvrir un projet au hasard',
+            needsData: true,
+            run(args, {data}) {
+                if (!data.projects.length) return {lines: [M.line('muted', 'Aucun projet publié pour le moment.')]};
+                const project = data.projects[Math.floor(Math.random() * data.projects.length)];
+                return {lines: [M.line('muted', `🎲 ${project.title}`)], effect: {type: 'navigate', target: project.url}};
+            }
+        },
+
+        lab: {
+            desc: 'Articles du lab (liens cliquables)',
+            needsData: true,
+            run(args, {data}) {
+                const lines = [M.line('accent', '▸ Lab')];
+                data.articles.forEach((article) => {
+                    lines.push(M.line('text', '  ', M.link(article.url, article.title), article.category ? `  · ${article.category}` : ''));
+                });
+                if (!data.articles.length) lines.push(M.line('muted', '  Aucun article publié pour le moment.'));
+                lines.push(M.blank(), M.line('muted', 'Snippets interactifs : ', M.cmd('goto lab')));
+                return {lines};
+            }
+        },
+
+        tree: {
+            desc: 'Arborescence du site',
+            needsData: true,
+            run(args, {data}) {
+                const lines = [
+                    M.line('accent', '/'),
+                    M.line('text', '├── #about  #skills  #projects  #gallery  #contact'),
+                    M.line('text', '├── projets/')
+                ];
+                data.projects.forEach((project, index) => {
+                    const branch = index === data.projects.length - 1 ? '└──' : '├──';
+                    lines.push(M.line('text', `│   ${branch} `, M.link(project.url, project.url.replace('/projets/', ''))));
+                });
+                lines.push(M.line('text', '├── ', M.link('/lab', 'lab/')), M.line('text', '└── mentions-legales  politique-de-confidentialite  cgv'));
+                return {lines};
+            }
+        },
+
+        cookies: {
+            desc: 'Gérer mon choix de mesure d\'audience',
+            run() {
+                return {lines: [M.line('muted', 'Ouverture du panneau de choix…')], effect: {type: 'consent'}};
+            }
+        },
+
+        fortune: {
+            desc: 'Une phrase de développeur au hasard',
+            run() {
+                return {lines: [M.line('text', M.fortunes[Math.floor(Math.random() * M.fortunes.length)])]};
+            }
+        },
+
         /* ---- Commandes cachées (absentes de help) ---- */
         'hire-yann': {
             run() {
@@ -354,6 +546,12 @@
                         M.line('muted', 'Essayez : ', M.cmd('sudo hire-yann'))
                     ]
                 };
+            }
+        },
+
+        coffee: {
+            run() {
+                return {lines: [M.line('ascii', '  ( (\n   ) )\n  .______.\n  |      |]\n  \\      /\n   `----\''), M.line('muted', 'Café servi. Le build peut continuer.')]};
             }
         },
 
@@ -470,7 +668,12 @@
         }
 
         // 2. Argument de commande
-        const options = {goto: this.config.sections, theme: this.config.themes, sudo: ['hire-yann']}[lower];
+        const options = {
+            goto: this.config.sections,
+            theme: this.config.themes,
+            sudo: ['hire-yann'],
+            man: Object.keys(this.commands).filter((name) => this.commands[name].desc)
+        }[lower];
         if (!options || rest.length > 1) return {completed: null, matches: []};
         const matches = options.filter((option) => option.startsWith(rest[0].toLowerCase()));
         return {completed: matches.length === 1 ? `${lower} ${matches[0]}` : null, matches};
@@ -800,6 +1003,14 @@
         window.location.assign(url);
     };
 
+    /**
+     * Demande à consent.js de rouvrir le panneau de choix de mesure d'audience (événement `consent:open`).
+     * @returns {void}
+     */
+    V.requestConsentPanel = function () {
+        document.dispatchEvent(new CustomEvent('consent:open'));
+    };
+
     /* =======================================================================
        C — CONTRÔLEUR
        ======================================================================= */
@@ -889,7 +1100,7 @@
 
     /**
      * Applique l'effet demandé par une commande (seul endroit où une commande agit sur la page).
-     * @param {{type:string, mode?:string, target?:string, steps?:Array}} effect
+     * @param {{type:string, mode?:string, target?:string, steps?:Array}} effect (types : clear, close, theme, goto, navigate, consent, sequence)
      * @returns {Promise<void>}
      */
     C.applyEffect = async function (effect) {
@@ -905,6 +1116,13 @@
                 break;
             case 'goto':
                 C.goto(effect.target);
+                break;
+            case 'navigate':
+                V.navigate(effect.target);
+                break;
+            case 'consent':
+                V.close();
+                V.requestConsentPanel();
                 break;
             case 'sequence':
                 await C.playSequence(effect.steps);

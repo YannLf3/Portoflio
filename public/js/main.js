@@ -37,6 +37,9 @@
     ];
 
     /** Délais de fermeture (ms) : pause après la dernière ligne, puis durée de la remontée. */
+    /** true une fois le loader fermé (fin normale ou bouton « Passer ») : évite une double fermeture. */
+    M.closed = false;
+
     M.timing = {
         closeDelay: 800,
         hideDelay: 700
@@ -56,6 +59,16 @@
      */
     M.markPlayed = function () {
         sessionStorage.setItem(this.storageKey, 'true');
+    };
+
+    /**
+     * Mémorise que le loader est fermé.
+     * @returns {boolean} true si c'était la première fermeture, false s'il était déjà fermé.
+     */
+    M.close = function () {
+        const first = !this.closed;
+        this.closed = true;
+        return first;
     };
 
     /**
@@ -93,6 +106,8 @@
      */
     V.init = function (handlers) {
         document.addEventListener('DOMContentLoaded', handlers.onReady);
+        // Bouton « Passer » : délégation sur le document (le loader existe avant ce script)
+        document.addEventListener('click', handlers.onSkip);
     };
 
     /**
@@ -116,6 +131,15 @@
         line.className = 'flex items-center gap-2 text-accent';
         line.innerHTML = `<span class="text-zinc-600">$</span> <span>${text}</span>`;
         this.logsContainer.appendChild(line);
+    };
+
+    /**
+     * Indique si un clic vise le bouton « Passer » du loader.
+     * @param {EventTarget} target
+     * @returns {boolean}
+     */
+    V.isSkipTarget = function (target) {
+        return target instanceof Element && Boolean(target.closest('#loader-skip'));
     };
 
     /**
@@ -163,7 +187,7 @@
      * @returns {void}
      */
     C.init = function () {
-        V.init({onReady: C.handler_ready});
+        V.init({onReady: C.handler_ready, onSkip: C.handler_skip});
     };
 
     /**
@@ -175,7 +199,9 @@
             V.markAppReady();
             return;
         }
-        if (M.hasPlayed()) {
+        // Loader déjà joué ou mouvement réduit demandé : pas de séquence animée
+        if (M.hasPlayed() || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            M.close();
             V.hideLoader();
             V.markAppReady();
             return;
@@ -189,6 +215,7 @@
      * @returns {void}
      */
     C.showLog = function (index) {
+        if (M.closed) return;
         V.appendLog(M.logs[index].text);
         V.setProgress(M.progress(index));
         if (M.isLast(index)) setTimeout(C.closeLoader, M.timing.closeDelay);
@@ -199,9 +226,22 @@
      * @returns {void}
      */
     C.closeLoader = function () {
+        if (!M.close()) return;
         V.slideUp();
         V.markAppReady();
         setTimeout(C.finishLoader, M.timing.hideDelay);
+    };
+
+    /**
+     * Clic sur « Passer » : le loader se ferme tout de suite.
+     * @param {MouseEvent} ev
+     * @returns {void}
+     */
+    C.handler_skip = function (ev) {
+        if (!V.isSkipTarget(ev.target) || !M.close()) return;
+        V.hideLoader();
+        M.markPlayed();
+        V.markAppReady();
     };
 
     /**

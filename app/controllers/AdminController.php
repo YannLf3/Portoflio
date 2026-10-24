@@ -4,7 +4,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/Controller.php';
 require_once __DIR__ . '/../models/Setting.php';
 require_once __DIR__ . '/../models/Project.php';
+require_once __DIR__ . '/../models/AnalyticsEvent.php';
 require_once __DIR__ . '/../core/Csrf.php';
+require_once __DIR__ . '/../core/ClientIp.php';
 require_once __DIR__ . '/../core/ImageUploader.php';
 
 /**
@@ -124,15 +126,37 @@ final class AdminController extends Controller
         $flash = $_SESSION[self::FLASH_KEY] ?? null;
         unset($_SESSION[self::FLASH_KEY]);
 
+        // Période des statistiques (liste blanche : 7, 30 ou 90 jours)
+        $range = (int)($_GET['range'] ?? 30);
+        $range = in_array($range, AnalyticsEvent::RANGES, true) ? $range : 30;
+
         $this->render('admin/dashboard', array_merge(
             [
                 'title' => 'Back-Office Admin',
+                'range' => $range,
+                'stats' => $this->statsView($range),
                 'flash' => $this->flashView($flash),
                 'fields' => $this->formFields($settings),
                 'projects' => array_map(static fn(Project $project): array => $project->toArray(), Project::findAll()),
             ],
             $this->formLists($settings)
         ));
+    }
+
+    /**
+     * Statistiques d'audience de la période, ou null si la table n'existe pas encore (migration non jouée).
+     *
+     * @param int $range Nombre de jours.
+     * @return array<string, mixed>|null
+     */
+    private function statsView(int $range): ?array
+    {
+        try {
+            return AnalyticsEvent::summary($range);
+        } catch (Throwable $e) {
+            error_log('AdminController::statsView : ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**
@@ -151,7 +175,7 @@ final class AdminController extends Controller
 
         // Protection CSRF : sans jeton valide, AUCUNE donnée n'est traitée
         if (!Csrf::isValid($_POST[Csrf::FIELD] ?? null)) {
-            error_log('AdminController::save — jeton CSRF invalide (IP ' . ($_SERVER['REMOTE_ADDR'] ?? '?') . ')');
+            error_log('AdminController::save — jeton CSRF invalide (IP ' . (ClientIp::get() ?: '?') . ')');
             $this->redirectWithFlash('error', 'Jeton de sécurité invalide ou expiré : rechargez la page puis recommencez. Aucune modification n\'a été enregistrée.');
         }
 
@@ -205,6 +229,13 @@ final class AdminController extends Controller
         $projectImages = $uploader->storeIndexed($_FILES['projects_image_file'] ?? [], 'proj');
         array_walk($projectImages, static function (string $url, int|string $index) use (&$data): void {
             $data['projects'][$index]['image'] = $url;
+        });
+
+        // Galerie du projet : les fichiers envoyés s'ajoutent, ligne par ligne, aux URL déjà saisies
+        $galleryUploads = $uploader->storeNested($_FILES['projects_gallery_files'] ?? [], 'projgal');
+        array_walk($galleryUploads, static function (array $urls, int|string $index) use (&$data): void {
+            $existing = trim((string)($data['projects'][$index]['gallery'] ?? ''));
+            $data['projects'][$index]['gallery'] = trim($existing . "\n" . implode("\n", $urls));
         });
 
         $photoImages = $uploader->storeIndexed($_FILES['photos_url_file'] ?? [], 'photo');

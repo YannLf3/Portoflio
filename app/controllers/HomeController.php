@@ -5,9 +5,10 @@ require_once __DIR__ . '/Controller.php';
 require_once __DIR__ . '/../models/Setting.php';
 require_once __DIR__ . '/../models/Project.php';
 require_once __DIR__ . '/../core/UrlGuard.php';
+require_once __DIR__ . '/../core/Csrf.php';
 
 /**
- * Pages publiques : accueil, Lab et mentions légales.
+ * Pages publiques : accueil, fiches projet, Lab, articles du Lab et pages légales.
  * Chaque méthode privée prépare les données d'une section ; les vues se contentent de les afficher.
  */
 final class HomeController extends Controller
@@ -74,6 +75,121 @@ final class HomeController extends Controller
     }
 
     /**
+     * Fiche d'un projet : /projets/{id}-{slug}. Un slug erroné redirige (301) vers l'adresse canonique.
+     *
+     * @param int    $id   Identifiant du projet.
+     * @param string $slug Slug demandé dans l'URL.
+     * @return void
+     */
+    public function project(int $id, string $slug): void
+    {
+        $project = Project::findById($id);
+        if ($project === null) {
+            $this->notFound();
+            return;
+        }
+
+        $url = self::projectUrl($project);
+        if ($url !== '/projets/' . $id . '-' . $slug) {
+            http_response_code(301);
+            $this->redirect($url);
+        }
+
+        $card = $this->projectCardView($project, 0);
+        $canonical = 'https://yannleflohic.fr' . $url;
+        $description = mb_substr(trim($project->getDescription()), 0, 155);
+
+        $this->render('front/project', [
+            'title' => $project->getTitle() . ' | Projet web de Yann Le Flohic',
+            'pageDesc' => $description !== '' ? $description : 'Projet réalisé par Yann Le Flohic, développeur web freelance.',
+            'canonical' => $canonical,
+            'project' => $card,
+            'jsonLd' => array_filter([
+                '@context' => 'https://schema.org',
+                '@type' => 'CreativeWork',
+                'name' => $project->getTitle(),
+                'description' => $project->getDescription(),
+                'image' => str_starts_with($card['image'], 'http') ? $card['image'] : 'https://yannleflohic.fr' . $card['image'],
+                'url' => $canonical,
+                'keywords' => implode(', ', $card['tags']),
+                'copyrightYear' => $card['year'] !== '' ? $card['year'] : null,
+                'author' => ['@id' => 'https://yannleflohic.fr/#person'],
+            ], static fn(mixed $value): bool => $value !== null),
+        ]);
+    }
+
+    /**
+     * Article du Lab : /lab/{slug}. Le slug est calculé à partir du titre (404 s'il ne correspond à aucun article).
+     *
+     * @param string $slug Slug demandé dans l'URL.
+     * @return void
+     */
+    public function article(string $slug): void
+    {
+        $articles = array_map([$this, 'articleView'], self::rows(Setting::load()->getList('articles')));
+        $matches = array_values(array_filter($articles, static fn(array $article): bool => $article['slug'] === $slug));
+
+        if ($matches === []) {
+            $this->notFound();
+            return;
+        }
+
+        $article = $matches[0];
+        $canonical = 'https://yannleflohic.fr/lab/' . $slug;
+
+        $this->render('front/article', [
+            'title' => $article['title'] . ' | Lab de Yann Le Flohic',
+            'pageDesc' => mb_substr(trim($article['excerpt']), 0, 155),
+            'canonical' => $canonical,
+            'article' => $article,
+            'jsonLd' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'Article',
+                'headline' => $article['title'],
+                'url' => $canonical,
+                'author' => ['@id' => 'https://yannleflohic.fr/#person'],
+            ],
+        ]);
+    }
+
+    /**
+     * Plan du site XML généré à la volée : accueil, Lab, une fiche par projet et un article par entrée du Lab.
+     * Remplace l'ancien fichier statique, qui ne pouvait pas suivre les contenus du back-office.
+     *
+     * @return never
+     */
+    public function sitemap(): never
+    {
+        $settings = Setting::load();
+        $projectUrls = array_map([self::class, 'projectUrl'], Project::findAll());
+        $articleUrls = array_map(
+            static fn(array $article): string => '/lab/' . (self::slugify((string)($article['title'] ?? '')) ?: 'article'),
+            self::rows($settings->getList('articles'))
+        );
+
+        $entries = array_merge(
+            [['/', 'weekly', '1.0'], ['/lab', 'monthly', '0.8']],
+            array_map(static fn(string $url): array => [$url, 'monthly', '0.7'], $projectUrls),
+            array_map(static fn(string $url): array => [$url, 'monthly', '0.6'], $articleUrls)
+        );
+
+        $xml = implode('', array_map(
+            static fn(array $entry): string => sprintf(
+                "  <url>\n    <loc>%s</loc>\n    <changefreq>%s</changefreq>\n    <priority>%s</priority>\n  </url>\n",
+                htmlspecialchars('https://yannleflohic.fr' . ($entry[0] === '/' ? '/' : $entry[0]), ENT_XML1),
+                $entry[1],
+                $entry[2]
+            ),
+            $entries
+        ));
+
+        header('Content-Type: application/xml; charset=UTF-8');
+        header('Cache-Control: public, max-age=3600');
+        echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n" . $xml . "</urlset>\n";
+        exit;
+    }
+
+    /**
      * Page des mentions légales (non indexée pour ne pas concurrencer l'accueil).
      *
      * @return void
@@ -130,6 +246,24 @@ final class HomeController extends Controller
         $this->render('front/404', [
             'title' => 'Page introuvable | Yann Le Flohic',
             'pageDesc' => 'Cette page n\'existe pas ou a été déplacée. Retournez à l\'accueil du portfolio de Yann Le Flohic.',
+            'canonical' => 'https://yannleflohic.fr/',
+            'noindex' => true,
+        ]);
+    }
+
+    /**
+     * Page d'erreur 500 : affichée par le gestionnaire d'exceptions de public/index.php.
+     * Aucune requête BDD ici (la panne peut venir de la base) et aucun détail technique.
+     *
+     * @return void
+     */
+    public function serverError(): void
+    {
+        http_response_code(500);
+
+        $this->render('front/500', [
+            'title' => 'Erreur technique | Yann Le Flohic',
+            'pageDesc' => 'Une erreur technique est survenue. Réessayez dans quelques instants ou écrivez-moi directement.',
             'canonical' => 'https://yannleflohic.fr/',
             'noindex' => true,
         ]);
@@ -240,6 +374,7 @@ final class HomeController extends Controller
 
         return [
             'number' => sprintf('%02d', $index + 1),
+            'url' => self::projectUrl($project),
             'link' => $link,
             'isExternal' => str_starts_with($link, 'http'),
             'image' => UrlGuard::safe($project->getImage()) ?: self::FALLBACK_PROJECT_IMAGE,
@@ -253,6 +388,14 @@ final class HomeController extends Controller
             'description' => $project->getDescription(),
             'hasTags' => !empty($tags),
             'tags' => self::splitList($tags),
+            // Page détail : champs optionnels, une chaîne vide = section non affichée
+            'year' => trim($project->getYear()),
+            'role' => trim($project->getRole()),
+            'context' => trim($project->getContext()),
+            'solution' => trim($project->getSolution()),
+            'result' => trim($project->getResult()),
+            'repoLink' => UrlGuard::safe($project->getRepoLink()),
+            'gallery' => $project->getGalleryList(),
         ];
     }
 
@@ -436,6 +579,7 @@ final class HomeController extends Controller
         $metaParts = explode('—', (string)($article['meta'] ?? ''), 2);
 
         return [
+            'slug' => self::slugify((string)($article['title'] ?? '')) ?: 'article',
             'category' => trim($metaParts[0] ?? 'BLOG'),
             'date' => trim($metaParts[1] ?? '2026'),
             'title' => $article['title'] ?? '',

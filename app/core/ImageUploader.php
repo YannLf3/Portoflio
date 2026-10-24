@@ -129,6 +129,37 @@ final class ImageUploader
     }
 
     /**
+     * Valide et enregistre les fichiers d'un champ multiple ET indexé (ex : projects_gallery_files[2][]).
+     * PHP range ces champs sous la forme name[ligne][n] : on reconstitue chaque fichier de chaque ligne.
+     *
+     * @param array<string, mixed> $field  Entrée de $_FILES pour un champ indexé à fichiers multiples.
+     * @param string               $prefix Préfixe du nom généré.
+     * @return array<int|string, list<string>> URL publiques acceptées, par index de ligne (lignes sans fichier absentes).
+     */
+    public function storeNested(array $field, string $prefix): array
+    {
+        if (!isset($field['tmp_name']) || !is_array($field['tmp_name'])) {
+            return [];
+        }
+
+        $rows = array_map(
+            fn(int|string $row): array => array_values(array_filter(array_map(
+                fn(int|string $n): ?string => $this->store([
+                    'name' => $field['name'][$row][$n] ?? '',
+                    'tmp_name' => $field['tmp_name'][$row][$n] ?? '',
+                    'error' => $field['error'][$row][$n] ?? UPLOAD_ERR_NO_FILE,
+                    'size' => $field['size'][$row][$n] ?? 0,
+                ], $prefix),
+                array_keys(is_array($field['tmp_name'][$row]) ? $field['tmp_name'][$row] : [])
+            ), static fn(?string $url): bool => $url !== null)),
+            array_combine(array_keys($field['tmp_name']), array_keys($field['tmp_name']))
+        );
+
+        // Lignes sans aucun fichier accepté écartées
+        return array_filter($rows, static fn(array $urls): bool => $urls !== []);
+    }
+
+    /**
      * Erreurs rencontrées pendant les envois.
      *
      * @return list<string>

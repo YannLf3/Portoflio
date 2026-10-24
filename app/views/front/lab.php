@@ -1,10 +1,10 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-    <main class="mt-12 w-full flex flex-col gap-20">
+    <main id="main" tabindex="-1" class="mt-12 w-full flex flex-col gap-20">
 
         <section class="flex flex-col items-start gap-4 border-b border-border-strong pb-12">
-            <span class="text-xs font-mono tracking-widest text-accent uppercase [html[data-mode='photo']_&]:text-amber-400">
-                04 — Laboratoire &amp; Veille
+            <span class="text-xs font-mono tracking-widest text-accent uppercase">
+                Lab — Laboratoire &amp; Veille
             </span>
             <h1 class="reveal-title reveal-title--short text-3xl sm:text-5xl font-display font-normal tracking-tight text-foreground">
                 <span class="reveal-title__mask">
@@ -22,7 +22,7 @@
                 <h2 class="reveal-title reveal-title--short text-xl sm:text-2xl font-display text-foreground">
                     <span class="reveal-title__mask">
                         <span class="reveal-title__inner flex items-center gap-3">
-                            <span class="font-mono text-xs text-accent [html[data-mode='photo']_&]:text-amber-400">&lt;/&gt;</span>
+                            <span class="font-mono text-xs text-accent">&lt;/&gt;</span>
                             <span>Snippets &amp; UI Experiments</span>
                         </span>
                     </span>
@@ -36,14 +36,14 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <h3 class="font-bold text-foreground text-base"><?= htmlspecialchars($snippet['title']) ?></h3>
-                                <p class="text-xs text-muted-foreground mt-1">Snippet interactif</p>
+                                <p class="text-sm text-muted-foreground mt-1">Snippet interactif</p>
                             </div>
-                            <span class="text-[10px] font-mono px-2 py-0.5 rounded border border-accent/30 text-accent [html[data-mode='photo']_&]:border-amber-400/30 [html[data-mode='photo']_&]:text-amber-400">
+                            <span class="text-xs font-mono px-2 py-0.5 rounded border border-accent/30 text-accent">
                                 <?= htmlspecialchars($snippet['category']) ?>
                             </span>
                         </div>
 
-                        <div class="h-48 rounded-lg bg-zinc-950/80 border border-zinc-800 relative overflow-hidden" id="snippet-container-<?= $index ?>">
+                        <div class="h-48 rounded-lg bg-background border border-border-strong relative overflow-hidden" id="snippet-container-<?= $index ?>">
                             <iframe sandbox="allow-scripts"
                                     srcdoc="<?= htmlspecialchars($snippet['srcdoc'], ENT_QUOTES) ?>"
                                     title="Aperçu : <?= htmlspecialchars($snippet['title'], ENT_QUOTES) ?>"
@@ -51,9 +51,9 @@
                                     class="w-full h-full border-0"></iframe>
                         </div>
 
-                        <div class="flex justify-between items-center text-xs font-mono text-muted-foreground pt-2 border-t border-zinc-800/60">
+                        <div class="flex justify-between items-center text-xs font-mono text-muted-foreground pt-2 border-t border-border-strong">
                             <span><?= htmlspecialchars($snippet['badge']) ?></span>
-                            <button type="button" class="text-accent hover:underline [html[data-mode='photo']_&]:text-amber-400 open-code-modal"
+                            <button type="button" class="text-accent underline-offset-4 hover:underline py-1 open-code-modal"
                                     data-title="<?= htmlspecialchars($snippet['modalTitle'], ENT_QUOTES) ?>"
                                     data-html="<?= htmlspecialchars($snippet['html'], ENT_QUOTES) ?>"
                                     data-css="<?= htmlspecialchars($snippet['css'], ENT_QUOTES) ?>"
@@ -71,7 +71,7 @@
                 <h2 class="reveal-title reveal-title--short text-xl sm:text-2xl font-display text-foreground">
                     <span class="reveal-title__mask">
                         <span class="reveal-title__inner flex items-center gap-3">
-                            <span class="font-mono text-accent [html[data-mode='photo']_&]:text-amber-400"></span>
+                            <span class="font-mono text-accent"></span>
                             <span>Workflows, Mac &amp; Design Notes</span>
                         </span>
                     </span>
@@ -82,24 +82,22 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <?php array_walk($articles, static function (array $article): void { ?>
                     <article
-                            class="border border-border-strong rounded-xl bg-background-card/20 p-5 flex flex-col gap-4 hover:border-zinc-700 transition-all duration-300">
+                            class="border border-border-strong rounded-xl bg-background-card/20 p-5 flex flex-col gap-4 hover:border-accent/40 transition-all duration-300">
                         <div class="flex items-center justify-between text-xs font-mono text-muted-foreground">
-                            <span class="text-accent [html[data-mode='photo']_&]:text-amber-400"><?= htmlspecialchars($article['category']) ?></span>
+                            <span class="text-accent"><?= htmlspecialchars($article['category']) ?></span>
                             <span><?= htmlspecialchars($article['date']) ?></span>
                         </div>
                         <h3 class="font-bold text-foreground text-base leading-snug">
                             <?= htmlspecialchars($article['title']) ?>
                         </h3>
-                        <p class="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                        <p class="text-sm text-muted-foreground leading-relaxed line-clamp-3">
                             <?= htmlspecialchars($article['excerpt']) ?>
                         </p>
                         <div class="pt-2 mt-auto">
-                            <button type="button" class="text-xs font-mono text-accent hover:underline [html[data-mode='photo']_&]:text-amber-400 open-article-modal"
-                                    data-title="<?= htmlspecialchars($article['title'], ENT_QUOTES) ?>"
-                                    data-category="<?= htmlspecialchars($article['meta'], ENT_QUOTES) ?>"
-                                    data-content="<?= htmlspecialchars($article['content'], ENT_QUOTES) ?>">
-                                Lire l'article →
-                            </button>
+                            <a href="/lab/<?= htmlspecialchars($article['slug']) ?>"
+                               class="inline-block py-1 text-sm font-mono text-accent underline-offset-4 hover:underline">
+                                Lire l'article<span class="sr-only"> : <?= htmlspecialchars($article['title']) ?></span>
+                            </a>
                         </div>
                     </article>
                 <?php }); ?>
@@ -108,59 +106,37 @@
 
     </main>
 
-    <div id="code-modal"
-         class="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
-        <div class="bg-zinc-950 border border-zinc-800 rounded-xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+    <dialog id="code-dialog" aria-labelledby="code-modal-title"
+            class="m-auto w-[calc(100%-2rem)] max-w-3xl max-h-[85vh] p-0 overflow-hidden rounded-xl border border-border-strong bg-background text-foreground shadow-2xl backdrop:bg-black/80 backdrop:backdrop-blur-md open:flex flex-col">
 
-            <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50">
-                <div class="flex items-center gap-2">
-                    <button type="button" class="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-500 close-modal" aria-label="Fermer la console"></button>
-                    <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
-                    <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
-                    <span id="code-modal-title" class="text-xs font-mono text-zinc-400 ml-2">Console</span>
-                </div>
+        <div class="flex items-center justify-between gap-4 px-4 py-3 border-b border-border-strong bg-background-2">
+            <h2 id="code-modal-title" class="text-sm font-mono text-muted-foreground">Console</h2>
 
-                <div class="flex gap-1 font-mono text-xs">
-                    <button type="button" class="code-tab px-3 py-1 rounded bg-zinc-800 text-accent active" data-lang="html">HTML
-                    </button>
-                    <button type="button" class="code-tab px-3 py-1 rounded text-zinc-400 hover:text-zinc-200" data-lang="css">CSS
-                    </button>
-                    <button type="button" class="code-tab px-3 py-1 rounded text-zinc-400 hover:text-zinc-200" data-lang="js">JS
-                    </button>
-                </div>
+            <div role="tablist" aria-label="Langage affiché" class="flex gap-1 font-mono text-sm">
+                <button type="button" role="tab" id="code-tab-html" aria-selected="true" aria-controls="code-panel"
+                        class="code-tab px-3 py-2 rounded bg-background-card text-accent" data-lang="html">HTML</button>
+                <button type="button" role="tab" id="code-tab-css" aria-selected="false" aria-controls="code-panel" tabindex="-1"
+                        class="code-tab px-3 py-2 rounded text-muted-foreground hover:text-foreground" data-lang="css">CSS</button>
+                <button type="button" role="tab" id="code-tab-js" aria-selected="false" aria-controls="code-panel" tabindex="-1"
+                        class="code-tab px-3 py-2 rounded text-muted-foreground hover:text-foreground" data-lang="js">JS</button>
             </div>
 
-            <div class="p-6 overflow-y-auto font-mono text-xs md:text-sm text-zinc-300 bg-zinc-950 leading-relaxed">
-                <pre><code id="code-content" class="select-text whitespace-pre-wrap"></code></pre>
-            </div>
-
-            <div class="px-4 py-2 border-t border-zinc-800 text-[11px] font-mono text-zinc-500 flex justify-between">
-                <span>READ-ONLY CONSOLE</span>
-                <span>PRESS ESC TO CLOSE</span>
-            </div>
+            <button type="button" class="close-modal inline-flex items-center justify-center w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-background-card"
+                    aria-label="Fermer la console">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
         </div>
-    </div>
 
-    <div id="article-modal"
-         class="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
-        <div class="bg-zinc-950 border border-zinc-800 rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-
-            <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
-                <span id="article-modal-category"
-                      class="text-xs font-mono text-accent [html[data-mode='photo']_&]:text-amber-400">CATEGORY</span>
-                <button type="button" class="text-zinc-500 hover:text-zinc-200 font-mono text-sm close-modal">✕ Fermer</button>
-            </div>
-
-            <div class="p-6 md:p-8 overflow-y-auto space-y-4">
-                <h2 id="article-modal-title" class="text-xl md:text-2xl font-display text-foreground">Titre</h2>
-                <div id="article-modal-body"
-                     class="text-sm text-zinc-300 leading-relaxed space-y-3 font-body whitespace-pre-line">
-                    Contenu de l'article...
-                </div>
-            </div>
+        <div id="code-panel" role="tabpanel" tabindex="0" aria-labelledby="code-tab-html"
+             class="p-6 overflow-y-auto font-mono text-sm text-foreground bg-background leading-relaxed">
+            <pre><code id="code-content" class="select-text whitespace-pre-wrap"></code></pre>
         </div>
-    </div>
 
-    <script src="/js/lab.js?v=20261014" defer></script>
+        <p class="px-4 py-2 border-t border-border-strong text-xs font-mono text-muted-foreground">
+            Lecture seule. Échap pour fermer.
+        </p>
+    </dialog>
+
+    <script src="/js/lab.js?v=20261025" defer></script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

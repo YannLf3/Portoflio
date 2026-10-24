@@ -1,6 +1,49 @@
 <?php
 declare(strict_types=1);
 
+// 0. Gestion des erreurs : jamais de trace de pile ni de chemin de fichier chez le visiteur en production
+// (affichage actif uniquement en local, ENVIRONMENT=dev ; les erreurs vont toujours dans le journal serveur)
+ini_set('display_errors', getenv('ENVIRONMENT') === 'dev' ? '1' : '0');
+ini_set('log_errors', '1');
+
+// La page est construite en mémoire puis envoyée : une exception en plein rendu n'envoie jamais une page à moitié
+ob_start();
+
+/**
+ * Gestionnaire global des exceptions non rattrapées (panne MySQL, bug dans un contrôleur ou une vue).
+ * Journalise le détail côté serveur, jette la sortie déjà préparée, puis affiche une erreur 500 générique :
+ * JSON pour l'API, page HTML sinon.
+ *
+ * @param Throwable $e Exception non rattrapée.
+ * @return void
+ */
+function handleUncaughtException(Throwable $e): void
+{
+    error_log(sprintf('Exception non rattrapée %s : %s (%s:%d)', $e::class, $e->getMessage(), $e->getFile(), $e->getLine()));
+
+    // Sortie partielle supprimée (page à moitié rendue, JSON incomplet)
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    try {
+        if (str_starts_with(normalizePath($_SERVER['REQUEST_URI'] ?? '/'), '/api/')) {
+            require_once __DIR__ . '/../app/core/Response.php';
+            Response::json(['error' => 'Erreur interne du serveur.'], 500);
+        }
+
+        require_once __DIR__ . '/../app/controllers/HomeController.php';
+        (new HomeController())->serverError();
+    } catch (Throwable) {
+        // Dernier recours : la page d'erreur elle-même est en échec, on envoie un texte brut
+        http_response_code(500);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Erreur interne du serveur.';
+    }
+}
+
+set_exception_handler('handleUncaughtException');
+
 // 1. Nonce CSP : valeur aléatoire propre à CHAQUE requête, recopiée dans les <script> inline autorisés
 define('CSP_NONCE', base64_encode(random_bytes(16)));
 
@@ -104,6 +147,7 @@ $routes = [
     '/index.php' => static fn() => (new HomeController())->index(),
     '/mentions-legales' => static fn() => (new HomeController())->legal(),
     '/lab' => static fn() => (new HomeController())->lab(),
+    '/sitemap.xml' => static fn() => (new HomeController())->sitemap(),
     '/politique-de-confidentialite' => static fn() => (new HomeController())->privacy(),
     '/cgv' => static fn() => (new HomeController())->terms(),
 
@@ -111,6 +155,16 @@ $routes = [
     '/api/terminal' => static fn() => $_SERVER['REQUEST_METHOD'] === 'GET'
         ? (new ApiController())->terminal()
         : (new ApiController())->methodNotAllowed(),
+
+    // Envoi du formulaire de contact (POST uniquement)
+    '/api/contact' => static fn() => $isPost
+        ? (new ApiController())->contact()
+        : (new ApiController())->methodNotAllowed('POST'),
+
+    // Mesure d'audience (POST uniquement, après consentement)
+    '/api/track' => static fn() => $isPost
+        ? (new ApiController())->track()
+        : (new ApiController())->methodNotAllowed('POST'),
 
     // Authentification
     '/login' => static fn() => $isPost ? (new AuthController())->login() : (new AuthController())->showLogin(),
@@ -134,5 +188,34 @@ $routes = [
     },
 ];
 
-// 4. Exécution de la route demandée (404 si inconnue)
-($routes[normalizePath($_SERVER['REQUEST_URI'] ?? '/')] ?? 'notFound')();
+// Routes à paramètre : motif d'URL → action recevant les captures (fiche projet, article du Lab)
+$dynamicRoutes = [
+    '#^/projets/(\d+)-([a-z0-9-]+)$#' => static fn(array $m) => (new HomeController())->project((int)$m[1], $m[2]),
+    '#^/lab/([a-z0-9-]+)$#' => static fn(array $m) => (new HomeController())->article($m[1]),
+];
+
+/**
+ * Trouve l'action d'une route à paramètre pour un chemin donné.
+ *
+ * @param array<string, callable> $dynamicRoutes Motif regex → action.
+ * @param string                  $path          Chemin normalisé.
+ * @return callable|null Action prête à être appelée (captures déjà liées), ou null si aucun motif ne correspond.
+ */
+function resolveDynamicRoute(array $dynamicRoutes, string $path): ?callable
+{
+    $matches = array_filter(
+        array_map(
+            static fn(string $pattern, callable $action): ?callable => preg_match($pattern, $path, $m) === 1
+                ? static fn() => $action($m)
+                : null,
+            array_keys($dynamicRoutes),
+            $dynamicRoutes
+        )
+    );
+
+    return $matches === [] ? null : reset($matches);
+}
+
+// 4. Exécution de la route demandée (route exacte, puis route à paramètre, sinon 404)
+$path = normalizePath($_SERVER['REQUEST_URI'] ?? '/');
+($routes[$path] ?? resolveDynamicRoute($dynamicRoutes, $path) ?? 'notFound')();

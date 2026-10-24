@@ -13,7 +13,10 @@ require_once __DIR__ . '/../core/UrlGuard.php';
 final class Project
 {
     /** Champs texte éditables dans le back-office. */
-    private const FIELDS = ['title', 'meta', 'description', 'image', 'link', 'category', 'tags'];
+    private const FIELDS = [
+        'title', 'meta', 'description', 'image', 'link', 'category', 'tags',
+        'year', 'role', 'context', 'solution', 'result', 'repo_link', 'gallery',
+    ];
 
     private ?int $id = null;
     private int $position = 0;
@@ -24,6 +27,14 @@ final class Project
     private string $link = '';
     private string $category = '';
     private string $tags = '';
+    private string $year = '';
+    private string $role = '';
+    private string $context = '';
+    private string $solution = '';
+    private string $result = '';
+    private string $repoLink = '';
+    /** Images de la galerie du projet : une URL par ligne. */
+    private string $gallery = '';
 
     /**
      * Lit tous les projets, dans l'ordre d'affichage.
@@ -33,13 +44,34 @@ final class Project
     public static function findAll(): array
     {
         $stmt = getPDOConnection()->prepare('
-            SELECT id, position, title, meta, description, image, link, category, tags
+            SELECT id, position, title, meta, description, image, link, category, tags,
+                   year, role, context, solution, result, repo_link, gallery
             FROM projects
             ORDER BY position ASC, id ASC
         ');
         $stmt->execute();
 
         return array_map([self::class, 'fromRow'], $stmt->fetchAll());
+    }
+
+    /**
+     * Lit un projet par son identifiant.
+     *
+     * @param int $id Identifiant BDD.
+     * @return Project|null Le projet, ou null s'il n'existe pas.
+     */
+    public static function findById(int $id): ?Project
+    {
+        $stmt = getPDOConnection()->prepare('
+            SELECT id, position, title, meta, description, image, link, category, tags,
+                   year, role, context, solution, result, repo_link, gallery
+            FROM projects
+            WHERE id = :id
+        ');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        return is_array($row) ? self::fromRow($row) : null;
     }
 
     /**
@@ -92,12 +124,17 @@ final class Project
     public function save(PDO $db): static
     {
         $stmt = $db->prepare('
-            INSERT INTO projects (id, position, title, meta, description, image, link, category, tags)
-            VALUES (:id, :position, :title, :meta, :description, :image, :link, :category, :tags)
+            INSERT INTO projects (id, position, title, meta, description, image, link, category, tags,
+                                  year, role, context, solution, result, repo_link, gallery)
+            VALUES (:id, :position, :title, :meta, :description, :image, :link, :category, :tags,
+                    :year, :role, :context, :solution, :result, :repo_link, :gallery)
             ON DUPLICATE KEY UPDATE
                 position = VALUES(position), title = VALUES(title), meta = VALUES(meta),
                 description = VALUES(description), image = VALUES(image), link = VALUES(link),
-                category = VALUES(category), tags = VALUES(tags)
+                category = VALUES(category), tags = VALUES(tags),
+                year = VALUES(year), role = VALUES(role), context = VALUES(context),
+                solution = VALUES(solution), result = VALUES(result),
+                repo_link = VALUES(repo_link), gallery = VALUES(gallery)
         ');
         $stmt->execute([
             'id' => $this->id,
@@ -109,6 +146,13 @@ final class Project
             'link' => $this->link,
             'category' => $this->category,
             'tags' => $this->tags,
+            'year' => $this->year,
+            'role' => $this->role,
+            'context' => $this->context,
+            'solution' => $this->solution,
+            'result' => $this->result,
+            'repo_link' => $this->repoLink,
+            'gallery' => $this->gallery,
         ]);
 
         // Nouveau projet : l'identifiant attribué par MySQL est conservé dans l'objet
@@ -121,7 +165,7 @@ final class Project
     /**
      * Données publiques du projet (format attendu par les vues et l'API).
      *
-     * @return array{id: int|null, title: string, meta: string, description: string, image: string, link: string, category: string, tags: string}
+     * @return array<string, int|string|null>
      */
     public function toArray(): array
     {
@@ -134,6 +178,13 @@ final class Project
             'link' => $this->link,
             'category' => $this->category,
             'tags' => $this->tags,
+            'year' => $this->year,
+            'role' => $this->role,
+            'context' => $this->context,
+            'solution' => $this->solution,
+            'result' => $this->result,
+            'repo_link' => $this->repoLink,
+            'gallery' => $this->gallery,
         ];
     }
 
@@ -281,6 +332,133 @@ final class Project
         return $this;
     }
 
+    /** @return string Année de réalisation. */
+    public function getYear(): string
+    {
+        return $this->year;
+    }
+
+    /**
+     * @param string $year
+     * @return static
+     */
+    public function setYear(string $year): static
+    {
+        $this->year = $year;
+        return $this;
+    }
+
+    /** @return string Rôle tenu sur le projet. */
+    public function getRole(): string
+    {
+        return $this->role;
+    }
+
+    /**
+     * @param string $role
+     * @return static
+     */
+    public function setRole(string $role): static
+    {
+        $this->role = $role;
+        return $this;
+    }
+
+    /** @return string Contexte et objectifs. */
+    public function getContext(): string
+    {
+        return $this->context;
+    }
+
+    /**
+     * @param string $context
+     * @return static
+     */
+    public function setContext(string $context): static
+    {
+        $this->context = $context;
+        return $this;
+    }
+
+    /** @return string Solution apportée. */
+    public function getSolution(): string
+    {
+        return $this->solution;
+    }
+
+    /**
+     * @param string $solution
+     * @return static
+     */
+    public function setSolution(string $solution): static
+    {
+        $this->solution = $solution;
+        return $this;
+    }
+
+    /** @return string Résultat obtenu. */
+    public function getResult(): string
+    {
+        return $this->result;
+    }
+
+    /**
+     * @param string $result
+     * @return static
+     */
+    public function setResult(string $result): static
+    {
+        $this->result = $result;
+        return $this;
+    }
+
+    /** @return string URL du dépôt de code (optionnelle). */
+    public function getRepoLink(): string
+    {
+        return $this->repoLink;
+    }
+
+    /**
+     * @param string $repoLink
+     * @return static
+     */
+    public function setRepoLink(string $repoLink): static
+    {
+        $this->repoLink = $repoLink;
+        return $this;
+    }
+
+    /** @return string Images de la galerie, une URL par ligne. */
+    public function getGallery(): string
+    {
+        return $this->gallery;
+    }
+
+    /**
+     * @param string $gallery
+     * @return static
+     */
+    public function setGallery(string $gallery): static
+    {
+        $this->gallery = $gallery;
+        return $this;
+    }
+
+    /**
+     * Images de la galerie sous forme de liste d'URL sûres (lignes vides et schémas dangereux écartés).
+     *
+     * @return list<string>
+     */
+    public function getGalleryList(): array
+    {
+        $urls = array_map(
+            static fn(string $line): string => UrlGuard::safe(trim($line)),
+            preg_split('/\R/', $this->gallery) ?: []
+        );
+
+        return array_values(array_filter($urls, static fn(string $url): bool => $url !== ''));
+    }
+
     /**
      * Hydrate un projet depuis une ligne de BDD (ou une ligne de formulaire déjà filtrée).
      *
@@ -302,7 +480,15 @@ final class Project
             ->setImage(UrlGuard::safe($row['image'] ?? ''))
             ->setLink(UrlGuard::safe($row['link'] ?? ''))
             ->setCategory((string)($row['category'] ?? ''))
-            ->setTags((string)($row['tags'] ?? ''));
+            ->setTags((string)($row['tags'] ?? ''))
+            ->setYear((string)($row['year'] ?? ''))
+            ->setRole((string)($row['role'] ?? ''))
+            ->setContext((string)($row['context'] ?? ''))
+            ->setSolution((string)($row['solution'] ?? ''))
+            ->setResult((string)($row['result'] ?? ''))
+            // Dépôt : schémas dangereux supprimés ; galerie nettoyée à la lecture (getGalleryList)
+            ->setRepoLink(UrlGuard::safe($row['repo_link'] ?? ''))
+            ->setGallery((string)($row['gallery'] ?? ''));
     }
 
     /**

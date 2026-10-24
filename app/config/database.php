@@ -4,8 +4,11 @@ declare(strict_types=1);
 /** Variables obligatoires du fichier .env (DB_PASS doit exister mais peut être vide). */
 const REQUIRED_ENV_KEYS = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS'];
 
+/** Fichier .env, à la racine du projet (hors du dossier public). */
+const ENV_FILE = __DIR__ . '/../../.env';
+
 /**
- * Charge le fichier .env (lignes « NOM=valeur ») dans $_ENV.
+ * Charge le fichier .env (lignes « NOM=valeur ») dans $_ENV, une seule fois par requête.
  * Les commentaires (#) et les lignes sans « = » sont ignorés ; les guillemets entourant la valeur sont retirés.
  *
  * @param string $envFile Chemin absolu du fichier .env.
@@ -13,9 +16,12 @@ const REQUIRED_ENV_KEYS = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS'];
  */
 function loadEnvFile(string $envFile): void
 {
-    if (!file_exists($envFile)) {
+    // Plusieurs classes lisent le .env (BDD, IP du client) : le fichier n'est analysé qu'une fois
+    static $loaded = [];
+    if (isset($loaded[$envFile]) || !file_exists($envFile)) {
         return;
     }
+    $loaded[$envFile] = true;
 
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
 
@@ -50,9 +56,11 @@ function findMissingEnvKeys(): array
  * Les identifiants proviennent uniquement du fichier .env situé à la racine du
  * projet (clés DB_HOST, DB_NAME, DB_USER, DB_PASS — modèle : .env.example).
  * En cas de configuration incomplète ou de connexion impossible, le détail est
- * journalisé côté serveur et une erreur 500 générique est renvoyée.
+ * journalisé côté serveur puis une exception générique est levée : le gestionnaire
+ * global de public/index.php affiche la page 500 (aucun détail technique au visiteur).
  *
  * @return PDO
+ * @throws RuntimeException Configuration absente ou base injoignable.
  */
 function getPDOConnection(): PDO
 {
@@ -62,7 +70,7 @@ function getPDOConnection(): PDO
         return $pdo;
     }
 
-    loadEnvFile(__DIR__ . '/../../.env');
+    loadEnvFile(ENV_FILE);
 
     // Identifiants lus EXCLUSIVEMENT dans le .env (aucune valeur de repli dans le code) :
     // si une variable manque, on échoue clairement plutôt que de deviner.
@@ -70,8 +78,7 @@ function getPDOConnection(): PDO
     if ($missing !== []) {
         // Le nom des variables manquantes va dans le log serveur, jamais dans la réponse HTTP
         error_log('Configuration BDD incomplète : ' . implode(', ', $missing) . ' absent(s) du fichier .env');
-        http_response_code(500);
-        exit('Erreur interne du serveur.');
+        throw new RuntimeException('Configuration de la base de données incomplète.');
     }
 
     try {
@@ -83,9 +90,9 @@ function getPDOConnection(): PDO
             PDO::ATTR_EMULATE_PREPARES => false,
         ]);
     } catch (PDOException $e) {
+        // Le message PDO peut contenir l'hôte et l'utilisateur : journal serveur uniquement, jamais relancé tel quel
         error_log('Erreur PDO : ' . $e->getMessage());
-        http_response_code(500);
-        exit('Erreur interne du serveur.');
+        throw new RuntimeException('Connexion à la base de données impossible.');
     }
 
     return $pdo;

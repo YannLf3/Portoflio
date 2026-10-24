@@ -1,6 +1,6 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-<main class="w-full min-h-screen px-6 sm:px-12 pt-32 pb-24 flex justify-center">
+<main id="main" tabindex="-1" class="w-full min-h-screen px-6 sm:px-12 pt-32 pb-24 flex justify-center">
     <div class="w-full max-w-3xl flex flex-col gap-16">
 
         <div class="flex flex-col items-start gap-4">
@@ -29,9 +29,10 @@
                 <h2 class="text-lg font-medium text-foreground">2. Données collectées, finalités et bases légales</h2>
                 <ul class="flex flex-col gap-3 list-disc pl-5">
                     <li>
-                        <strong>Contact par email ou téléphone :</strong> les informations que vous me transmettez
+                        <strong>Contact par formulaire, email ou téléphone :</strong> les informations que vous me transmettez
                         (identité, coordonnées, contenu du message) servent uniquement à répondre à votre demande et à
-                        préparer un éventuel devis. Base légale : mesures précontractuelles et intérêt légitime à
+                        préparer un éventuel devis. Un message envoyé par le formulaire du site m'est transmis par email
+                        et n'est pas enregistré dans la base de données du site. Base légale : mesures précontractuelles et intérêt légitime à
                         répondre aux sollicitations.
                     </li>
                     <li>
@@ -44,10 +45,20 @@
                         l'espace réservé, l'adresse IP est conservée 15 minutes pour limiter les tentatives
                         d'intrusion, puis supprimée automatiquement. Base légale : intérêt légitime (sécurité).
                     </li>
+                    <li id="mesure-audience">
+                        <strong>Mesure d'audience (uniquement si vous l'acceptez) :</strong> page consultée, site
+                        d'origine (domaine seulement), type d'appareil (mobile, tablette ou ordinateur) et quelques
+                        actions (clic sur « Me contacter », ouverture d'un projet, envoi du formulaire). Aucune adresse
+                        IP n'est conservée : un compteur de visiteurs uniques utilise une empreinte tronquée qui change
+                        chaque jour et ne permet pas de vous suivre d'un jour à l'autre. L'outil est hébergé sur ce
+                        site, sans service tiers. Le signal « Do Not Track » de votre navigateur est respecté.
+                        Base légale : votre consentement, que vous pouvez retirer à tout moment via le lien
+                        « Mesure d'audience » en bas de chaque page.
+                    </li>
                 </ul>
                 <p>
                     Aucune donnée n'est vendue, cédée ou utilisée à des fins de prospection commerciale. Ce site ne
-                    comporte aucun outil de mesure d'audience ni aucun traceur publicitaire.
+                    comporte aucun traceur publicitaire.
                 </p>
             </section>
 
@@ -59,22 +70,24 @@
                         comptables.
                     </li>
                     <li>Journaux techniques de l'hébergeur : selon la politique de l'hébergeur, 12 mois au plus.</li>
+                    <li>Données de mesure d'audience : 13 mois, puis suppression automatique.</li>
                 </ul>
             </section>
 
             <section class="flex flex-col gap-4">
                 <h2 class="text-lg font-medium text-foreground">4. Cookies et stockage local</h2>
                 <p>
-                    Ce site dépose uniquement des éléments strictement nécessaires à son fonctionnement, exemptés de
-                    consentement :
+                    Ce site ne dépose aucun cookie de suivi. Il utilise uniquement des éléments nécessaires à son
+                    fonctionnement, exemptés de consentement :
                 </p>
                 <ul class="flex flex-col gap-3 list-disc pl-5">
                     <li><strong>Cookie de session (PHPSESSID) :</strong> maintient la session technique et sécurise
                         l'espace d'administration. Il est supprimé à la fermeture du navigateur.
                     </li>
                     <li><strong>Stockage local du navigateur :</strong> mémorise votre choix de mode (Développeur ou
-                        Photographe) et l'affichage de l'animation d'introduction. Ces informations restent sur votre
-                        appareil et ne sont jamais transmises.
+                        Photographe), l'affichage de l'animation d'introduction et votre choix concernant la mesure
+                        d'audience (conservé 6 mois, puis redemandé). Ces informations restent sur votre appareil et ne
+                        sont jamais transmises.
                     </li>
                 </ul>
             </section>
