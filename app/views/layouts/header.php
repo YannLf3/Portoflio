@@ -84,7 +84,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,300..800&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=JetBrains+Mono:wght@400..600&display=swap">
-    <link rel="stylesheet" href="/css/style.css?v=20261026">
+    <link rel="stylesheet" href="/css/style.css?v=20261027">
 
     <script nonce="<?= CSP_NONCE ?>">
         // Exécuté AVANT le premier rendu :
