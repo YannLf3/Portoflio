@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/Controller.php';
+require_once __DIR__ . '/../core/PdfUploader.php';
 require_once __DIR__ . '/../models/Setting.php';
 require_once __DIR__ . '/../models/Project.php';
 require_once __DIR__ . '/../core/UrlGuard.php';
@@ -47,6 +48,7 @@ final class HomeController extends Controller
                 'canonical' => 'https://yannleflohic.fr/',
             ],
             $this->heroData($settings),
+            $this->cvData($settings),
             $this->aboutData($settings),
             $this->skillsData($settings),
             $this->projectsData($settings),
@@ -290,6 +292,24 @@ final class HomeController extends Controller
             'status' => $settings->get('status'),
             // Image affichée uniquement si un fichier png/jpg/webp est renseigné, sinon la vidéo animoji
             'avatar' => $avatar !== '' && preg_match(self::AVATAR_PATTERN, $avatar) ? $avatar : null,
+        ];
+    }
+
+    /**
+     * CV à télécharger : adresse du PDF (null tant qu'aucun CV n'est envoyé) et nom proposé au téléchargement.
+     * L'adresse relue en BDD doit avoir la forme exacte d'un fichier produit par PdfUploader, sinon le bouton est masqué.
+     *
+     * @param Setting $settings
+     * @return array<string, mixed>
+     */
+    private function cvData(Setting $settings): array
+    {
+        $url = (string)$settings->get('cv_url');
+
+        return [
+            'cvUrl' => preg_match(PdfUploader::URL_PATTERN, $url) === 1 ? $url : null,
+            // Ex : « CV-yann-le-flohic.pdf » (nom du hero, sans accents ni espaces)
+            'cvFilename' => 'CV-' . (self::slugify((string)$settings->get('hero_name')) ?: 'portfolio') . '.pdf',
         ];
     }
 

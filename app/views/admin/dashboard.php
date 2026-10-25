@@ -381,6 +381,30 @@
                 </div>
 
                 <div class="flex flex-col gap-2">
+                    <label for="cv_file" class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">CV
+                        à télécharger (PDF, 5 Mo maximum)</label>
+                    <div class="flex flex-col gap-3">
+                        <?php if ($fields['cv_url'] !== ''): ?>
+                            <p class="text-sm text-muted-foreground">
+                                CV en ligne :
+                                <a href="<?= htmlspecialchars($fields['cv_url']) ?>" target="_blank" rel="noopener noreferrer"
+                                   class="text-accent underline underline-offset-4">voir le fichier<span class="sr-only"> (s'ouvre dans un nouvel onglet)</span></a>
+                            </p>
+                            <label class="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                                <input type="checkbox" name="cv_remove" value="1" class="accent-accent">
+                                Retirer le CV du site (le bouton de téléchargement disparaît)
+                            </label>
+                        <?php else: ?>
+                            <p class="text-sm text-muted-foreground">Aucun CV en ligne : le bouton de téléchargement est masqué sur le site.</p>
+                        <?php endif; ?>
+                        <input type="hidden" name="cv_url" value="<?= htmlspecialchars($fields['cv_url']) ?>">
+                        <input type="file" id="cv_file" name="cv_file" accept="application/pdf"
+                               class="w-full text-xs text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer">
+                        <p class="text-xs text-muted-foreground">Envoyer un nouveau fichier remplace l'ancien après l'enregistrement.</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-mono tracking-widest uppercase text-muted-foreground">Accroche
                         principale (Mode Dev)</label>
                     <textarea name="hero_dev" rows="3"

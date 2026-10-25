@@ -78,6 +78,17 @@
 
             <div class="flex flex-col divide-y divide-border-strong border-y border-border-strong">
 
+                <?php if ($cvUrl !== null): ?>
+                    <a href="<?= htmlspecialchars($cvUrl) ?>" download="<?= htmlspecialchars($cvFilename) ?>" type="application/pdf"
+                       data-track="cv_download" class="group flex items-center justify-between gap-4 py-5 transition-colors">
+                        <span class="text-xs font-mono tracking-widest text-muted-foreground uppercase">CV</span>
+                        <span class="text-sm sm:text-base font-body text-foreground group-hover:text-accent transition-colors text-right">
+                            Télécharger mon CV
+                            <span class="sr-only">(PDF)</span>
+                        </span>
+                    </a>
+                <?php endif; ?>
+
                 <?php array_walk($contacts, static function (array $contact): void { ?>
                     <a href="<?= htmlspecialchars($contact['href']) ?>" data-track="<?= htmlspecialchars($contact['track']) ?>"
                             <?= $contact['isExternal'] ? 'target="_blank" rel="noopener noreferrer"' : '' ?>

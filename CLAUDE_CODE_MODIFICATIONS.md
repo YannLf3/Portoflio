@@ -104,6 +104,10 @@ Comparaison effectuée avec l’état Git de référence du dépôt. Ce document
   - collecte : heure (Paris), navigateur, système, langue, mode Dev/Photo, `utm_source`, `utm_campaign`, pays (en-tête `CF-IPCountry`, vide hors Cloudflare), profondeur de défilement (50 % et 90 %), temps passé (arrondi à 5 s), clics GitHub, LinkedIn, e-mail, autre lien et CV ;
   - back-office : variation par rapport à la période précédente, pages par visite, rebond, durée moyenne, taux de conversion, entonnoir, profondeur de lecture, jours de la semaine, heures, fiches projet les plus ouvertes, navigateurs, systèmes, langues, pays, campagnes, modes ;
   - migration : `2026-10-25_analytics_details.sql`, à jouer avant le code.
+- CV téléchargeable (25 octobre 2026) :
+  - envoi, remplacement et retrait du PDF depuis l'onglet « En-tête » du back-office (clé `cv_url` de la table `settings`, aucune migration) ;
+  - `app/core/PdfUploader.php` : type réel `application/pdf`, signature `%PDF-`, 5 Mo maximum, nom aléatoire `cv_<horodatage>_<16 hex>.pdf` dans `public/assets/uploads/` ;
+  - boutons « Télécharger mon CV » dans l'en-tête et la section contact, masqués tant qu'aucun CV n'est envoyé, mesurés par l'action `cv_download`.
 
 ### Terminal
 

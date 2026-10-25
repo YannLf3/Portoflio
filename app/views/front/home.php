@@ -38,6 +38,12 @@
                 <a href="#projects" class="btn-glow btn-glow--ghost">
                     <span>Voir mes projets</span>
                 </a>
+                <?php if ($cvUrl !== null): ?>
+                    <a href="<?= htmlspecialchars($cvUrl) ?>" download="<?= htmlspecialchars($cvFilename) ?>" type="application/pdf"
+                       class="btn-glow btn-glow--ghost" data-track="cv_download">
+                        <span>Télécharger mon CV<span class="sr-only"> (PDF)</span></span>
+                    </a>
+                <?php endif; ?>
             </div>
 
             <button type="button" data-mode-hint="photo"

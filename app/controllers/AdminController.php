@@ -8,6 +8,7 @@ require_once __DIR__ . '/../models/AnalyticsEvent.php';
 require_once __DIR__ . '/../core/Csrf.php';
 require_once __DIR__ . '/../core/ClientIp.php';
 require_once __DIR__ . '/../core/ImageUploader.php';
+require_once __DIR__ . '/../core/PdfUploader.php';
 
 /**
  * Back-office : affichage et enregistrement des contenus du site.
@@ -34,6 +35,7 @@ final class AdminController extends Controller
         'dispo_text' => 'Disponible pour un stage · 8-12 semaines',
         'hero_name' => 'Yann Le Flohic',
         'hero_avatar' => '',
+        'cv_url' => '',
         'hero_dev' => 'Développeur web full-stack — je conçois et code des interfaces sur-mesure, du front au back, jusqu\'à l\'hébergement.',
         'hero_photo' => 'Photographe — je capture la lumière, la matière et l\'instant, entre portraits, rue et paysages cinématographiques.',
         'location' => 'Châteauroux — FR',
@@ -186,6 +188,11 @@ final class AdminController extends Controller
         $uploader = new ImageUploader(self::UPLOAD_DIR, self::UPLOAD_URL);
         $data = $this->attachUploads($uploader, $data);
 
+        // CV (PDF) : envoi, remplacement ou retrait ; l'ancien fichier n'est supprimé qu'après l'enregistrement en base
+        $pdfUploader = new PdfUploader(self::UPLOAD_DIR, self::UPLOAD_URL);
+        $previousCv = (string)(Setting::load()->getRaw('cv_url') ?? '');
+        $data['cv_url'] = $this->resolveCv($pdfUploader, $data);
+
         // Les modèles ne retiennent que les clés de leur liste blanche.
         // Les projets ne sont remplacés que s'ils figurent dans l'envoi (une clé absente n'efface rien).
         $settings = Setting::fromInput($data);
@@ -204,9 +211,14 @@ final class AdminController extends Controller
             $this->redirectWithFlash('error', 'Erreur lors de l\'enregistrement : aucune modification n\'a été appliquée.');
         }
 
-        $uploadErrors = $uploader->getErrors();
+        // Un CV remplacé ou retiré n'a plus de raison de rester sur le disque
+        if ($previousCv !== '' && $previousCv !== $data['cv_url']) {
+            $pdfUploader->delete($previousCv);
+        }
+
+        $uploadErrors = array_merge($uploader->getErrors(), $pdfUploader->getErrors());
         if ($uploadErrors !== []) {
-            $this->redirectWithFlash('warning', 'Contenus enregistrés, mais certaines images ont été refusées :', $uploadErrors);
+            $this->redirectWithFlash('warning', 'Contenus enregistrés, mais certains fichiers ont été refusés :', $uploadErrors);
         }
         $this->redirectWithFlash('success', 'Modifications enregistrées.');
     }
@@ -250,6 +262,28 @@ final class AdminController extends Controller
         );
 
         return array_merge($data, array_filter($compareImages, static fn(?string $url): bool => $url !== null));
+    }
+
+    /**
+     * Adresse du CV à enregistrer : fichier envoyé, sinon CV actuel, sinon rien (case « Retirer » cochée).
+     * Une adresse qui n'a pas la forme d'un fichier produit par PdfUploader est écartée.
+     *
+     * @param PdfUploader          $uploader Service d'upload du PDF.
+     * @param array<string, mixed> $data     Données du formulaire.
+     * @return string Adresse publique du CV, ou chaîne vide.
+     */
+    private function resolveCv(PdfUploader $uploader, array $data): string
+    {
+        $uploaded = $uploader->store($_FILES['cv_file'] ?? []);
+        if ($uploaded !== null) {
+            return $uploaded;
+        }
+        if (!empty($data['cv_remove'])) {
+            return '';
+        }
+
+        $current = is_scalar($data['cv_url'] ?? null) ? (string)$data['cv_url'] : '';
+        return preg_match(PdfUploader::URL_PATTERN, $current) === 1 ? $current : '';
     }
 
     /**

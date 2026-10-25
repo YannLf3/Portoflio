@@ -20,6 +20,7 @@ final class Setting
         'hero_dev',
         'hero_photo',
         'hero_avatar',
+        'cv_url',
         'dispo_text',
         'location',
         'status',
@@ -41,7 +42,7 @@ final class Setting
     ];
 
     /** Réglages texte qui contiennent une URL : filtrés par UrlGuard (pas de « javascript: »). */
-    private const URL_KEYS = ['hero_avatar', 'compare_before', 'compare_after'];
+    private const URL_KEYS = ['hero_avatar', 'cv_url', 'compare_before', 'compare_after'];
 
     /** Sous-champs d'URL des listes : clé de la liste → sous-champs filtrés par UrlGuard. */
     private const LIST_URL_FIELDS = [
@@ -65,6 +66,7 @@ final class Setting
         'hero_dev' => "Développeur web full-stack — je conçois et code des interfaces sur-mesure, du front au back, jusqu'à l'hébergement.",
         'hero_photo' => "Photographe — je capture la lumière, la matière et l'instant, entre portraits, rue et paysages cinématographiques.",
         'hero_avatar' => '',
+        'cv_url' => '',
         'dispo_text' => 'Disponible pour un stage · 8-12 semaines',
         'location' => 'Châteauroux — FR',
         'status' => '2° Année MMI',
