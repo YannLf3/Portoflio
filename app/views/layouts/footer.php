@@ -87,5 +87,5 @@
 <script src="/js/animations.js?v=20261025" defer></script>
 <script src="/js/terminal.js?v=20261025" defer></script>
 <script src="/js/motion-controls.js?v=20261025" defer></script>
-<script src="/js/consent.js?v=20261027" defer></script>
+<script src="/js/consent.js?v=20261028" defer></script>
 <script src="/js/photo-mode.js?v=20261025" defer></script>

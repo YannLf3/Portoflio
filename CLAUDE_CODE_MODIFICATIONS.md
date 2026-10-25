@@ -100,6 +100,10 @@ Comparaison effectuée avec l’état Git de référence du dépôt. Ce document
 - Mise à jour de la page de confidentialité.
 - Les données sont annoncées comme purgées automatiquement après 13 mois.
 - Le sel d’empreinte peut être fourni par `ANALYTICS_SALT`. Sans cette variable, un sel de base est utilisé.
+- Statistiques détaillées (25 octobre 2026) :
+  - collecte : heure (Paris), navigateur, système, langue, mode Dev/Photo, `utm_source`, `utm_campaign`, pays (en-tête `CF-IPCountry`, vide hors Cloudflare), profondeur de défilement (50 % et 90 %), temps passé (arrondi à 5 s), clics GitHub, LinkedIn, e-mail, autre lien et CV ;
+  - back-office : variation par rapport à la période précédente, pages par visite, rebond, durée moyenne, taux de conversion, entonnoir, profondeur de lecture, jours de la semaine, heures, fiches projet les plus ouvertes, navigateurs, systèmes, langues, pays, campagnes, modes ;
+  - migration : `2026-10-25_analytics_details.sql`, à jouer avant le code.
 
 ### Terminal
 
@@ -174,6 +178,7 @@ La commande cachée `coffee` est également mentionnée.
 - [app/views/front/project.php](app/views/front/project.php)
 - [database/migrations/2026-10-24_analytics_events.sql](database/migrations/2026-10-24_analytics_events.sql)
 - [database/migrations/2026-10-24_projects_detail.sql](database/migrations/2026-10-24_projects_detail.sql)
+- [database/migrations/2026-10-25_analytics_details.sql](database/migrations/2026-10-25_analytics_details.sql)
 - [public/js/consent.js](public/js/consent.js)
 - [public/js/contact.js](public/js/contact.js)
 - [public/js/motion-controls.js](public/js/motion-controls.js)
@@ -200,7 +205,8 @@ Ces dossiers contiennent leurs fichiers `SKILL.md` et, selon la compétence, des
 - Les migrations SQL ont été appliquées sur la base Docker locale, mais leur application sur Hostinger reste à faire.
 - Le site doit recevoir les migrations avant le déploiement du code :
   - `2026-10-24_projects_detail.sql` ;
-  - `2026-10-24_analytics_events.sql`.
+  - `2026-10-24_analytics_events.sql` ;
+  - `2026-10-25_analytics_details.sql`.
 - Le sitemap statique supprimé ne doit pas être réintroduit sur Hostinger.
 - Les champs éditoriaux des fiches projet restent vides lorsqu’aucun contenu réel n’a été fourni.
 - Les données de contexte, rôle, solution et résultat nécessitent encore un remplissage éditorial projet par projet.

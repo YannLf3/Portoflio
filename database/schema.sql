@@ -107,15 +107,24 @@ CREATE TABLE IF NOT EXISTS `login_attempts`
 -- 5. Mesure d'audience (voir app/models/AnalyticsEvent.php) : aucune IP stockée, purge à 13 mois
 CREATE TABLE IF NOT EXISTS `analytics_events`
 (
-    `id`         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `day`        DATE         NOT NULL,
-    `type`       VARCHAR(10)  NOT NULL,
-    `name`       VARCHAR(40)  NOT NULL DEFAULT '',
-    `path`       VARCHAR(255) NOT NULL,
-    `referrer`   VARCHAR(120) NOT NULL DEFAULT '',
-    `device`     VARCHAR(10)  NOT NULL,
-    `visitor`    CHAR(16)     NOT NULL,
+    `id`           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `created_at`   DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `day`          DATE              NOT NULL,
+    `hour`         TINYINT UNSIGNED  NOT NULL DEFAULT 0,
+    `type`         VARCHAR(10)       NOT NULL,
+    `name`         VARCHAR(40)       NOT NULL DEFAULT '',
+    `path`         VARCHAR(255)      NOT NULL,
+    `referrer`     VARCHAR(120)      NOT NULL DEFAULT '',
+    `device`       VARCHAR(10)       NOT NULL,
+    `browser`      VARCHAR(10)       NOT NULL DEFAULT '',
+    `os`           VARCHAR(10)       NOT NULL DEFAULT '',
+    `country`      CHAR(2)           NOT NULL DEFAULT '',
+    `lang`         CHAR(2)           NOT NULL DEFAULT '',
+    `mode`         VARCHAR(5)        NOT NULL DEFAULT '',
+    `utm_source`   VARCHAR(40)       NOT NULL DEFAULT '',
+    `utm_campaign` VARCHAR(40)       NOT NULL DEFAULT '',
+    `value`        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    `visitor`      CHAR(16)          NOT NULL,
     KEY `idx_analytics_day_type` (`day`, `type`),
     KEY `idx_analytics_path` (`path`)
 ) ENGINE = InnoDB

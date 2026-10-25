@@ -98,12 +98,13 @@
     <section id="stats" class="tab-content hidden flex-col gap-8">
         <?php if ($stats === null): ?>
             <div role="alert" class="rounded-lg border border-red-400/40 px-4 py-3 text-sm text-red-300">
-                La table <code>analytics_events</code> est introuvable. Jouez la migration
-                <code>database/migrations/2026-10-24_analytics_events.sql</code> sur la base.
+                La table <code>analytics_events</code> est introuvable ou n'est pas à jour. Jouez, dans l'ordre, les migrations
+                <code>database/migrations/2026-10-24_analytics_events.sql</code> puis
+                <code>database/migrations/2026-10-25_analytics_details.sql</code> sur la base.
             </div>
         <?php else: ?>
             <?php
-            // Libellés lisibles des actions mesurées et des appareils
+            // Libellés lisibles des actions mesurées, des appareils, des navigateurs et des systèmes
             $eventLabels = [
                 'contact_click' => 'Clics sur « Me contacter »',
                 'contact_sent' => 'Messages envoyés par le formulaire',
@@ -111,11 +112,82 @@
                 'project_link' => 'Clics sur « Voir le projet »',
                 'repo_link' => 'Clics sur « Code source »',
                 'mode_switch' => 'Changements de mode Dev / Photo',
+                'link_github' => 'Clics sur le lien GitHub',
+                'link_linkedin' => 'Clics sur le lien LinkedIn',
+                'link_email' => 'Clics sur l\'adresse e-mail',
+                'link_other' => 'Clics sur un autre lien de contact',
+                'cv_download' => 'Téléchargements du CV',
             ];
             $deviceLabels = ['mobile' => 'Mobile', 'tablet' => 'Tablette', 'desktop' => 'Ordinateur'];
+            $browserLabels = ['edge' => 'Edge', 'opera' => 'Opera', 'firefox' => 'Firefox', 'chrome' => 'Chrome', 'safari' => 'Safari', 'other' => 'Autre'];
+            $systemLabels = ['ios' => 'iOS', 'android' => 'Android', 'windows' => 'Windows', 'macos' => 'macOS', 'linux' => 'Linux', 'other' => 'Autre'];
+            $modeLabels = ['dev' => 'Mode Développeur', 'photo' => 'Mode Photographe'];
+            $funnelLabels = [
+                'visit' => 'Visiteurs',
+                'project_open' => 'Ont ouvert une fiche projet',
+                'contact_click' => 'Ont cliqué sur « Me contacter »',
+                'contact_sent' => 'Ont envoyé un message',
+            ];
+            $weekdayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+
             $maxViews = max(1, ...array_column($stats['days'], 'views'));
             $barWidth = 600 / count($stats['days']);
             $directPercent = $stats['views'] > 0 ? round($stats['direct'] / $stats['views'] * 100) : 0;
+
+            // Part d'une valeur dans un total, en pourcentage entier (0 si le total est vide)
+            $share = static fn(int $part, int $whole): int => $whole > 0 ? (int)round($part / $whole * 100) : 0;
+            // Variation par rapport à la période précédente (null = période précédente vide)
+            $trendText = static fn(?int $value): string => $value === null
+                ? 'Pas de période précédente à comparer'
+                : ($value > 0 ? '+' : '') . $value . ' % par rapport à la période précédente';
+            // Durée en secondes affichée en minutes et secondes
+            $duration = static fn(int $seconds): string => $seconds <= 0
+                ? 'Pas de donnée'
+                : ($seconds >= 60 ? intdiv($seconds, 60) . ' min ' . str_pad((string)($seconds % 60), 2, '0', STR_PAD_LEFT) . ' s' : $seconds . ' s');
+
+            // Cartes de chiffres clés : [intitulé, valeur, précision]
+            $kpiMain = [
+                ['Pages vues', number_format($stats['views'], 0, ',', ' '), $trendText($stats['trend']['views'])],
+                ['Visiteurs (somme des visiteurs uniques par jour)', number_format($stats['visitors'], 0, ',', ' '), $trendText($stats['trend']['visitors'])],
+                ['Accès directs', $directPercent . ' %', 'Visites sans site d\'origine'],
+            ];
+            $kpiDetail = [
+                ['Pages par visite', number_format($stats['pagesPerVisit'], 1, ',', ' '), 'Pages vues divisées par visiteurs'],
+                ['Taux de rebond', $stats['bounceRate'] === null ? 'Pas de donnée' : $stats['bounceRate'] . ' %', 'Visiteurs qui n\'ont vu qu\'une page'],
+                ['Durée moyenne par page', $duration($stats['avgSeconds']), 'Temps réellement passé à l\'écran'],
+                ['Taux de conversion', $stats['conversionRate'] === null ? 'Pas de donnée' : number_format($stats['conversionRate'], 1, ',', ' ') . ' %', 'Visiteurs qui ont envoyé un message'],
+            ];
+            $kpiCard = static function (array $kpi): void { ?>
+                <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-1">
+                    <dt class="text-xs font-mono uppercase text-muted-foreground"><?= htmlspecialchars($kpi[0]) ?></dt>
+                    <dd class="font-display text-3xl text-foreground"><?= htmlspecialchars($kpi[1]) ?></dd>
+                    <dd class="text-xs text-muted-foreground"><?= htmlspecialchars($kpi[2]) ?></dd>
+                </div>
+            <?php };
+
+            // Histogramme SVG : une barre par créneau, étiquettes sous les barres (une sur $labelEvery)
+            $barChart = static function (string $title, array $values, array $labels, int $labelEvery, string $unit): void {
+                $max = max(1, ...$values);
+                $width = 600 / count($values); ?>
+                <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-4">
+                    <h3 class="text-xs font-mono uppercase text-muted-foreground"><?= htmlspecialchars($title) ?></h3>
+                    <svg viewBox="0 0 600 165" class="w-full h-40" role="img"
+                         aria-label="<?= htmlspecialchars($title) ?> : <?= htmlspecialchars(implode(', ', array_map(static fn(string $label, int $value): string => $label . ' ' . $value, $labels, $values))) ?>">
+                        <?php array_walk($values, static function (int $value, int $index) use ($max, $width, $labels, $labelEvery, $unit): void {
+                            $height = round($value / $max * 120); ?>
+                            <rect x="<?= round($index * $width + 2, 2) ?>" y="<?= 130 - $height ?>"
+                                  width="<?= max(1, round($width - 4, 2)) ?>" height="<?= max(1, $height) ?>"
+                                  rx="2" fill="<?= $value > 0 ? 'var(--accent)' : 'var(--border-strong)' ?>">
+                                <title><?= htmlspecialchars($labels[$index]) ?> : <?= $value ?> <?= htmlspecialchars($unit) ?></title>
+                            </rect>
+                            <?php if ($index % $labelEvery === 0): ?>
+                                <text x="<?= round($index * $width + $width / 2, 2) ?>" y="155" text-anchor="middle" font-size="12"
+                                      fill="currentColor" class="text-muted-foreground"><?= htmlspecialchars($labels[$index]) ?></text>
+                            <?php endif; ?>
+                        <?php }); ?>
+                    </svg>
+                </div>
+            <?php };
             ?>
             <div class="flex flex-wrap items-end justify-between gap-4 border-b border-border-strong pb-4">
                 <div>
@@ -137,18 +209,11 @@
             </div>
 
             <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-1">
-                    <dt class="text-xs font-mono uppercase text-muted-foreground">Pages vues</dt>
-                    <dd class="font-display text-3xl text-foreground"><?= number_format($stats['views'], 0, ',', ' ') ?></dd>
-                </div>
-                <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-1">
-                    <dt class="text-xs font-mono uppercase text-muted-foreground">Visiteurs (somme des visiteurs uniques par jour)</dt>
-                    <dd class="font-display text-3xl text-foreground"><?= number_format(array_sum(array_column($stats['days'], 'visitors')), 0, ',', ' ') ?></dd>
-                </div>
-                <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-1">
-                    <dt class="text-xs font-mono uppercase text-muted-foreground">Accès directs</dt>
-                    <dd class="font-display text-3xl text-foreground"><?= $directPercent ?> %</dd>
-                </div>
+                <?php array_walk($kpiMain, $kpiCard); ?>
+            </dl>
+
+            <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <?php array_walk($kpiDetail, $kpiCard); ?>
             </dl>
 
             <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-4">
@@ -169,7 +234,8 @@
                     <table class="mt-3 w-full text-left font-mono">
                         <thead><tr><th class="py-1">Jour</th><th>Vues</th><th>Visiteurs</th></tr></thead>
                         <tbody>
-                        <?php array_walk(array_reverse($stats['days']), static function (array $day): void { ?>
+                        <?php $latestFirst = array_reverse($stats['days']);
+                        array_walk($latestFirst, static function (array $day): void { ?>
                             <tr class="border-t border-border-strong">
                                 <td class="py-1"><?= htmlspecialchars($day['day']) ?></td>
                                 <td><?= $day['views'] ?></td>
@@ -182,27 +248,90 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <?php $barChart('Pages vues par jour de la semaine', $stats['weekdays'], $weekdayLabels, 1, 'vue(s)'); ?>
+                <?php $barChart('Pages vues par heure (heure de Paris)', $stats['hours'], array_map(static fn(int $hour): string => $hour . ' h', range(0, 23)), 3, 'vue(s)'); ?>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-4">
+                    <h3 class="text-xs font-mono uppercase text-muted-foreground">Entonnoir de conversion</h3>
+                    <ol class="flex flex-col gap-4">
+                        <?php array_walk($stats['funnel'], static function (array $step, int $index) use ($stats, $funnelLabels, $share): void {
+                            $percent = $share($step['total'], $stats['funnel'][0]['total']);
+                            $before = $index > 0 ? $stats['funnel'][$index - 1]['total'] : 0; ?>
+                            <li class="flex flex-col gap-1">
+                                <div class="flex items-baseline justify-between gap-4 text-sm">
+                                    <span><?= htmlspecialchars($funnelLabels[$step['label']] ?? $step['label']) ?></span>
+                                    <span class="font-mono text-foreground"><?= $step['total'] ?> (<?= $percent ?> %)</span>
+                                </div>
+                                <div class="h-2 rounded-full bg-border-strong overflow-hidden" aria-hidden="true">
+                                    <div class="h-full bg-accent" style="width: <?= $percent ?>%"></div>
+                                </div>
+                                <?php if ($index > 0 && $before >= $step['total'] && $before > 0): ?>
+                                    <p class="text-xs text-muted-foreground">
+                                        Perte de <?= 100 - $share($step['total'], $before) ?> % par rapport à l'étape précédente
+                                    </p>
+                                <?php endif; ?>
+                            </li>
+                        <?php }); ?>
+                    </ol>
+                </div>
+
+                <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-4">
+                    <h3 class="text-xs font-mono uppercase text-muted-foreground">Profondeur de lecture</h3>
+                    <ul class="flex flex-col gap-4">
+                        <?php
+                        $depths = [['Ont lu au moins la moitié de la page', $stats['scroll']['half']], ['Sont allés presque jusqu\'en bas (90 %)', $stats['scroll']['full']]];
+                        array_walk($depths, static function (array $depth) use ($stats, $share): void {
+                            $percent = $share($depth[1], $stats['scroll']['visitors']); ?>
+                            <li class="flex flex-col gap-1">
+                                <div class="flex items-baseline justify-between gap-4 text-sm">
+                                    <span><?= htmlspecialchars($depth[0]) ?></span>
+                                    <span class="font-mono text-foreground"><?= $depth[1] ?> (<?= $percent ?> %)</span>
+                                </div>
+                                <div class="h-2 rounded-full bg-border-strong overflow-hidden" aria-hidden="true">
+                                    <div class="h-full bg-accent" style="width: <?= $percent ?>%"></div>
+                                </div>
+                            </li>
+                        <?php }); ?>
+                    </ul>
+                    <p class="text-xs text-muted-foreground">Part des visiteurs de la période, toutes pages confondues.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <?php
-                // Tableaux de classement : titre, lignes, intitulé de colonne, formatage du libellé
+                // Tableaux de classement : titre, lignes, intitulé de colonne, formatage du libellé, message si vide
+                $emptyDefault = 'Pas encore de données sur la période.';
                 $tables = [
-                    ['Pages les plus vues', $stats['pages'], 'Page', static fn(string $label): string => $label],
-                    ['Sites d\'origine', $stats['referrers'], 'Domaine', static fn(string $label): string => $label],
-                    ['Appareils', $stats['devices'], 'Appareil', static fn(string $label): string => $deviceLabels[$label] ?? $label],
-                    ['Actions mesurées', $stats['events'], 'Action', static fn(string $label): string => $eventLabels[$label] ?? $label],
+                    ['title' => 'Pages les plus vues', 'rows' => $stats['pages'], 'column' => 'Page', 'format' => static fn(string $label): string => $label, 'empty' => $emptyDefault],
+                    ['title' => 'Fiches projet les plus ouvertes', 'rows' => $stats['projects'], 'column' => 'Projet', 'format' => static fn(string $label): string => str_replace('-', ' ', (string)preg_replace('#^/projets/\d+-#', '', $label)), 'empty' => $emptyDefault],
+                    ['title' => 'Sites d\'origine', 'rows' => $stats['referrers'], 'column' => 'Domaine', 'format' => static fn(string $label): string => $label, 'empty' => $emptyDefault],
+                    ['title' => 'Sources de campagne (utm_source)', 'rows' => $stats['sources'], 'column' => 'Source', 'format' => static fn(string $label): string => $label, 'empty' => 'Aucune donnée : ajoutez ?utm_source=linkedin à vos liens partagés.'],
+                    ['title' => 'Campagnes (utm_campaign)', 'rows' => $stats['campaigns'], 'column' => 'Campagne', 'format' => static fn(string $label): string => $label, 'empty' => 'Aucune donnée : ajoutez &utm_campaign=nom à vos liens partagés.'],
+                    ['title' => 'Appareils', 'rows' => $stats['devices'], 'column' => 'Appareil', 'format' => static fn(string $label): string => $deviceLabels[$label] ?? $label, 'empty' => $emptyDefault],
+                    ['title' => 'Navigateurs', 'rows' => $stats['browsers'], 'column' => 'Navigateur', 'format' => static fn(string $label): string => $browserLabels[$label] ?? $label, 'empty' => $emptyDefault],
+                    ['title' => 'Systèmes d\'exploitation', 'rows' => $stats['systems'], 'column' => 'Système', 'format' => static fn(string $label): string => $systemLabels[$label] ?? $label, 'empty' => $emptyDefault],
+                    ['title' => 'Langues du navigateur', 'rows' => $stats['languages'], 'column' => 'Langue', 'format' => static fn(string $label): string => strtoupper($label), 'empty' => $emptyDefault],
+                    ['title' => 'Pays', 'rows' => $stats['countries'], 'column' => 'Pays', 'format' => static fn(string $label): string => class_exists('Locale') ? (string)Locale::getDisplayRegion('-' . $label, 'fr') : $label, 'empty' => 'Aucune donnée : le pays n\'est fourni que si le site passe par Cloudflare.'],
+                    ['title' => 'Mode d\'affichage', 'rows' => $stats['modes'], 'column' => 'Mode', 'format' => static fn(string $label): string => $modeLabels[$label] ?? $label, 'empty' => $emptyDefault],
+                    ['title' => 'Actions mesurées', 'rows' => $stats['events'], 'column' => 'Action', 'format' => static fn(string $label): string => $eventLabels[$label] ?? $label, 'empty' => $emptyDefault],
                 ];
                 array_walk($tables, static function (array $table): void { ?>
                     <div class="border border-border-strong bg-background-2/20 rounded-xl p-5 flex flex-col gap-3">
-                        <h3 class="text-xs font-mono uppercase text-muted-foreground"><?= htmlspecialchars($table[0]) ?></h3>
-                        <?php if ($table[1] === []): ?>
-                            <p class="text-sm text-muted-foreground">Pas encore de données sur la période.</p>
+                        <h3 class="text-xs font-mono uppercase text-muted-foreground"><?= htmlspecialchars($table['title']) ?></h3>
+                        <?php if ($table['rows'] === []): ?>
+                            <p class="text-sm text-muted-foreground"><?= htmlspecialchars($table['empty']) ?></p>
                         <?php else: ?>
                             <table class="w-full text-sm text-left">
-                                <thead class="sr-only"><tr><th><?= htmlspecialchars($table[2]) ?></th><th>Total</th></tr></thead>
+                                <thead class="sr-only"><tr><th><?= htmlspecialchars($table['column']) ?></th><th>Total</th></tr></thead>
                                 <tbody>
-                                <?php array_walk($table[1], static function (array $row) use ($table): void { ?>
+                                <?php array_walk($table['rows'], static function (array $row) use ($table): void { ?>
                                     <tr class="border-t border-border-strong first:border-0">
-                                        <td class="py-2 pr-4 break-all"><?= htmlspecialchars(($table[3])((string)$row['label'])) ?></td>
-                                        <td class="py-2 text-right font-mono text-foreground"><?= (int)$row['total'] ?></td>
+                                        <td class="py-2 pr-4 break-all"><?= htmlspecialchars(($table['format'])((string)$row['label'])) ?></td>
+                                        <td class="py-2 text-right font-mono text-foreground">
+                                            <?= (int)$row['total'] ?><?= isset($row['percent']) ? ' (' . (int)$row['percent'] . ' %)' : '' ?>
+                                        </td>
                                     </tr>
                                 <?php }); ?>
                                 </tbody>

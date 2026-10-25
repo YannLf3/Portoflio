@@ -6,8 +6,11 @@
  * - Signaux « Do Not Track » / Global Privacy Control : traités comme un refus, sans afficher le bandeau.
  * - Le choix est mémorisé 6 mois dans le localStorage du navigateur (aucun cookie), puis redemandé, et modifiable à tout moment
  *   (lien du pied de page, commande `cookies` du terminal : événement `consent:open`).
- * - Mesures : une page vue par chargement, plus les actions marquées [data-track="nom"] ou
- *   annoncées par l'événement `track:event` (ex : envoi réussi du formulaire de contact).
+ * - Mesures : une page vue par chargement, les actions marquées [data-track="nom"] ou annoncées par
+ *   l'événement `track:event` (ex : envoi réussi du formulaire de contact), la profondeur de défilement
+ *   (50 % et 90 %, une fois chacune) et le temps passé visible à l'écran (envoyé quand l'onglet se masque).
+ * - Contexte joint à chaque mesure : mode Dev/Photo, langue du navigateur et, pour la page vue,
+ *   les paramètres de campagne utm_source et utm_campaign.
  *
  * Architecture M/V/C stricte :
  *  - M (Modèle)     : choix mémorisé, signaux de vie privée, envoi des mesures (fetch).
@@ -29,6 +32,15 @@
     /** Clé localStorage du choix, et point d'accès de l'API. */
     M.storageKey = 'portfolio-consent';
     M.endpoint = '/api/track';
+
+    /** Seuils de défilement mesurés (pourcentage de la page), chacun envoyé une seule fois par chargement. */
+    M.scrollSteps = [50, 90];
+
+    /** État de la mesure en cours : active après consentement, seuils déjà atteints, chronomètre de présence. */
+    M.measuring = false;
+    M.reachedSteps = [];
+    M.visibleSince = null;
+    M.visibleMs = 0;
 
     /** Durée de validité du choix : 6 mois (recommandation CNIL), en millisecondes. */
     M.choiceLifetime = 6 * 30 * 24 * 60 * 60 * 1000;
@@ -76,20 +88,67 @@
 
     /**
      * Envoie une mesure au serveur (silencieux en cas d'échec : la mesure ne doit jamais gêner le site).
-     * @param {'pageview'|'event'} type
-     * @param {string} [name=''] - Nom de l'action (type event).
+     * @param {Object} payload - Champs à envoyer (type, name, path, referrer, mode, lang, utm_*, value).
      * @returns {Promise<void>}
      */
-    M.send = async function (type, name = '') {
-        const body = new URLSearchParams({
-            type,
-            name,
-            path: window.location.pathname,
-            referrer: document.referrer
-        });
+    M.send = async function (payload) {
+        const body = new URLSearchParams(payload);
         try {
             await fetch(this.endpoint, {method: 'POST', body, keepalive: true});
         } catch (error) { /* ignoré */ }
+    };
+
+    /**
+     * Démarre la mesure de la page (idempotent : un second appel ne fait rien).
+     * @returns {boolean} true si la mesure vient réellement de démarrer.
+     */
+    M.startMeasuring = function () {
+        if (this.measuring) return false;
+        this.measuring = true;
+        this.reachedSteps = [];
+        this.visibleMs = 0;
+        return true;
+    };
+
+    /**
+     * Arrête la mesure (choix refusé après coup) et oublie le temps accumulé.
+     * @returns {void}
+     */
+    M.stopMeasuring = function () {
+        this.measuring = false;
+        this.visibleSince = null;
+        this.visibleMs = 0;
+    };
+
+    /**
+     * Mémorise qu'un seuil de défilement est atteint.
+     * @param {number} step - Seuil en pourcentage.
+     * @returns {boolean} true la première fois seulement.
+     */
+    M.markReached = function (step) {
+        if (this.reachedSteps.includes(step)) return false;
+        this.reachedSteps.push(step);
+        return true;
+    };
+
+    /**
+     * Lance le chronomètre de présence (page visible à l'écran).
+     * @returns {void}
+     */
+    M.startClock = function () {
+        if (this.visibleSince === null) this.visibleSince = Date.now();
+    };
+
+    /**
+     * Arrête le chronomètre et remet le cumul à zéro.
+     * @returns {number} Secondes de présence depuis la dernière remise à zéro.
+     */
+    M.stopClock = function () {
+        if (this.visibleSince !== null) this.visibleMs += Date.now() - this.visibleSince;
+        this.visibleSince = null;
+        const seconds = Math.round(this.visibleMs / 1000);
+        this.visibleMs = 0;
+        return seconds;
     };
 
     /* =======================================================================
@@ -101,7 +160,7 @@
 
     /**
      * Point d'entrée de la Vue : récupère le bandeau et déclare les écouteurs (délégation sur le document).
-     * @param {{onClick:Function, onOpen:Function, onTrack:Function}} handlers
+     * @param {{onClick:Function, onOpen:Function, onTrack:Function, onScroll:Function, onVisibility:Function}} handlers
      * @returns {void}
      */
     V.init = function (handlers) {
@@ -109,6 +168,45 @@
         document.addEventListener('click', handlers.onClick);
         document.addEventListener('consent:open', handlers.onOpen);
         document.addEventListener('track:event', handlers.onTrack);
+        window.addEventListener('scroll', handlers.onScroll, {passive: true});
+        document.addEventListener('visibilitychange', handlers.onVisibility);
+    };
+
+    /**
+     * Contexte de la page joint à chaque mesure. Les paramètres de campagne ne servent qu'à la page vue
+     * (c'est la page d'arrivée qui porte les utm_*).
+     * @param {'pageview'|'event'} type
+     * @returns {Object} Champs prêts à être envoyés.
+     */
+    V.pageContext = function (type) {
+        const params = new URLSearchParams(window.location.search);
+        const context = {
+            path: window.location.pathname,
+            referrer: document.referrer,
+            mode: document.documentElement.dataset.mode ?? '',
+            lang: navigator.language ?? ''
+        };
+        if (type === 'pageview') {
+            context.utm_source = params.get('utm_source') ?? '';
+            context.utm_campaign = params.get('utm_campaign') ?? '';
+        }
+        return context;
+    };
+
+    /**
+     * Part de la page déjà parcourue (bas de l'écran rapporté à la hauteur totale du document).
+     * @returns {number} Pourcentage de 0 à 100 (100 si la page tient dans l'écran).
+     */
+    V.scrollPercent = function () {
+        const root = document.documentElement;
+        return Math.min(100, (window.scrollY + window.innerHeight) / Math.max(1, root.scrollHeight) * 100);
+    };
+
+    /**
+     * @returns {boolean} true si l'onglet est visible à l'écran.
+     */
+    V.isPageVisible = function () {
+        return document.visibilityState === 'visible';
     };
 
     /**
@@ -184,14 +282,69 @@
      * @returns {void}
      */
     C.init = function () {
-        V.init({onClick: C.handler_click, onOpen: C.handler_open, onTrack: C.handler_trackEvent});
+        V.init({
+            onClick: C.handler_click,
+            onOpen: C.handler_open,
+            onTrack: C.handler_trackEvent,
+            onScroll: C.handler_scroll,
+            onVisibility: C.handler_visibility
+        });
 
         // Signal de vie privée du navigateur : refus implicite, aucun bandeau, aucune mesure
         if (M.hasPrivacySignal()) return;
 
         const choice = M.readChoice();
         if (choice === null) V.showBanner();
-        if (choice === 'granted') M.send('pageview');
+        if (choice === 'granted') C.startMeasuring();
+    };
+
+    /**
+     * Envoie une mesure avec le contexte de la page.
+     * @param {'pageview'|'event'} type
+     * @param {string} [name=''] - Nom de l'action (type event).
+     * @param {Object} [extra={}] - Champs supplémentaires (ex : value pour le temps passé).
+     * @returns {void}
+     */
+    C.send = function (type, name = '', extra = {}) {
+        M.send({type, name, ...V.pageContext(type), ...extra});
+    };
+
+    /**
+     * Démarre la mesure de la page : page vue, chronomètre de présence et premier contrôle du défilement
+     * (une page qui tient dans l'écran compte comme lue en entier).
+     * @returns {void}
+     */
+    C.startMeasuring = function () {
+        if (!M.startMeasuring()) return;
+        C.send('pageview');
+        if (V.isPageVisible()) M.startClock();
+        C.handler_scroll();
+    };
+
+    /**
+     * Défilement : envoie chaque seuil (50 %, 90 %) la première fois qu'il est franchi.
+     * @returns {void}
+     */
+    C.handler_scroll = function () {
+        if (!M.measuring) return;
+        const percent = V.scrollPercent();
+        M.scrollSteps
+            .filter((step) => percent >= step && M.markReached(step))
+            .forEach((step) => C.send('event', 'scroll_' + step));
+    };
+
+    /**
+     * Changement de visibilité de l'onglet : masqué = envoi du temps passé (secondes), visible = chronomètre relancé.
+     * @returns {void}
+     */
+    C.handler_visibility = function () {
+        if (!M.measuring) return;
+        if (V.isPageVisible()) {
+            M.startClock();
+            return;
+        }
+        const seconds = M.stopClock();
+        if (seconds > 0) C.send('event', 'time_spent', {value: seconds});
     };
 
     /**
@@ -211,11 +364,11 @@
         }
 
         const name = V.trackNameFrom(ev.target);
-        if (name && !M.hasPrivacySignal() && M.readChoice() === 'granted') M.send('event', name);
+        if (name && !M.hasPrivacySignal() && M.readChoice() === 'granted') C.send('event', name);
     };
 
     /**
-     * Enregistre le choix ; une acceptation envoie aussitôt la page vue de la page en cours.
+     * Enregistre le choix ; une acceptation lance aussitôt la mesure de la page en cours, un refus l'arrête.
      * @param {'granted'|'denied'} choice
      * @returns {void}
      */
@@ -223,8 +376,9 @@
         const previous = M.readChoice();
         M.saveChoice(choice);
         V.hideBanner();
+        if (choice === 'denied') M.stopMeasuring();
         // Un signal DNT/GPC l'emporte sur l'acceptation : aucune mesure envoyée
-        if (choice === 'granted' && previous !== 'granted' && !M.hasPrivacySignal()) M.send('pageview');
+        if (choice === 'granted' && previous !== 'granted' && !M.hasPrivacySignal()) C.startMeasuring();
     };
 
     /**
@@ -242,7 +396,7 @@
      * @returns {void}
      */
     C.handler_trackEvent = function (ev) {
-        if (!M.hasPrivacySignal() && M.readChoice() === 'granted' && ev.detail?.name) M.send('event', ev.detail.name);
+        if (!M.hasPrivacySignal() && M.readChoice() === 'granted' && ev.detail?.name) C.send('event', ev.detail.name);
     };
 
     C.init();

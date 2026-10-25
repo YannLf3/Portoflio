@@ -507,11 +507,29 @@ final class HomeController extends Controller
                     'isExternal' => str_starts_with(UrlGuard::safe($contact['href'] ?? ''), 'http'),
                     'label' => $contact['label'] ?? 'CONTACT',
                     'value' => $contact['value'] ?? '',
+                    'track' => self::contactTrackName(UrlGuard::safe($contact['href'] ?? '')),
                 ],
                 self::rows($settings->get('contacts'))
             ),
             'interests' => self::splitList($settings->get('interests')),
         ];
+    }
+
+    /**
+     * Nom de l'action mesurée pour un lien de la section contact, déduit de son adresse.
+     *
+     * @param string $href Adresse déjà filtrée par UrlGuard.
+     * @return string Un nom de AnalyticsEvent::EVENT_NAMES.
+     */
+    private static function contactTrackName(string $href): string
+    {
+        return match (true) {
+            preg_match('/\.pdf($|[?#])/i', $href) === 1 => 'cv_download',
+            str_contains($href, 'github.com') => 'link_github',
+            str_contains($href, 'linkedin.com') => 'link_linkedin',
+            str_starts_with($href, 'mailto:') => 'link_email',
+            default => 'link_other',
+        };
     }
 
     /**

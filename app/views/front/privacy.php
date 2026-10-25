@@ -56,8 +56,13 @@
                     </li>
                     <li id="mesure-audience">
                         <strong>Mesure d'audience (uniquement si vous l'acceptez) :</strong> page consultée, site
-                        d'origine (domaine seulement), type d'appareil (mobile, tablette ou ordinateur) et quelques
-                        actions (clic sur « Me contacter », ouverture d'un projet, envoi du formulaire). Aucune adresse
+                        d'origine (domaine seulement), type d'appareil (mobile, tablette ou ordinateur), navigateur et
+                        système d'exploitation (famille seulement, sans numéro de version), langue du navigateur, mode
+                        d'affichage choisi (Développeur ou Photographe), heure de la visite, paramètres de campagne de
+                        l'adresse d'arrivée (utm_source, utm_campaign), pays (uniquement si l'hébergeur le fournit),
+                        profondeur de défilement (50 % et 90 % de la page), temps passé sur la page (arrondi à 5
+                        secondes) et quelques actions (clic sur « Me contacter », sur un lien de contact, ouverture
+                        d'un projet, envoi du formulaire). Aucune adresse
                         IP n'est conservée : un compteur de visiteurs uniques utilise une empreinte tronquée qui change
                         chaque jour et ne permet pas de vous suivre d'un jour à l'autre. L'outil est hébergé sur ce
                         site, sans service tiers. Le signal « Do Not Track » de votre navigateur est respecté.

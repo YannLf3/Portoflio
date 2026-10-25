@@ -174,6 +174,7 @@ final class ApiController extends Controller
      * Garde-fous : requête même origine uniquement, signal « Do Not Track » respecté, robots et administrateur
      * connecté ignorés, noms d'action en liste blanche, 60 mesures par minute et par adresse IP (en base),
      * chemin limité aux pages qui existent réellement (une URL inventée ne pollue pas les statistiques).
+     * Les champs facultatifs (langue, mode, campagne UTM, durée) sont revalidés ici : le navigateur n'est jamais cru sur parole.
      * Réponse 204 sans contenu (rien à renvoyer au navigateur).
      *
      * @return never
@@ -200,7 +201,8 @@ final class ApiController extends Controller
             || $this->isAdmin()
             || preg_match('#^/(?!/)[A-Za-z0-9/_\-.~%]{0,254}$#', $path) !== 1
             || preg_match('#^/(admin|login|logout|api)(/|$)#', $path) === 1
-            || ($type === 'event' && !in_array($name, AnalyticsEvent::EVENT_NAMES, true));
+            || ($type === 'event' && !in_array($name, AnalyticsEvent::EVENT_NAMES, true))
+            || ($type === 'event' && $name === 'time_spent' && AnalyticsEvent::cleanDuration($_POST['value'] ?? 0) === 0);
 
         if (!$ignored) {
             try {
@@ -211,14 +213,25 @@ final class ApiController extends Controller
                     // Domaine d'origine uniquement (jamais l'URL complète), et seulement s'il est externe
                     $referrerHost = (string)parse_url((string)($_POST['referrer'] ?? ''), PHP_URL_HOST);
 
-                    AnalyticsEvent::record(
-                        $type,
-                        $type === 'event' ? $name : '',
-                        $path,
-                        $referrerHost === $ownHost ? '' : preg_replace('/^www\./', '', $referrerHost),
-                        AnalyticsEvent::deviceFrom($userAgent),
-                        AnalyticsEvent::visitorHash($clientIp, $userAgent)
-                    );
+                    // Champs facultatifs : chacun est nettoyé par le modèle (liste blanche ou format strict), sinon vide
+                    $field = static fn(string $key): string => is_scalar($_POST[$key] ?? null) ? (string)$_POST[$key] : '';
+
+                    AnalyticsEvent::record([
+                        'type' => $type,
+                        'name' => $type === 'event' ? $name : '',
+                        'path' => $path,
+                        'referrer' => $referrerHost === $ownHost ? '' : preg_replace('/^www\./', '', $referrerHost),
+                        'device' => AnalyticsEvent::deviceFrom($userAgent),
+                        'browser' => AnalyticsEvent::browserFrom($userAgent),
+                        'os' => AnalyticsEvent::osFrom($userAgent),
+                        'country' => AnalyticsEvent::countryFrom((string)($_SERVER['HTTP_CF_IPCOUNTRY'] ?? '')),
+                        'lang' => AnalyticsEvent::cleanLang($field('lang')),
+                        'mode' => AnalyticsEvent::cleanMode($field('mode')),
+                        'utm_source' => $type === 'pageview' ? AnalyticsEvent::cleanTag($field('utm_source')) : '',
+                        'utm_campaign' => $type === 'pageview' ? AnalyticsEvent::cleanTag($field('utm_campaign')) : '',
+                        'value' => $type === 'event' && $name === 'time_spent' ? AnalyticsEvent::cleanDuration($_POST['value'] ?? 0) : 0,
+                        'visitor' => AnalyticsEvent::visitorHash($clientIp, $userAgent),
+                    ]);
                     // Purge occasionnelle (1 requête sur 200) : la table ne dépasse jamais 13 mois de données
                     if (random_int(1, 200) === 1) {
                         AnalyticsEvent::purgeOld();
