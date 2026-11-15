@@ -68,14 +68,31 @@
                 <img src="<?= htmlspecialchars($avatar) ?>" alt="Portrait de Yann Le Flohic" width="1200" height="1200"
                      class="w-full h-full object-contain pointer-events-none select-none">
             <?php else: ?>
-                <video autoplay loop muted playsinline poster="/assets/before-video.webp" width="1280" height="720"
-                       aria-hidden="true" data-motion-video
-                       class="w-full h-full object-contain pointer-events-none select-none">
-                    <source src="/assets/videos/animoji.mov" type="video/quicktime; codecs=hvc1">
-                    <source src="/assets/videos/animoji.webm" type="video/webm">
-                </video>
+                <div id="mac3d" class="absolute inset-0">
+                    <canvas id="mac3d-canvas" role="img"
+                            aria-label="MacBook Air en 3D, orientable à la souris ou au doigt"
+                            class="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-700 cursor-grab touch-pan-y"></canvas>
+                    <video id="mac3d-fallback" autoplay loop muted playsinline poster="/assets/before-video.webp" width="1280" height="720"
+                           aria-hidden="true" data-motion-video
+                           class="w-full h-full object-contain pointer-events-none select-none">
+                        <source src="/assets/videos/animoji.mov" type="video/quicktime; codecs=hvc1">
+                        <source src="/assets/videos/animoji.webm" type="video/webm">
+                    </video>
+                </div>
             <?php endif; ?>
         </div>
+
+        <?php if ($avatar === null): ?>
+            <script type="importmap" nonce="<?= CSP_NONCE ?>">
+                {
+                    "imports": {
+                        "three": "/js/vendor/three/three.module.min.js",
+                        "three/addons/": "/js/vendor/three/addons/"
+                    }
+                }
+            </script>
+            <script type="module" src="/js/mac3d.js?v=20261115"></script>
+        <?php endif; ?>
 
     </div>
 
