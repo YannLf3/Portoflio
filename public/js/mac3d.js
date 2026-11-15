@@ -27,6 +27,9 @@ const M = {};
 /** Chemin du modèle 3D. */
 M.modelUrl = '/assets/models/mac.glb';
 
+/** Capture de pro.yannleflohic.fr affichée sur l'écran (format de l'écran : 1280 x 832). */
+M.screenUrl = '/assets/images/mac-screen.webp';
+
 /** Rotation cible issue de la position du curseur (radians). */
 M.follow = {x: 0, y: 0};
 
@@ -218,6 +221,28 @@ V.mountModel = function (gltf, startOpen) {
 };
 
 /**
+ * Plaque une image sur l'écran du Mac (matériau « Screen » du .glb).
+ * Si l'image manque, l'écran garde sa couleur d'origine : aucune erreur bloquante.
+ * @param {string} url
+ * @returns {Promise<void>}
+ */
+V.applyScreen = async function (url) {
+    const texture = await new THREE.TextureLoader().loadAsync(url);
+    // Les UV d'un glTF ont l'origine en haut à gauche : pas d'inversion verticale
+    texture.flipY = false;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    // Filtrage anisotrope : le texte reste net quand l'écran est vu de biais
+    texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+
+    // MeshBasicMaterial ignore la lumière de la scène, comme un écran rétroéclairé ;
+    // toneMapped: false garde les couleurs exactes de la capture (pas de tone mapping ACES)
+    const screen = new THREE.MeshBasicMaterial({map: texture, toneMapped: false});
+    this.pivot.traverse((node) => {
+        if (node.isMesh && node.material.name === 'Screen') node.material = screen;
+    });
+};
+
+/**
  * Affiche le canvas et masque la vidéo de fallback.
  * @returns {void}
  */
@@ -301,6 +326,8 @@ C.init = async function () {
 
     V.showCanvas();
     V.resize();
+    // Non bloquant : le Mac s'affiche tout de suite, l'image de l'écran arrive ensuite
+    V.applyScreen(M.screenUrl).catch(() => {});
 
     window.addEventListener('pointermove', C.handler_follow);
     V.canvas.addEventListener('pointerdown', C.handler_dragStart);
