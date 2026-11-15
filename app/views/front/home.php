@@ -91,7 +91,7 @@
                     }
                 }
             </script>
-            <script type="module" src="/js/mac3d.js?v=20261115b"></script>
+            <script type="module" src="/js/mac3d.js?v=20261115c"></script>
         <?php endif; ?>
 
     </div>

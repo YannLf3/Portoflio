@@ -1,8 +1,11 @@
 /**
  * @file mac3d.js
- * @description MacBook Air 3D du hero (three.js) : il suit le curseur et se manipule au drag (souris ou doigt).
+ * @description Objet 3D du hero (three.js) : il suit le curseur et se manipule au drag (souris ou doigt).
  *
- * - Le modèle /assets/models/mac.glb s'ouvre à l'arrivée (animation « LidOpen » exportée depuis Blender).
+ * - Mode Dev : MacBook Air (/assets/models/mac.glb), il s'ouvre à l'arrivée (animation « LidOpen ») et
+ *   affiche une capture du site pro sur son écran.
+ * - Mode Photo : appareil photo (/assets/models/camera.glb). Il n'est téléchargé qu'à la première bascule.
+ * - Le changement de mode est détecté sur l'attribut data-mode de <html> (posé par theme-toggle.js).
  * - Sans WebGL ou si le chargement échoue, la <video> de l'animoji reste affichée (fallback).
  * - Mouvement réduit : écran ouvert d'emblée, pas de suivi du curseur (le drag reste possible).
  * - Rendu en pause quand le hero sort de l'écran ou que l'onglet est caché (batterie mobile).
@@ -24,8 +27,34 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
    ======================================================================= */
 const M = {};
 
-/** Chemin du modèle 3D. */
-M.modelUrl = '/assets/models/mac.glb';
+/**
+ * Un modèle par univers.
+ * size : plus grande dimension de l'objet en unités de scène ; yaw : orientation de départ (rad) ;
+ * envIntensity : force des reflets de l'environnement (le métal sombre du Mac en demande moins).
+ */
+M.models = {
+    dev: {
+        url: '/assets/models/mac.glb', size: 2.2, yaw: 0, envIntensity: 0.45,
+        label: 'MacBook Air en 3D, orientable à la souris ou au doigt'
+    },
+    photo: {
+        url: '/assets/models/camera.glb', size: 2.0, yaw: -0.5, envIntensity: 0.9,
+        label: 'Appareil photo en 3D, orientable à la souris ou au doigt'
+    }
+};
+
+/** Normal map du grain du grip de l'appareil photo (fichier séparé : la CSP interdit les textures embarquées en blob:). */
+M.grainUrl = '/assets/models/camera-grain-normal.png';
+
+/** Univers affiché : 'dev' ou 'photo'. */
+M.mode = 'dev';
+
+/**
+ * @returns {'dev'|'photo'} Univers actif, lu sur l'attribut data-mode de <html>.
+ */
+M.readMode = function () {
+    return document.documentElement.getAttribute('data-mode') === 'photo' ? 'photo' : 'dev';
+};
 
 /** Capture de pro.yannleflohic.fr affichée sur l'écran (format de l'écran : 1280 x 832). */
 M.screenUrl = '/assets/images/mac-screen.webp';
@@ -121,6 +150,15 @@ V.pivot = null;
 V.mixer = null;
 V.clock = null;
 
+/** Modèles déjà chargés, par univers : { dev: Group, photo: Group }. */
+V.models = {};
+
+/** Chargements en cours, par univers (évite de télécharger deux fois le même .glb). */
+V.pending = {};
+
+/** Action « LidOpen » du Mac (null tant que le Mac n'est pas chargé). */
+V.openAction = null;
+
 /**
  * Récupère les éléments du hero.
  * @returns {boolean} false si le hero 3D est absent de la page.
@@ -173,15 +211,17 @@ V.loadModel = function (url) {
 };
 
 /**
- * Centre et met à l'échelle le modèle, prépare l'animation d'ouverture puis l'ajoute à la scène.
+ * Centre et met à l'échelle le modèle, prépare son animation éventuelle, puis l'ajoute (masqué) à la scène.
+ * @param {'dev'|'photo'} mode
  * @param {object} gltf
- * @param {boolean} startOpen true = écran déjà ouvert (mouvement réduit).
- * @returns {void}
+ * @param {boolean} startOpen true = écran du Mac déjà ouvert (mouvement réduit).
+ * @returns {THREE.Group} Le conteneur du modèle (porte l'orientation de départ).
  */
-V.mountModel = function (gltf, startOpen) {
+V.mountModel = function (mode, gltf, startOpen) {
+    const config = M.models[mode];
     const model = gltf.scene;
 
-    // Écran et verre : reflet atténué, sinon l'écran vire au blanc vu de face
+    // Écran et verre du Mac : reflet atténué, sinon l'écran vire au blanc vu de face
     model.traverse((node) => {
         if (node.isMesh && ['Glass_Bezel', 'Screen'].includes(node.material.name)) {
             // envMapIntensity n'agit que si la map est portée par le matériau (pas seulement par la scène)
@@ -205,28 +245,75 @@ V.mountModel = function (gltf, startOpen) {
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
-    // La plus grande dimension du Mac occupe 2.2 unités de scène
-    const scale = 2.2 / Math.max(size.x, size.y, size.z);
+    const scale = config.size / Math.max(size.x, size.y, size.z);
     model.scale.setScalar(scale);
     model.position.sub(center.multiplyScalar(scale));
 
     if (action) {
+        this.openAction = action;
         // Arrivée en fin de clip, l'action passe en pause : reset() la relance depuis le début
         action.reset();
         action.time = startOpen ? action.getClip().duration : 0;
         this.mixer.update(0);
     }
 
-    this.pivot.add(model);
+    // Le conteneur porte l'orientation de départ ; la rotation curseur/drag reste sur le pivot
+    const holder = new THREE.Group();
+    holder.rotation.y = config.yaw;
+    holder.visible = false;
+    holder.add(model);
+    this.pivot.add(holder);
+    this.models[mode] = holder;
+    return holder;
+};
+
+/**
+ * Affiche le modèle d'un univers et masque l'autre.
+ * @param {'dev'|'photo'} mode
+ * @param {boolean} reducedMotion true = pas de réouverture animée du Mac.
+ * @returns {void}
+ */
+V.showMode = function (mode, reducedMotion) {
+    Object.entries(this.models).forEach(([key, holder]) => {
+        holder.visible = key === mode;
+    });
+    this.scene.environmentIntensity = M.models[mode].envIntensity;
+    this.canvas.setAttribute('aria-label', M.models[mode].label);
+
+    // Le Mac se rouvre à chaque retour en mode Dev
+    if (mode === 'dev' && this.openAction && !reducedMotion) {
+        this.openAction.reset().play();
+        this.mixer.update(0);
+    }
+};
+
+/**
+ * Change d'univers avec un fondu : le canvas s'efface, on échange les modèles, il réapparaît.
+ * @param {'dev'|'photo'} mode
+ * @param {boolean} reducedMotion true = échange immédiat, sans fondu.
+ * @returns {void}
+ */
+V.swapMode = function (mode, reducedMotion) {
+    if (reducedMotion) {
+        this.showMode(mode, true);
+        return;
+    }
+    this.canvas.classList.add('opacity-0');
+    // 350 ms : le canvas est à moitié transparent, l'échange passe inaperçu
+    setTimeout(() => {
+        this.showMode(mode, false);
+        this.showCanvas();
+    }, 350);
 };
 
 /**
  * Plaque une image sur l'écran du Mac (matériau « Screen » du .glb).
  * Si l'image manque, l'écran garde sa couleur d'origine : aucune erreur bloquante.
+ * @param {THREE.Object3D} root Conteneur du Mac.
  * @param {string} url
  * @returns {Promise<void>}
  */
-V.applyScreen = async function (url) {
+V.applyScreen = async function (root, url) {
     const texture = await new THREE.TextureLoader().loadAsync(url);
     // Les UV d'un glTF ont l'origine en haut à gauche : pas d'inversion verticale
     texture.flipY = false;
@@ -237,8 +324,30 @@ V.applyScreen = async function (url) {
     // MeshBasicMaterial ignore la lumière de la scène, comme un écran rétroéclairé ;
     // toneMapped: false garde les couleurs exactes de la capture (pas de tone mapping ACES)
     const screen = new THREE.MeshBasicMaterial({map: texture, toneMapped: false});
-    this.pivot.traverse((node) => {
+    root.traverse((node) => {
         if (node.isMesh && node.material.name === 'Screen') node.material = screen;
+    });
+};
+
+/**
+ * Applique le grain en relief sur le caoutchouc de l'appareil photo (matériau « Rubber_Grip »).
+ * Sans l'image, le grip reste lisse : aucune erreur bloquante.
+ * @param {THREE.Object3D} root Conteneur de l'appareil photo.
+ * @param {string} url
+ * @returns {Promise<void>}
+ */
+V.applyGrain = async function (root, url) {
+    const texture = await new THREE.TextureLoader().loadAsync(url);
+    // Réglages d'origine du .glb : texture répétée, UV glTF (origine en haut à gauche)
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.flipY = false;
+    texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+
+    root.traverse((node) => {
+        if (!node.isMesh || node.material.name !== 'Rubber_Grip') return;
+        node.material.normalMap = texture;
+        node.material.normalScale.set(0.7, 0.7);
+        node.material.needsUpdate = true;
     });
 };
 
@@ -251,6 +360,18 @@ V.showCanvas = function () {
     if (this.fallback) {
         this.fallback.pause();
         this.fallback.classList.add('hidden');
+    }
+};
+
+/**
+ * Remet la vidéo de l'animoji à la place du canvas (le modèle d'un univers n'a pas pu se charger).
+ * @returns {void}
+ */
+V.showFallback = function () {
+    this.canvas.classList.add('opacity-0');
+    if (this.fallback) {
+        this.fallback.classList.remove('hidden');
+        this.fallback.play();
     }
 };
 
@@ -317,17 +438,18 @@ C.init = async function () {
     this.reducedMotion = M.prefersReducedMotion();
     V.createScene();
 
+    // Seul le modèle de l'univers actif est téléchargé ; l'autre attend la première bascule
+    M.mode = M.readMode();
     try {
-        V.mountModel(await V.loadModel(M.modelUrl), this.reducedMotion);
+        await C.ensureModel(M.mode);
     } catch {
         V.abort();
         return;
     }
 
+    V.showMode(M.mode, this.reducedMotion);
     V.showCanvas();
     V.resize();
-    // Non bloquant : le Mac s'affiche tout de suite, l'image de l'écran arrive ensuite
-    V.applyScreen(M.screenUrl).catch(() => {});
 
     window.addEventListener('pointermove', C.handler_follow);
     V.canvas.addEventListener('pointerdown', C.handler_dragStart);
@@ -335,6 +457,10 @@ C.init = async function () {
     V.canvas.addEventListener('pointerup', C.handler_dragEnd);
     V.canvas.addEventListener('pointercancel', C.handler_dragEnd);
     document.addEventListener('visibilitychange', C.handler_visibility);
+    new MutationObserver(C.handler_mode).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-mode']
+    });
     new ResizeObserver(() => V.resize()).observe(V.host);
     new IntersectionObserver(C.handler_intersect).observe(V.host);
 
@@ -342,7 +468,47 @@ C.init = async function () {
 };
 
 /**
- * Le Mac suit la souris (pas le doigt : un écran tactile n'a pas de survol).
+ * Charge (une seule fois) le modèle d'un univers.
+ * @param {'dev'|'photo'} mode
+ * @returns {Promise<void>}
+ */
+C.ensureModel = function (mode) {
+    if (V.models[mode]) return Promise.resolve();
+    if (!V.pending[mode]) {
+        V.pending[mode] = (async () => {
+            const holder = V.mountModel(mode, await V.loadModel(M.models[mode].url), C.reducedMotion);
+            // Non bloquant : l'objet s'affiche tout de suite, ses textures (écran, grain) arrivent ensuite
+            if (mode === 'dev') V.applyScreen(holder, M.screenUrl).catch(() => {});
+            if (mode === 'photo') V.applyGrain(holder, M.grainUrl).catch(() => {});
+        })().catch((err) => {
+            // Échec : on libère l'entrée pour qu'une bascule ultérieure puisse réessayer
+            delete V.pending[mode];
+            throw err;
+        });
+    }
+    return V.pending[mode];
+};
+
+/**
+ * Bascule Dev / Photo : charge le modèle voulu si besoin, puis échange avec un fondu.
+ * @returns {Promise<void>}
+ */
+C.handler_mode = async function () {
+    const mode = M.readMode();
+    if (mode === M.mode) return;
+    M.mode = mode;
+    try {
+        await C.ensureModel(mode);
+    } catch {
+        V.showFallback();
+        return;
+    }
+    // L'utilisateur a pu rebasculer pendant le téléchargement : on n'affiche que l'univers courant
+    if (M.mode === mode) V.swapMode(mode, C.reducedMotion);
+};
+
+/**
+ * L'objet suit la souris (pas le doigt : un écran tactile n'a pas de survol).
  * @param {PointerEvent} ev
  * @returns {void}
  */
